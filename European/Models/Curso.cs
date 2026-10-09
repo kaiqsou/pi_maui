@@ -11,6 +11,6 @@ namespace European.Models
         public int Id { get; set; }
         public string Nome { get; set; }
         public decimal Preco {  get; set; }
-        public List<Materia> Materias { get; set; } = new ();
+        public List<Materia> Materias { get; set; } = new List<Materia>();
     }
 }
