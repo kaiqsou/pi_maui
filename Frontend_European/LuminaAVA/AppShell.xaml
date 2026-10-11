@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="LuminaAVA.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:LuminaAVA"
+    xmlns:views="clr-namespace:LuminaAVA.Views"
+    Title="LuminaAVA">
+
+    <ShellContent
+        Title="Acesso"
+        ContentTemplate="{DataTemplate views:TelaLoginPage}"
+        Route="login" />
+
+    <ShellContent
+        Title="Cadastro"
+        ContentTemplate="{DataTemplate views:TelaCadastroPage}"
+        Route="cadastro" />
+
+    <ShellContent
+        Title="Início"
+        ContentTemplate="{DataTemplate views:TelaInicialAlunoPage}"
+        Route="inicio" />
+
+    <ShellContent
+        Title="Aulas"
+        ContentTemplate="{DataTemplate views:TelaAulasPage}"
+        Route="aulas" />
+
+    <ShellContent
+        Title="Provas"
+        ContentTemplate="{DataTemplate views:TelaAvaliacoesPage}"
+        Route="provas" />
+
+    <ShellContent
+        Title="Desempenho"
+        ContentTemplate="{DataTemplate views:TelaDesempenhoPage}"
+        Route="desempenho" />
+
+    <ShellContent
+        Title="Certificados"
+        ContentTemplate="{DataTemplate views:TelaCertificadosPage}"
+        Route="certificados" />
+
+    <ShellContent
+        Title="Perfil"
+        ContentTemplate="{DataTemplate views:TelaPerfilPage}"
+        Route="perfil" />
+
+</Shell>
