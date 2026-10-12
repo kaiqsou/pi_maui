@@ -1,20 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using European.Enums;
 
 namespace European.Models
 {
     public class Matricula
     {
-        public int Id { get; set; }
-        public Usuario Aluno { get; set; }
-        public int AlunoId { get; set; }
-        public Curso Curso { get; set; }
-        public int CursoId { get; set; }
-        public bool IsActive { get; set; } = false;
+        public string Id { get; set; } = string.Empty;
+        public string AlunoId { get; set; } = string.Empty;
+        public Usuario? Aluno { get; set; }
+        public string CursoId { get; set; } = string.Empty;
+        public Curso? Curso { get; set; }
+        public StatusMatricula Status { get; set; } = StatusMatricula.Ativa;
+        public double ProgressoPercentual { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime DataMatricula { get; set; } = DateTime.Now;
+        public DateTime? DataConclusao { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set;} = DateTime.Now;
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.MateriaEditPage"
+             x:DataType="vm:MateriaEditViewModel"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Nome" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Nome}" Placeholder="Nome da matéria" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Descrição" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="10">
+                    <Editor Text="{Binding Descricao}" Placeholder="Descrição" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

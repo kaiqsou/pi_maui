@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace European.Models
+﻿namespace European.Models
 {
     public class Prova
     {
-        public int Id { get; set; }
-        public Materia Materia { get; set; }
-        public float TempoProva { get; set; }
-        public Usuario? Aluno { get; set; }
-        public int AlunoId { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string MateriaId { get; set; } = string.Empty;
+        public Materia? Materia { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public double NotaMaxima { get; set; } = 10;
+        public double Peso { get; set; } = 1;
+        public double NotaCorte { get; set; } = 6;
         public DateTime Prazo { get; set; }
+        public int DuracaoMinutos { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

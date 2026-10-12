@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.CertificadoDetalhePage"
+             x:DataType="vm:CertificadoDetalheViewModel"
+             Title="Certificado"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
+                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding VoltarCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Grid.Column="1" Text="Certificado" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+            </Grid>
+
+            <Border Style="{StaticResource Card}" Padding="24">
+                <VerticalStackLayout Spacing="14">
+                    <Border WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
+                            BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 20">
+                        <Label Text="&#xea3f;" Style="{StaticResource Icon}" FontSize="38"
+                               TextColor="{StaticResource Warning}" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <Label Text="EUROPEAN" Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+                    <Label Text="{Binding Certificado.Titulo}" Style="{StaticResource TitleMd}" HorizontalTextAlignment="Center" />
+                    <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+                    <Label Text="Certificamos que" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding Certificado.AlunoNome}" Style="{StaticResource TitleSm}" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding Certificado.CursoNome}" Style="{StaticResource BodyMd}" HorizontalTextAlignment="Center" TextColor="{StaticResource BrandPrimary}" />
+                    <Label Text="{Binding Certificado.TipoTexto}" Style="{StaticResource BodySm}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Carga horária" Style="{StaticResource Muted}" />
+                        <Label Grid.Column="1" Text="{Binding Certificado.CargaHorariaHoras, StringFormat='{0} horas'}" Style="{StaticResource TitleSm}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Emissão" Style="{StaticResource Muted}" />
+                        <Label Grid.Column="1" Text="{Binding EmissaoTexto}" Style="{StaticResource TitleSm}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Código" Style="{StaticResource Muted}" />
+                        <Label Grid.Column="1" Text="{Binding Certificado.CodigoVerificacao}" Style="{StaticResource TitleSm}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Baixar PDF" Style="{StaticResource PrimaryButton}" Clicked="OnBaixarClicked" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

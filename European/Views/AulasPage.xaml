@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.AulasPage"
+             x:DataType="vm:AulasViewModel"
+             BackgroundColor="{StaticResource Surface}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20,24,20,0" RowSpacing="16">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="2">
+            <Label Text="Aulas" Style="{StaticResource TitleLg}" />
+            <Label Text="{Binding CursoNome}" Style="{StaticResource Muted}" />
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="10">
+
+                <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleMd}" />
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding AulasPagina}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AulaItem">
+                            <VerticalStackLayout Spacing="8">
+
+                                <VerticalStackLayout IsVisible="{Binding MostrarCabecalho}" Padding="0,6,0,0" Spacing="4">
+                                    <Label Text="{Binding Cabecalho}" Style="{StaticResource TitleSm}" TextColor="{StaticResource BrandPrimary}" />
+                                    <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+                                </VerticalStackLayout>
+
+                                <Border Padding="14">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                            <Style.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
+                                                    <Setter Property="Opacity" Value="0.55" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AulasViewModel}}, Path=AbrirAulaCommand, x:DataType=vm:AulasViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                                        <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                                BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                                                StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                                            <Label Text="&#xe1c4;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                        </Border>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                            <Label Text="{Binding Aula.Titulo}" Style="{StaticResource TitleSm}" />
+                                            <Label Text="{Binding Descricao}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="End">
+                                            <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="16"
+                                                   TextColor="{StaticResource Success}" HorizontalOptions="End"
+                                                   IsVisible="{Binding Concluida}" />
+                                            <Label Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16"
+                                                   TextColor="{StaticResource OnSurfaceVariant}" HorizontalOptions="End"
+                                                   IsVisible="{Binding PodeAssistir}" />
+                                            <Label Text="&#xe897;" Style="{StaticResource Icon}" FontSize="16"
+                                                   TextColor="{StaticResource Danger}" HorizontalOptions="End"
+                                                   IsVisible="{Binding Bloqueada}" />
+                                            <Label Text="{Binding Duracao}" Style="{StaticResource BodySm}" IsVisible="{Binding Liberada}" />
+                                            <Label Text="Bloqueada" Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}"
+                                                   IsVisible="{Binding Bloqueada}" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </Border>
+
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12"
+              Padding="0,0,0,16" IsVisible="{Binding TemPaginacao}">
+            <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
+                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                    IsEnabled="{Binding PodePaginaAnterior}" Command="{Binding PaginaAnteriorCommand}" />
+            <Label Grid.Column="1" Text="{Binding IndicadorPagina}" Style="{StaticResource BodySm}"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
+                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                    IsEnabled="{Binding PodePaginaProxima}" Command="{Binding PaginaProximaCommand}" />
+        </Grid>
+
+    </Grid>
+
+</ContentView>

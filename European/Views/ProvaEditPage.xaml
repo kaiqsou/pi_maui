@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.ProvaEditPage"
+             x:DataType="vm:ProvaEditViewModel"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Título" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Titulo}" Placeholder="Título da prova" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0" Spacing="8">
+                    <Label Text="Nota máxima" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding NotaMaxima}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="8">
+                    <Label Text="Peso" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding Peso}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0" Spacing="8">
+                    <Label Text="Nota de corte" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding NotaCorte}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="8">
+                    <Label Text="Duração (min)" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding DuracaoMinutos}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Prazo" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <DatePicker Date="{Binding Prazo}" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

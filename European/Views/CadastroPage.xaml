@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.CadastroPage"
+             x:DataType="vm:UserViewModel"
+             Title="Criar conta"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,32,28,28" Spacing="18">
+
+            <Label Text="Criar conta" Style="{StaticResource TitleLg}" />
+            <Label Text="Preencha os dados para começar a estudar na European." Style="{StaticResource Muted}" />
+
+            <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
+                <Label Text="Nome completo" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Nome}" Placeholder="Seu nome" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="E-mail" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Senha" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Senha}" Placeholder="••••••" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}"
+                   TextColor="{StaticResource Danger}" FontSize="13" />
+
+            <Button Text="Cadastrar" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding CadastroCommand}" Margin="0,8,0,0" />
+
+            <Button Text="Já tenho conta? Entrar" Style="{StaticResource GhostButton}"
+                    Command="{Binding IrParaLoginCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

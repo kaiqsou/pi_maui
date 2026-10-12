@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.DesempenhoPage"
+             x:DataType="vm:DesempenhoViewModel"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Desempenho" Style="{StaticResource TitleLg}" />
+                <Label Text="Acompanhe suas notas e progresso" Style="{StaticResource Muted}" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="Média geral" Style="{StaticResource Muted}" />
+                    <Label Text="{Binding MediaTexto}" Style="{StaticResource TitleLg}" FontSize="40" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Por matéria" Style="{StaticResource TitleSm}" />
+
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Materias}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MateriaDesempenho">
+                        <Border Style="{StaticResource Card}" Padding="14">
+                            <VerticalStackLayout Spacing="10">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                        <Label Text="{Binding ModuloTitulo}" Style="{StaticResource BodySm}" />
+                                    </VerticalStackLayout>
+                                    <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
+                                        <Label Text="{Binding Media, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
+                                    </Border>
+                                </Grid>
+                                <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
+                                <Label Text="{Binding Progresso, Converter={StaticResource PercentageText}, StringFormat='Progresso: {0}'}" Style="{StaticResource BodySm}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label Text="Resultados" Style="{StaticResource TitleSm}" />
+
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Resultados}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ResultadoItem">
+                        <Border Style="{StaticResource Card}" Padding="14">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding ProvaTitulo}" Style="{StaticResource TitleSm}" />
+                                    <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" />
+                                    <Label Text="{Binding Data}" Style="{StaticResource BodySm}" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
+                                    <Label Text="{Binding Nota, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="15" TextColor="{StaticResource BrandPrimary}" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentView>

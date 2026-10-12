@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace European.Models
+﻿namespace European.Models
 {
     public class Materia
     {
-        public int Id { get; set; }
-        public string Nome { get; set; }
-        public Curso Curso { get; set; }
-        public int Semestre { get; set; }
-        public List<Usuario> Alunos { get; set; } = new List<Usuario>();
+        public string Id { get; set; } = string.Empty;
+        public string ModuloId { get; set; } = string.Empty;
+        public Modulo? Modulo { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public int Ordem { get; set; }
+        public List<Aula> Aulas { get; set; } = new();
     }
 }

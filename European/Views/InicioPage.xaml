@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:models="clr-namespace:European.Models"
+             x:Class="European.Views.InicioPage"
+             x:DataType="vm:InicioViewModel"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+
+            <Grid ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="{Binding Saudacao}" Style="{StaticResource TitleLg}" />
+                    <Label Text="Vamos continuar seus estudos" Style="{StaticResource Muted}" />
+                </VerticalStackLayout>
+                <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                    <Border WidthRequest="44" HeightRequest="44"
+                            BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 14">
+                        <Label Text="&#xe7f4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <Border WidthRequest="44" HeightRequest="44"
+                            BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding AbrirPerfilCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="&#xe7fd;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Text="{Binding TotalCursos}" Style="{StaticResource TitleMd}" />
+                        <Label Text="Cursos" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}" Padding="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="&#xe8e5;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Text="{Binding ProgressoMedio, Converter={StaticResource PercentageText}}" Style="{StaticResource TitleMd}" />
+                        <Label Text="Progresso" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="&#xea3f;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Text="{Binding TotalCertificados}" Style="{StaticResource TitleMd}" />
+                        <Label Text="Certificados" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Label Text="Continuar estudando" Style="{StaticResource TitleSm}" IsVisible="{Binding TemUltimaAula}" />
+
+            <Border Style="{StaticResource Card}" IsVisible="{Binding TemUltimaAula}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Label Text="&#xe1c4;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="{Binding UltimaAula.Titulo}" Style="{StaticResource TitleSm}" />
+                            <Label Text="{Binding UltimaCursoNome}" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label Text="{Binding UltimaAula.Descricao}" Style="{StaticResource Muted}" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Grid.Column="0" Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                        <Label Grid.Column="1" Text="{Binding UltimaDuracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Button Text="Continuar aula" Style="{StaticResource PrimaryButton}" Command="{Binding ContinuarCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Style="{StaticResource Card}" IsVisible="{Binding MostrarIniciarAulas}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                                StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Label Text="&#xe1c4;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Iniciar seus estudos" Style="{StaticResource TitleSm}" />
+                            <Label Text="{Binding UltimaCursoNome}" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Label Text="Explore as aulas do curso e comece a aprender agora." Style="{StaticResource Muted}" />
+                    <Button Text="Iniciar aulas" Style="{StaticResource PrimaryButton}" Command="{Binding IniciarAulasCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Certificados recentes" Style="{StaticResource TitleSm}" />
+
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding CertificadosRecentes}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:Certificado">
+                        <Border Style="{StaticResource Card}" Padding="14">
+                            <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                                <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                        BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+                                        StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                                    <Label Text="&#xea3f;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
+                                    <Label Text="{Binding TipoTexto}" Style="{StaticResource BodySm}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label Text="Nenhum certificado ainda. Conclua um curso ou matéria para emitir."
+                   Style="{StaticResource Muted}"
+                   IsVisible="{Binding CertificadosRecentes.Count, Converter={StaticResource CountToBool}, ConverterParameter=invert}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentView>

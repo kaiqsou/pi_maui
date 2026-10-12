@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:models="clr-namespace:European.Models"
+             x:Class="European.Views.GerenciarPage"
+             x:DataType="vm:GerenciarViewModel"
+             Title="Gerenciar conteúdo"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="20,16,20,0" RowSpacing="14">
+
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
+                    BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                    StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding VoltarCommand}" />
+                </Border.GestureRecognizers>
+                <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Label Grid.Column="1" Text="Gerenciar conteúdo" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+        </Grid>
+
+        <Button Grid.Row="1" Text="Novo curso" Style="{StaticResource PrimaryButton}" Command="{Binding NovoCommand}" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Cursos}" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Curso">
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GerenciarViewModel}}, Path=AbrirCommand, x:DataType=vm:GerenciarViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                <Label Text="{Binding Categoria}" Style="{StaticResource BodySm}" />
+                                <Label Text="{Binding Modulos.Count, StringFormat='{0} módulo(s)'}" Style="{StaticResource BodySm}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="&#xe3c9;" FontFamily="MaterialIcons" FontSize="18" Padding="0"
+                                    WidthRequest="38" HeightRequest="38" BackgroundColor="Transparent" TextColor="{StaticResource OnSurfaceVariant}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GerenciarViewModel}}, Path=EditarCommand, x:DataType=vm:GerenciarViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            <Button Grid.Column="2" Text="&#xe872;" FontFamily="MaterialIcons" FontSize="18" Padding="0"
+                                    WidthRequest="38" HeightRequest="38" BackgroundColor="Transparent" TextColor="{StaticResource Danger}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GerenciarViewModel}}, Path=ExcluirCommand, x:DataType=vm:GerenciarViewModel}"
+                                    CommandParameter="{Binding .}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+
+</ContentPage>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="European"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <ContentView Grid.Row="0" x:Name="HostAba" />
+
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <BoxView Grid.Row="0" HeightRequest="1" Color="{StaticResource Outline}" />
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" Padding="4,10,4,12" BackgroundColor="{StaticResource Surface}">
+
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelecionarAbaCommand}" CommandParameter="inicio" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="&#xe871;" FontFamily="MaterialIcons" FontSize="22" HorizontalOptions="Center"
+                           TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarInicio}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Início" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarInicio}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelecionarAbaCommand}" CommandParameter="aulas" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="&#xe1c4;" FontFamily="MaterialIcons" FontSize="22" HorizontalOptions="Center"
+                           TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarAulas}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Aulas" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarAulas}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelecionarAbaCommand}" CommandParameter="provas" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="&#xe862;" FontFamily="MaterialIcons" FontSize="22" HorizontalOptions="Center"
+                           TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarProvas}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Provas" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarProvas}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="3" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelecionarAbaCommand}" CommandParameter="desempenho" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="&#xe26b;" FontFamily="MaterialIcons" FontSize="22" HorizontalOptions="Center"
+                           TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarDesempenho}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Desempenho" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarDesempenho}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="4" Spacing="2">
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelecionarAbaCommand}" CommandParameter="certificados" />
+                    </VerticalStackLayout.GestureRecognizers>
+                    <Label Text="&#xea3f;" FontFamily="MaterialIcons" FontSize="22" HorizontalOptions="Center"
+                           TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarCertificados}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="Certificados" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding MostrarCertificados}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+
+            </Grid>
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

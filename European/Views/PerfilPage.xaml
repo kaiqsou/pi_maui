@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.PerfilPage"
+             x:DataType="vm:PerfilViewModel"
+             Title="Perfil"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
+                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding VoltarCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Grid.Column="1" Text="Perfil" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Border WidthRequest="84" HeightRequest="84" BackgroundColor="{StaticResource BrandPrimary}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 28" HorizontalOptions="Center">
+                    <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="30"
+                           TextColor="White" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="{Binding Nome}" Style="{StaticResource TitleMd}" HorizontalOptions="Center" />
+                <Label Text="{Binding Email}" Style="{StaticResource Muted}" HorizontalOptions="Center" />
+                <Border Style="{StaticResource Pill}" HorizontalOptions="Center">
+                    <Label Text="{Binding RoleTexto}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding TotalCursos}" Style="{StaticResource TitleMd}" />
+                        <Label Text="Cursos" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Card}" Padding="12">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding TotalCertificados}" Style="{StaticResource TitleMd}" />
+                        <Label Text="Certificados" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource Card}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding GerenciarCommand}" />
+                </Border.GestureRecognizers>
+                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                    <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                            BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                            StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                        <Label Text="&#xe3c9;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                        <Label Text="Gerenciar conteúdo" Style="{StaticResource TitleSm}" />
+                        <Label Text="Cursos, módulos, matérias, aulas e provas" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
+                </Grid>
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding PodeGerenciar}" Value="False">
+                        <Setter Property="IsVisible" Value="False" />
+                    </DataTrigger>
+                </Border.Triggers>
+            </Border>
+
+            <Button Text="Sair da conta" Style="{StaticResource GhostButton}" Command="{Binding LogoutCommand}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

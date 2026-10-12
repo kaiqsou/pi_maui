@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using European.Services;
+using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -17,6 +18,9 @@ namespace European.WinUI
         public App()
         {
             this.InitializeComponent();
+
+            UnhandledException += (_, e) =>
+                CrashLogger.Registrar("WinUI.UnhandledException", e.Exception);
         }
 
         protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();

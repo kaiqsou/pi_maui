@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.CursoEditPage"
+             x:DataType="vm:CursoEditViewModel"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Nome" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Entry Text="{Binding Nome}" Placeholder="Nome do curso" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Descrição" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="10">
+                    <Editor Text="{Binding Descricao}" Placeholder="Descrição do curso" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Categoria" Style="{StaticResource BodySm}" />
+                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0" Spacing="8">
+                    <Label Text="Preço (R$)" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding Preco}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="8">
+                    <Label Text="Carga horária (h)" Style="{StaticResource BodySm}" />
+                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                        <Entry Text="{Binding CargaHoraria}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Publicado" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" />
+            </Grid>
+
+            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
