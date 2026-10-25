@@ -13,10 +13,10 @@ namespace European.Views
             BindingContext = _viewModel;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-            _viewModel.Carregar();
+            await _viewModel.CarregarAsync();
         }
     }
 }

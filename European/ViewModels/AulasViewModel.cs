@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 using European.Services;
 
@@ -17,7 +17,7 @@ namespace European.ViewModels
         public bool IniciaGrupo { get; set; }
         public bool MostrarCabecalho { get; set; }
 
-        public string Duracao => TimeSpan.FromSeconds(MockDataService.DuracaoVideosDaAula(Aula)).ToString(@"mm\:ss");
+        public string Duracao => Aula.DuracaoTexto;
         public string Descricao => Aula.Descricao;
         public bool Bloqueada => !Liberada;
         public bool PodeAssistir => Liberada && !Concluida;
@@ -80,7 +80,7 @@ namespace European.ViewModels
         public ICommand PaginaAnteriorCommand { get; }
         public ICommand PaginaProximaCommand { get; }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
 
@@ -90,8 +90,7 @@ namespace European.ViewModels
 
             if (aluno != null)
             {
-                foreach (var matricula in MockDataService.Matriculas().Where(m => m.AlunoId == aluno.Id))
-                    matriculas.Add(matricula);
+                matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
 
                 var matriculaAtiva = matriculas.FirstOrDefault();
                 MatriculaAtiva = matriculaAtiva;
@@ -99,6 +98,7 @@ namespace European.ViewModels
                 if (matriculaAtiva?.Curso != null)
                 {
                     CursoNome = matriculaAtiva.Curso.Nome;
+                    var progressos = await ProgressoRepositorio.DaMatriculaAsync(matriculaAtiva.Id);
 
                     foreach (var modulo in matriculaAtiva.Curso.Modulos.OrderBy(m => m.Ordem))
                     {
@@ -110,12 +110,12 @@ namespace European.ViewModels
 
                             foreach (var aula in materia.Aulas.OrderBy(a => a.Ordem))
                             {
-                                var progresso = MockDataService.ProgressoDaAula(matriculaAtiva.Id, aula.Id);
+                                var progresso = progressos.FirstOrDefault(p => p.AulaId == aula.Id);
                                 aulasModulo.Add(new AulaItem
                                 {
                                     Aula = aula,
                                     Concluida = progresso?.Concluida ?? false,
-                                    Liberada = MockDataService.AulaEstaLiberada(matriculaAtiva.Id, aula),
+                                    Liberada = ProgressoService.AulaEstaLiberada(matriculaAtiva.Curso, progressos, aula),
                                     Percentual = progresso?.PercentualAssistido ?? 0,
                                     Cabecalho = materia.Nome,
                                     IniciaGrupo = primeiroDaMateria
@@ -141,7 +141,7 @@ namespace European.ViewModels
             _aulasPorModulo = aulasPorModulo;
             _indicePagina = 0;
             AplicarPagina();
-        }
+        });
 
         private void MudarPagina(int delta)
         {

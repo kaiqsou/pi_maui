@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
+             x:Class="European.Views.AlunoAcessoPage"
+             x:DataType="vm:AlunoAcessoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <controls:Cabecalho Titulo="Acesso do aluno" />
+
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
+                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="White"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                            <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                            <Label Text="{Binding Email}" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Border Style="{StaticResource Painel}" Padding="12,10">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding StatusTexto}" Style="{StaticResource TitleSm}" FontSize="14" />
+                            <Label Text="{Binding StatusDescricao}" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Liberar curso -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Liberar acesso a um curso" Style="{StaticResource TitleSm}" />
+                    <VerticalStackLayout Spacing="12" IsVisible="{Binding TemCursosDisponiveis}">
+                        <Border Style="{StaticResource Campo}">
+                            <Picker ItemsSource="{Binding CursosDisponiveis}" SelectedItem="{Binding CursoSelecionado}"
+                                    ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" TextColor="{StaticResource OnSurface}" />
+                        </Border>
+                        <Button Text="Liberar acesso" Style="{StaticResource PrimaryButton}" Command="{Binding LiberarCommand}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                    </VerticalStackLayout>
+                    <Label Text="O aluno já tem acesso a todos os cursos ativos." Style="{StaticResource Muted}"
+                           IsVisible="{Binding TemCursosDisponiveis, Converter={StaticResource InverseBool}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Matrículas -->
+            <Label Text="Matrículas" Style="{StaticResource TitleSm}" />
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Matriculas}">
+                <BindableLayout.EmptyView>
+                    <Label Text="Nenhuma matrícula ainda." Style="{StaticResource Muted}" />
+                </BindableLayout.EmptyView>
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MatriculaItem">
+                        <Border Style="{StaticResource Card}" Padding="14">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" FontSize="15" />
+                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                    <Label Text="{Binding Status}" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold" TextColor="{StaticResource OnSurfaceVariant}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Ativa}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <Button Grid.Column="1" Text="Encerrar" Style="{StaticResource SoftButton}" VerticalOptions="Center"
+                                        BackgroundColor="{StaticResource DangerSoft}" TextColor="{StaticResource Danger}" IsVisible="{Binding Ativa}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AlunoAcessoViewModel}}, Path=EncerrarCommand, x:DataType=vm:AlunoAcessoViewModel}"
+                                        CommandParameter="{Binding .}" />
+                                <Button Grid.Column="1" Text="Reativar" Style="{StaticResource SoftButton}" VerticalOptions="Center"
+                                        IsVisible="{Binding Encerrada}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AlunoAcessoViewModel}}, Path=ReativarCommand, x:DataType=vm:AlunoAcessoViewModel}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Button Text="Redefinir senha" Style="{StaticResource GhostButton}" Command="{Binding RedefinirSenhaCommand}" />
+            <Button Text="Remover acesso ao aplicativo" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                    Command="{Binding RemoverAcessoCommand}" IsVisible="{Binding PodeRemover}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

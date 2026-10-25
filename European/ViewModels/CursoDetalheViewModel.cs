@@ -1,16 +1,25 @@
 using System.Windows.Input;
+using European.Data;
 using European.Enums;
-using European.MockData;
 using European.Models;
 using European.Services;
 
 namespace European.ViewModels
 {
+    public class ProvaNode
+    {
+        public Prova Prova { get; set; } = new();
+        public bool PodeEditar { get; set; }
+        public string Titulo => Prova.Titulo;
+        public string Resumo => $"{Prova.Questoes.Count} questões · {(Prova.IsPublicada ? "Publicada" : "Rascunho")}";
+    }
+
     public class MateriaNode
     {
         public Materia Materia { get; set; } = new();
         public List<Aula> Aulas { get; set; } = new();
-        public List<Prova> Provas { get; set; } = new();
+        public List<ProvaNode> Provas { get; set; } = new();
+        public string Resumo => $"{Aulas.Count} aula(s) · {Provas.Count} prova(s)";
     }
 
     public class ModuloNode
@@ -19,21 +28,24 @@ namespace European.ViewModels
         public List<MateriaNode> Materias { get; set; } = new();
     }
 
+    /// <summary>
+    /// Gestão do conteúdo de um curso. A coordenação edita a estrutura (curso, módulos, matérias) e as aulas;
+    /// os professores do curso editam aulas, materiais e as próprias provas.
+    /// </summary>
     public class CursoDetalheViewModel : BaseViewModel
     {
         private const int ModulosPorPagina = 2;
 
         private Curso? _curso;
-        private Usuario? _aluno;
-        private bool _isMatriculado;
+        private string _professoresTexto = string.Empty;
         private List<ModuloNode> _todosModulos = new();
         private int _indicePagina;
         private IReadOnlyList<ModuloNode> _modulosPagina = new List<ModuloNode>();
 
         public CursoDetalheViewModel()
         {
-            MatricularCommand = new Command(async () => await MatricularAsync());
-            VoltarCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+            VoltarCommand = new Command(async () => await VoltarAsync());
+            EditarCursoCommand = new Command(async () => await IrAsync("cursoedit", new() { ["Curso"] = Curso! }));
             NovoModuloCommand = new Command(async () => await IrAsync("moduloedit", new() { ["Curso"] = Curso! }));
             EditarModuloCommand = new Command<Modulo>(async m => await IrAsync("moduloedit", new() { ["Curso"] = Curso!, ["Modulo"] = m }));
             ExcluirModuloCommand = new Command<Modulo>(async m => await ExcluirModuloAsync(m));
@@ -44,8 +56,7 @@ namespace European.ViewModels
             EditarAulaCommand = new Command<Aula>(async a => await IrAsync("aulaedit", new() { ["Materia"] = a.Materia!, ["Aula"] = a }));
             ExcluirAulaCommand = new Command<Aula>(async a => await ExcluirAulaAsync(a));
             NovaProvaCommand = new Command<Materia>(async m => await IrAsync("provaedit", new() { ["Materia"] = m }));
-            EditarProvaCommand = new Command<Prova>(async p => await IrAsync("provaedit", new() { ["Materia"] = p.Materia!, ["Prova"] = p }));
-            ExcluirProvaCommand = new Command<Prova>(async p => await ExcluirProvaAsync(p));
+            EditarProvaCommand = new Command<ProvaNode>(async p => await IrAsync("provaedit", new() { ["Prova"] = p.Prova }));
             PaginaAnteriorCommand = new Command(() => MudarPagina(-1));
             PaginaProximaCommand = new Command(() => MudarPagina(1));
         }
@@ -58,8 +69,7 @@ namespace European.ViewModels
                 if (SetProperty(ref _curso, value))
                 {
                     OnPropertyChanged(nameof(CargaHorariaFormatada));
-                    OnPropertyChanged(nameof(TotalAulas));
-                    OnPropertyChanged(nameof(PrecoFormatado));
+                    OnPropertyChanged(nameof(ResumoTexto));
                 }
             }
         }
@@ -77,26 +87,24 @@ namespace European.ViewModels
         public bool PodePaginaProxima => _indicePagina < TotalPaginas - 1;
         public string IndicadorPagina => $"Página {PaginaAtual} de {TotalPaginas}";
 
-        public int TotalAulas => Curso?.Modulos.Sum(m => m.Materias.Sum(x => x.Aulas.Count)) ?? 0;
         public string CargaHorariaFormatada => Curso == null ? string.Empty : $"{Curso.CargaHorariaHoras} horas";
-        public string PrecoFormatado => Curso == null ? string.Empty : Curso.Preco.ToString("C");
+        public string ResumoTexto => Curso == null ? string.Empty : $"{Curso.Modulos.Count} módulos · {Curso.TotalMaterias} matérias · {Curso.TotalAulas} aulas";
 
-        public bool IsMatriculado
+        public string ProfessoresTexto
         {
-            get => _isMatriculado;
-            set
-            {
-                if (SetProperty(ref _isMatriculado, value))
-                    OnPropertyChanged(nameof(PodeMatricular));
-            }
+            get => _professoresTexto;
+            private set => SetProperty(ref _professoresTexto, value);
         }
 
-        public bool PodeMatricular => !IsMatriculado;
+        private static Usuario? Usuario => SessionService.UsuarioAtual;
 
-        public bool PodeGerenciar => SessionService.UsuarioAtual is { Roles: Roles.Administrador or Roles.Professor or Roles.Coordenador };
+        public bool PodeEditarEstrutura => Usuario?.IsCoordenacao == true;
+        public bool IsProfessorDoCurso => Usuario?.Roles == Roles.Professor && Curso?.ProfessorIds.Contains(Usuario.Id) == true;
+        public bool PodeEditarAulas => PodeEditarEstrutura || IsProfessorDoCurso;
+        public bool PodeCriarProvas => IsProfessorDoCurso;
 
-        public ICommand MatricularCommand { get; }
         public ICommand VoltarCommand { get; }
+        public ICommand EditarCursoCommand { get; }
         public ICommand NovoModuloCommand { get; }
         public ICommand EditarModuloCommand { get; }
         public ICommand ExcluirModuloCommand { get; }
@@ -108,49 +116,59 @@ namespace European.ViewModels
         public ICommand ExcluirAulaCommand { get; }
         public ICommand NovaProvaCommand { get; }
         public ICommand EditarProvaCommand { get; }
-        public ICommand ExcluirProvaCommand { get; }
         public ICommand PaginaAnteriorCommand { get; }
         public ICommand PaginaProximaCommand { get; }
 
-        public void Carregar(Curso curso)
+        public Task CarregarAsync(string cursoId) => ExecutarAsync(async () =>
         {
-            _aluno = SessionService.UsuarioAtual;
+            var curso = await CursoRepositorio.PorIdAsync(cursoId);
+            if (curso == null)
+            {
+                await VoltarAsync();
+                return;
+            }
+
             Curso = curso;
             Title = curso.Nome;
 
-            RecarregarModulos();
+            var professores = await UsuarioRepositorio.PorIdsAsync(curso.ProfessorIds);
+            ProfessoresTexto = professores.Count == 0 ? "Nenhum professor atribuído" : string.Join(", ", professores.Select(p => p.Nome));
 
-            IsMatriculado = _aluno != null &&
-                MockDataService.Matriculas().Any(m => m.CursoId == curso.Id && m.AlunoId == _aluno.Id);
-        }
+            var provas = await ProvaRepositorio.DosCursosAsync(new[] { curso.Id });
+            MontarModulos(provas);
 
-        private void RecarregarModulos()
+            OnPropertyChanged(nameof(PodeEditarEstrutura));
+            OnPropertyChanged(nameof(PodeEditarAulas));
+            OnPropertyChanged(nameof(PodeCriarProvas));
+        });
+
+        private void MontarModulos(List<Prova> provas)
         {
+            var paginaAnterior = _indicePagina;
             _todosModulos = new List<ModuloNode>();
 
-            if (Curso != null)
+            foreach (var modulo in Curso!.Modulos.OrderBy(m => m.Ordem))
             {
-                foreach (var modulo in Curso.Modulos.OrderBy(m => m.Ordem))
+                var node = new ModuloNode { Modulo = modulo };
+
+                foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
                 {
-                    var node = new ModuloNode { Modulo = modulo };
-
-                    foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
+                    node.Materias.Add(new MateriaNode
                     {
-                        node.Materias.Add(new MateriaNode
-                        {
-                            Materia = materia,
-                            Aulas = materia.Aulas.OrderBy(a => a.Ordem).ToList(),
-                            Provas = MockDataService.Provas().Where(p => p.MateriaId == materia.Id).ToList()
-                        });
-                    }
-
-                    _todosModulos.Add(node);
+                        Materia = materia,
+                        Aulas = materia.Aulas.OrderBy(a => a.Ordem).ToList(),
+                        Provas = provas.Where(p => p.MateriaId == materia.Id)
+                            .Select(p => new ProvaNode { Prova = p, PodeEditar = p.ProfessorId == Usuario?.Id })
+                            .ToList()
+                    });
                 }
+
+                _todosModulos.Add(node);
             }
 
-            _indicePagina = 0;
+            _indicePagina = Math.Min(paginaAnterior, TotalPaginas - 1);
             AplicarPagina();
-            OnPropertyChanged(nameof(TotalAulas));
+            OnPropertyChanged(nameof(ResumoTexto));
         }
 
         private void MudarPagina(int delta)
@@ -178,18 +196,6 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(IndicadorPagina));
         }
 
-        private async Task MatricularAsync()
-        {
-            if (Curso == null || IsMatriculado)
-                return;
-
-            var parametros = new Dictionary<string, object>
-            {
-                ["Curso"] = Curso
-            };
-            await Shell.Current.GoToAsync("pagamento", parametros);
-        }
-
         private static Task IrAsync(string rota, Dictionary<string, object> parametros)
             => Shell.Current.GoToAsync(rota, parametros);
 
@@ -198,50 +204,77 @@ namespace European.ViewModels
             if (modulo == null || Curso == null)
                 return;
 
-            if (!await ConfirmarAsync($"Excluir o módulo \"{modulo.Titulo}\"?"))
+            if (!await ConfirmarAsync($"Excluir o módulo \"{modulo.Titulo}\" com todas as matérias, aulas e provas?"))
                 return;
 
-            MockDataService.RemoveModulo(modulo);
-            RecarregarModulos();
+            await ExecutarAsync(async () =>
+            {
+                foreach (var materia in modulo.Materias)
+                    await ExcluirConteudoDaMateriaAsync(materia);
+
+                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
+                {
+                    c.Modulos.RemoveAll(m => m.Id == modulo.Id);
+                    Reordenar(c.Modulos, (m, i) => m.Ordem = i);
+                });
+            });
+            await CarregarAsync(Curso.Id);
         }
 
         private async Task ExcluirMateriaAsync(Materia? materia)
         {
-            if (materia == null)
+            if (materia == null || Curso == null)
                 return;
 
-            if (!await ConfirmarAsync($"Excluir a matéria \"{materia.Nome}\"?"))
+            if (!await ConfirmarAsync($"Excluir a matéria \"{materia.Nome}\" com suas aulas e provas?"))
                 return;
 
-            MockDataService.RemoveMateria(materia);
-            RecarregarModulos();
+            await ExecutarAsync(async () =>
+            {
+                await ExcluirConteudoDaMateriaAsync(materia);
+                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
+                {
+                    var modulo = c.Modulos.FirstOrDefault(m => m.Id == materia.Modulo?.Id);
+                    modulo?.Materias.RemoveAll(m => m.Id == materia.Id);
+                    if (modulo != null)
+                        Reordenar(modulo.Materias, (m, i) => m.Ordem = i);
+                });
+            });
+            await CarregarAsync(Curso.Id);
         }
 
         private async Task ExcluirAulaAsync(Aula? aula)
         {
-            if (aula == null)
+            if (aula == null || Curso == null)
                 return;
 
-            if (!await ConfirmarAsync($"Excluir a aula \"{aula.Titulo}\"?"))
+            if (!await ConfirmarAsync($"Excluir a aula \"{aula.Titulo}\" e seus materiais?"))
                 return;
 
-            MockDataService.RemoveAula(aula);
-            RecarregarModulos();
+            await ExecutarAsync(async () =>
+            {
+                await MaterialRepositorio.ExcluirDasAulasAsync(new[] { aula.Id });
+                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
+                {
+                    var materia = c.TodasMaterias.FirstOrDefault(m => m.Id == aula.Materia?.Id);
+                    materia?.Aulas.RemoveAll(a => a.Id == aula.Id);
+                    if (materia != null)
+                        Reordenar(materia.Aulas, (a, i) => a.Ordem = i);
+                });
+            });
+            await CarregarAsync(Curso.Id);
         }
 
-        private async Task ExcluirProvaAsync(Prova? prova)
+        private static async Task ExcluirConteudoDaMateriaAsync(Materia materia)
         {
-            if (prova == null)
-                return;
-
-            if (!await ConfirmarAsync($"Excluir a prova \"{prova.Titulo}\"?"))
-                return;
-
-            MockDataService.RemoveProva(prova);
-            RecarregarModulos();
+            await MaterialRepositorio.ExcluirDasAulasAsync(materia.Aulas.Select(a => a.Id));
+            await ProvaRepositorio.ExcluirDaMateriaAsync(materia.Id);
         }
 
-        private static Task<bool> ConfirmarAsync(string mensagem)
-            => Shell.Current.DisplayAlert("Confirmar", mensagem, "Excluir", "Cancelar");
+        private static void Reordenar<T>(List<T> itens, Action<T, int> definirOrdem)
+        {
+            for (var i = 0; i < itens.Count; i++)
+                definirOrdem(itens[i], i + 1);
+        }
     }
 }

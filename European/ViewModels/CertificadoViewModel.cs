@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 using European.Services;
 
@@ -26,20 +26,15 @@ namespace European.ViewModels
 
         public ICommand AbrirCommand { get; }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
-            var certificados = new ObservableCollection<Certificado>();
+            Certificados = aluno == null
+                ? new ObservableCollection<Certificado>()
+                : new ObservableCollection<Certificado>(await CertificadoRepositorio.DoAlunoAsync(aluno.Id));
 
-            if (aluno != null)
-            {
-                foreach (var certificado in MockDataService.CertificadosDoAluno(aluno.Id))
-                    certificados.Add(certificado);
-            }
-
-            Certificados = certificados;
             OnPropertyChanged(nameof(PossuiCertificado));
-        }
+        });
 
         private static async Task AbrirAsync(Certificado? certificado)
         {

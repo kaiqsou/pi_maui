@@ -17,13 +17,13 @@ namespace European.Views
             VideoPlayer.Navigated += OnVideoNavigated;
         }
 
-        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        public async void ApplyQueryAttributes(IDictionary<string, object> query)
         {
             var aula = query.TryGetValue("Aula", out var a) ? a as Aula : null;
             var matricula = query.TryGetValue("Matricula", out var m) ? m as Matricula : null;
 
             if (aula != null)
-                _viewModel.Carregar(aula, matricula);
+                await _viewModel.CarregarAsync(aula, matricula);
         }
 
         protected override void OnAppearing()
@@ -48,32 +48,19 @@ namespace European.Views
 
         private async Task InicializarPosicaoAsync()
         {
-            var duracao = 0.0;
-
-            for (var tentativa = 0; tentativa < 20; tentativa++)
+            // o player do YouTube carrega de forma assíncrona; a posição inicial já vai no HTML (playerVars.start)
+            for (var tentativa = 0; tentativa < 50; tentativa++)
             {
                 var resultado = await AvaliarAsync(
-                    "(function(){var v=document.querySelector('video');" +
-                    "if(!v||!isFinite(v.duration))return '';" +
-                    "return String(v.duration);})();");
+                    "(function(){return window.europeanPlayer?window.europeanPlayer.duracao():'';})();");
 
-                if (double.TryParse(resultado, NumberStyles.Float, CultureInfo.InvariantCulture, out duracao) && duracao > 0)
+                if (double.TryParse(resultado, NumberStyles.Float, CultureInfo.InvariantCulture, out var duracao) && duracao > 0)
+                {
+                    _viewModel.RegistrarDuracao(duracao);
                     break;
+                }
 
-                await Task.Delay(200);
-            }
-
-            if (duracao > 0)
-            {
-                _viewModel.RegistrarDuracao(duracao);
-
-                var resume = _viewModel.SegundosParaRetomar.ToString("0.###", CultureInfo.InvariantCulture);
-                await AvaliarAsync(
-                    "(function(){var v=document.querySelector('video');" +
-                    "if(!v)return;" +
-                    $"var r={resume};" +
-                    "if(r>0&&isFinite(v.duration)&&r<v.duration){v.currentTime=r;}" +
-                    "if(v.paused){var p=v.play();p&&p.catch&&p.catch(function(){});}})();");
+                await Task.Delay(300);
             }
         }
 
@@ -99,9 +86,7 @@ namespace European.Views
         private async void SalvarPosicaoAtual()
         {
             var resultado = await AvaliarAsync(
-                "(function(){var v=document.querySelector('video');" +
-                "if(!v)return '';" +
-                "return String(v.currentTime);})();");
+                "(function(){return window.europeanPlayer?window.europeanPlayer.posicao():'';})();");
 
             if (double.TryParse(resultado, NumberStyles.Float, CultureInfo.InvariantCulture, out var posicao) && posicao > 0)
                 _viewModel.RegistrarPosicao(posicao);
@@ -112,11 +97,7 @@ namespace European.Views
             PararTimerPosicao();
 
             var resultado = await AvaliarAsync(
-                "(function(){var v=document.querySelector('video');" +
-                "if(!v)return '0';" +
-                "var t=v.currentTime;" +
-                "v.pause();" +
-                "return String(t);})();");
+                "(function(){return window.europeanPlayer?window.europeanPlayer.pausar():'0';})();");
 
             if (double.TryParse(resultado, NumberStyles.Float, CultureInfo.InvariantCulture, out var posicao) && posicao > 0)
                 _viewModel.RegistrarPosicao(posicao);

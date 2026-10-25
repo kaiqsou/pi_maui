@@ -8,20 +8,32 @@ namespace European
         {
             InitializeComponent();
 
-            Routing.RegisterRoute("catalogo", typeof(CatalogoPage));
+            // Acesso
             Routing.RegisterRoute("cadastro", typeof(CadastroPage));
-            Routing.RegisterRoute("pagamento", typeof(PagamentoPage));
+            Routing.RegisterRoute("primeiroacesso", typeof(PrimeiroAcessoPage));
             Routing.RegisterRoute("perfil", typeof(PerfilPage));
-            Routing.RegisterRoute("curso", typeof(CursoDetalhePage));
-            Routing.RegisterRoute("aula", typeof(AulaDetalhePage));
-            Routing.RegisterRoute("certificado", typeof(CertificadoDetalhePage));
-            Routing.RegisterRoute("gerenciar", typeof(GerenciarPage));
 
+            // Aluno
+            Routing.RegisterRoute("aula", typeof(AulaDetalhePage));
+            Routing.RegisterRoute("provarealizar", typeof(ProvaRealizarPage));
+            Routing.RegisterRoute("certificado", typeof(CertificadoDetalhePage));
+
+            // Conteúdo (coordenação e professor)
+            Routing.RegisterRoute("curso", typeof(CursoDetalhePage));
             Routing.RegisterRoute("cursoedit", typeof(CursoEditPage));
             Routing.RegisterRoute("moduloedit", typeof(ModuloEditPage));
             Routing.RegisterRoute("materiaedit", typeof(MateriaEditPage));
             Routing.RegisterRoute("aulaedit", typeof(AulaEditPage));
+
+            // Professor
             Routing.RegisterRoute("provaedit", typeof(ProvaEditPage));
+            Routing.RegisterRoute("provaresultados", typeof(ProvaResultadosPage));
+            Routing.RegisterRoute("salaedit", typeof(SalaEditPage));
+
+            // Coordenação
+            Routing.RegisterRoute("alunoacesso", typeof(AlunoAcessoPage));
+            Routing.RegisterRoute("professoracesso", typeof(ProfessorAcessoPage));
+            Routing.RegisterRoute("contanova", typeof(ContaNovaPage));
         }
     }
 }

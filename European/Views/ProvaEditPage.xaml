@@ -2,68 +2,231 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:models="clr-namespace:European.Models"
+             xmlns:controls="clr-namespace:European.Controls"
              x:Class="European.Views.ProvaEditPage"
              x:DataType="vm:ProvaEditViewModel"
              Title="{Binding Title}"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+    <Grid RowDefinitions="*,Auto">
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Título" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Titulo}" Placeholder="Título da prova" TextColor="{StaticResource OnSurface}" />
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,16,20,24" Spacing="16">
+
+                <controls:Cabecalho Titulo="{Binding Title}" />
+
+                <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+                        IsVisible="{Binding TemEntregas}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                        <Label Text="&#xe002;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{Binding EntregasTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" />
+                        <Button Grid.Column="2" Text="Notas" Style="{StaticResource SoftButton}" Command="{Binding ResultadosCommand}" VerticalOptions="Center" />
+                    </Grid>
                 </Border>
-            </VerticalStackLayout>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                <VerticalStackLayout Grid.Column="0" Spacing="8">
-                    <Label Text="Nota máxima" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                        <Entry Text="{Binding NotaMaxima}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
-                    </Border>
-                </VerticalStackLayout>
-                <VerticalStackLayout Grid.Column="1" Spacing="8">
-                    <Label Text="Peso" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                        <Entry Text="{Binding Peso}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
-                    </Border>
-                </VerticalStackLayout>
-            </Grid>
+                <!-- Dados gerais -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Dados da prova" Style="{StaticResource TitleSm}" />
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                <VerticalStackLayout Grid.Column="0" Spacing="8">
-                    <Label Text="Nota de corte" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                        <Entry Text="{Binding NotaCorte}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
-                    </Border>
-                </VerticalStackLayout>
-                <VerticalStackLayout Grid.Column="1" Spacing="8">
-                    <Label Text="Duração (min)" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                        <Entry Text="{Binding DuracaoMinutos}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
-                    </Border>
-                </VerticalStackLayout>
-            </Grid>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Curso" Style="{StaticResource BodySm}" />
+                            <Border Style="{StaticResource Campo}">
+                                <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}"
+                                        ItemDisplayBinding="{Binding Nome, x:DataType=models:Curso}" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Prazo" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <DatePicker Date="{Binding Prazo}" TextColor="{StaticResource OnSurface}" />
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Matéria" Style="{StaticResource BodySm}" />
+                            <Border Style="{StaticResource Campo}">
+                                <Picker ItemsSource="{Binding Materias}" SelectedItem="{Binding MateriaSelecionada}"
+                                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:MateriaOpcao}" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Quem faz a prova" Style="{StaticResource BodySm}" />
+                            <Border Style="{StaticResource Campo}">
+                                <Picker ItemsSource="{Binding Salas}" SelectedItem="{Binding SalaSelecionada}"
+                                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:SalaOpcao}" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Título" Style="{StaticResource BodySm}" />
+                            <Border Style="{StaticResource Campo}">
+                                <Entry Text="{Binding Titulo}" Placeholder="Ex.: Avaliação 1 — Teoria Geral" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Instruções para o aluno (opcional)" Style="{StaticResource BodySm}" />
+                            <Border Style="{StaticResource CampoTexto}">
+                                <Editor Text="{Binding Instrucoes}" Placeholder="Ex.: Leia com atenção. Cada questão tem uma única resposta correta."
+                                        AutoSize="TextChanges" MinimumHeightRequest="60" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
                 </Border>
+
+                <!-- Configurações -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="Regras e notas" Style="{StaticResource TitleSm}" />
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="14">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Tempo (min, 0 = livre)" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource Campo}">
+                                    <Entry Text="{Binding DuracaoMinutos}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                <Label Text="Peso da prova (opcional)" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource Campo}">
+                                    <Entry Text="{Binding Peso}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1" Spacing="8">
+                                <Label Text="Nota máxima" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource Campo}">
+                                    <Entry Text="{Binding NotaMaxima}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
+                                <Label Text="Nota de corte" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource Campo}">
+                                    <Entry Text="{Binding NotaCorte}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Definir prazo de entrega" Style="{StaticResource BodyMd}" />
+                                <Label Text="Depois do prazo a prova fica indisponível." Style="{StaticResource BodySm}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding TemPrazo}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="{Binding TemPrazo}">
+                            <Border Style="{StaticResource Campo}">
+                                <DatePicker Date="{Binding PrazoData}" Format="dd/MM/yyyy" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource Campo}">
+                                <TimePicker Time="{Binding PrazoHora}" Format="HH:mm" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Publicar para os alunos" Style="{StaticResource BodyMd}" />
+                                <Label Text="Desligado, a prova fica salva como rascunho." Style="{StaticResource BodySm}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1" IsToggled="{Binding IsPublicada}" OnColor="{StaticResource Success}" VerticalOptions="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Questões -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="0">
+                        <Label Text="Questões" Style="{StaticResource TitleSm}" />
+                        <Label Text="{Binding ResumoQuestoes}" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="1" Text="Adicionar questão" Style="{StaticResource SoftButton}" Command="{Binding AdicionarQuestaoCommand}" />
+                </Grid>
+
+                <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Questoes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:QuestaoEdicao">
+                            <Border Style="{StaticResource Card}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                        <Border Style="{StaticResource Pill}" VerticalOptions="Center">
+                                            <Label Text="{Binding Numero, StringFormat='Questão {0}'}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                                        </Border>
+                                        <Label Grid.Column="2" Text="Peso" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                        <Grid Grid.Column="3" ColumnDefinitions="64,Auto" ColumnSpacing="2">
+                                            <Border Style="{StaticResource Campo}" Padding="8,0">
+                                                <Entry Text="{Binding Peso}" Keyboard="Numeric" HorizontalTextAlignment="Center" TextColor="{StaticResource OnSurface}" />
+                                            </Border>
+                                            <Button Grid.Column="1" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverQuestaoCommand, x:DataType=vm:ProvaEditViewModel}"
+                                                    CommandParameter="{Binding .}" />
+                                        </Grid>
+                                    </Grid>
+
+                                    <Border Style="{StaticResource CampoTexto}">
+                                        <Editor Text="{Binding Enunciado}" Placeholder="Enunciado da questão" AutoSize="TextChanges"
+                                                MinimumHeightRequest="50" TextColor="{StaticResource OnSurface}" />
+                                    </Border>
+
+                                    <Label Text="Toque no círculo para marcar a alternativa correta." Style="{StaticResource BodySm}" />
+
+                                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alternativas}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:AlternativaEdicao">
+                                                <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="8">
+                                                    <Border WidthRequest="30" HeightRequest="30" StrokeShape="RoundRectangle 15" VerticalOptions="Center"
+                                                            Stroke="{StaticResource Outline}" StrokeThickness="1.5" BackgroundColor="{StaticResource SurfaceCard}">
+                                                        <Border.Triggers>
+                                                            <DataTrigger TargetType="Border" Binding="{Binding Correta}" Value="True">
+                                                                <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                                                <Setter Property="Stroke" Value="{StaticResource Success}" />
+                                                            </DataTrigger>
+                                                        </Border.Triggers>
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer
+                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=MarcarCorretaCommand, x:DataType=vm:ProvaEditViewModel}"
+                                                                CommandParameter="{Binding .}" />
+                                                        </Border.GestureRecognizers>
+                                                        <Label Text="{Binding Letra}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}"
+                                                               HorizontalOptions="Center" VerticalOptions="Center">
+                                                            <Label.Triggers>
+                                                                <DataTrigger TargetType="Label" Binding="{Binding Correta}" Value="True">
+                                                                    <Setter Property="TextColor" Value="White" />
+                                                                </DataTrigger>
+                                                            </Label.Triggers>
+                                                        </Label>
+                                                    </Border>
+                                                    <Border Grid.Column="1" Style="{StaticResource Campo}">
+                                                        <Entry Text="{Binding Texto}" Placeholder="Texto da alternativa" TextColor="{StaticResource OnSurface}" />
+                                                    </Border>
+                                                    <Button Grid.Column="2" Text="&#xe5cd;" Style="{StaticResource IconButton}"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <Button Text="+ Alternativa" Style="{StaticResource SoftButton}" HorizontalOptions="Start"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=AdicionarAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="Adicionar questão" Style="{StaticResource GhostButton}" Command="{Binding AdicionarQuestaoCommand}" />
+
+                <Button Text="Excluir prova" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                        Command="{Binding ExcluirCommand}" IsVisible="{Binding IsEdicao}" />
+
             </VerticalStackLayout>
+        </ScrollView>
 
-            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto">
+            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+            <Button Grid.Row="1" Text="Salvar prova" Style="{StaticResource PrimaryButton}" Margin="20,12,20,16"
+                    Command="{Binding SalvarCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+        </Grid>
 
-        </VerticalStackLayout>
-    </ScrollView>
+    </Grid>
 
 </ContentPage>

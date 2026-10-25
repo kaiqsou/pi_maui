@@ -10,6 +10,7 @@ namespace European.Models
         public string? VideoId { get; set; }
         public int DuracaoSegundos { get; set; }
         public int Ordem { get; set; }
-        public bool IsGratuita { get; set; }
+
+        public string DuracaoTexto => TimeSpan.FromSeconds(DuracaoSegundos).ToString(DuracaoSegundos >= 3600 ? @"h\:mm\:ss" : @"mm\:ss");
     }
 }

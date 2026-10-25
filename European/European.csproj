@@ -58,15 +58,12 @@
 
 		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-
-		<!-- Vídeo de teste das aulas -->
-		<MauiAsset Include="Videos\**" LogicalName="Videos\%(RecursiveDir)%(Filename)%(Extension)" />
-		<Content Include="Videos\AppHotel.mp4" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="MongoDB.Driver" Version="3.13.0" />
 	</ItemGroup>
 
 </Project>

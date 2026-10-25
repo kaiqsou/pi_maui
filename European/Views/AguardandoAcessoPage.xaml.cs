@@ -2,21 +2,20 @@ using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class CatalogoPage : ContentPage
+    public partial class AguardandoAcessoPage : ContentPage
     {
-        private readonly CatalogoViewModel _viewModel;
+        private readonly AcessoRestritoViewModel _viewModel = new();
 
-        public CatalogoPage()
+        public AguardandoAcessoPage()
         {
             InitializeComponent();
-            _viewModel = new CatalogoViewModel();
             BindingContext = _viewModel;
         }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            _viewModel.Carregar();
+            _viewModel.Atualizar();
         }
     }
 }

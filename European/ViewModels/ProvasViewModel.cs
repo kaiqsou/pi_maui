@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 using European.Services;
 
@@ -8,11 +8,15 @@ namespace European.ViewModels
 {
     public class ProvaItem
     {
-        public string Titulo { get; set; } = string.Empty;
-        public string MateriaNome { get; set; } = string.Empty;
-        public string Prazo { get; set; } = string.Empty;
-        public string Duracao { get; set; } = string.Empty;
-        public double NotaCorte { get; set; }
+        public Prova Prova { get; set; } = new();
+        public string Titulo => Prova.Titulo;
+        public string MateriaNome => Prova.Materia?.Nome ?? string.Empty;
+        public string Prazo => Prova.PrazoTexto;
+        public string Duracao => Prova.DuracaoTexto;
+        public string QuestoesTexto => $"{Prova.Questoes.Count} questões";
+        public string ResumoTexto => $"{QuestoesTexto} · {Duracao}";
+        public double NotaCorte => Prova.NotaCorte;
+        public bool Expirada => Prova.Expirada;
     }
 
     public class ProvasViewModel : BaseViewModel
@@ -25,6 +29,7 @@ namespace European.ViewModels
         {
             Title = "Provas";
             SelecionarAbaCommand = new Command<string>(aba => AbaSelecionada = aba);
+            IniciarCommand = new Command<ProvaItem>(async item => await IniciarAsync(item));
         }
 
         public ObservableCollection<ProvaItem> Disponiveis
@@ -63,8 +68,9 @@ namespace European.ViewModels
         public bool MostrarVazioRealizadas => MostrarRealizadas && !PossuiRealizadas;
 
         public ICommand SelecionarAbaCommand { get; }
+        public ICommand IniciarCommand { get; }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             var disponiveis = new ObservableCollection<ProvaItem>();
@@ -72,42 +78,18 @@ namespace European.ViewModels
 
             if (aluno != null)
             {
-                var materiasDoAluno = MockDataService.Matriculas()
-                    .Where(m => m.AlunoId == aluno.Id)
-                    .SelectMany(m => m.Curso?.Modulos.SelectMany(x => x.Materias) ?? Enumerable.Empty<Materia>())
-                    .Select(materia => materia.Id)
-                    .ToHashSet();
+                var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
+                var provas = await ProvaService.VisiveisParaAlunoAsync(aluno.Id, matriculas);
+                var resultados = await ResultadoRepositorio.DoAlunoAsync(aluno.Id);
+                var respondidas = resultados.Select(r => r.ProvaId).ToHashSet();
 
-                var respondidas = MockDataService.Resultados()
-                    .Where(r => r.AlunoId == aluno.Id)
-                    .Select(r => r.ProvaId)
-                    .ToHashSet();
+                foreach (var prova in provas.Where(p => !respondidas.Contains(p.Id)))
+                    disponiveis.Add(new ProvaItem { Prova = prova });
 
-                foreach (var prova in MockDataService.Provas().Where(p => materiasDoAluno.Contains(p.MateriaId)))
+                foreach (var resultado in resultados)
                 {
-                    if (respondidas.Contains(prova.Id))
-                        continue;
-
-                    disponiveis.Add(new ProvaItem
-                    {
-                        Titulo = prova.Titulo,
-                        MateriaNome = prova.Materia?.Nome ?? string.Empty,
-                        Prazo = prova.Prazo.ToString("dd/MM/yyyy"),
-                        Duracao = $"{prova.DuracaoMinutos} min",
-                        NotaCorte = prova.NotaCorte
-                    });
-                }
-
-                foreach (var resultado in MockDataService.Resultados().Where(r => r.AlunoId == aluno.Id))
-                {
-                    realizadas.Add(new ResultadoItem
-                    {
-                        ProvaTitulo = resultado.Prova?.Titulo ?? "Avaliação",
-                        MateriaNome = resultado.Prova?.Materia?.Nome ?? string.Empty,
-                        Nota = resultado.NotaObtida,
-                        Aprovado = resultado.NotaObtida >= (resultado.Prova?.NotaCorte ?? 6),
-                        DataRealizacao = resultado.DataRealizacao
-                    });
+                    var prova = provas.FirstOrDefault(p => p.Id == resultado.ProvaId) ?? await ProvaRepositorio.PorIdAsync(resultado.ProvaId);
+                    realizadas.Add(ResultadoItem.De(resultado, prova));
                 }
             }
 
@@ -118,6 +100,27 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(PossuiRealizadas));
             OnPropertyChanged(nameof(MostrarVazioDisponiveis));
             OnPropertyChanged(nameof(MostrarVazioRealizadas));
+        });
+
+        private static async Task IniciarAsync(ProvaItem? item)
+        {
+            if (item == null)
+                return;
+
+            if (item.Expirada)
+            {
+                await AvisarAsync("Prova encerrada", "O prazo desta prova já terminou.");
+                return;
+            }
+
+            var tempo = item.Prova.DuracaoMinutos > 0
+                ? $"Você terá {item.Prova.DuracaoMinutos} minutos. Ao final do tempo, a prova é enviada automaticamente."
+                : "Esta prova não tem limite de tempo.";
+
+            if (!await ConfirmarAsync($"{item.Titulo}\n\n{item.QuestoesTexto}. {tempo}\nA prova só pode ser feita uma vez.", "Começar"))
+                return;
+
+            await Shell.Current.GoToAsync("provarealizar", new Dictionary<string, object> { ["Prova"] = item.Prova });
         }
     }
 }

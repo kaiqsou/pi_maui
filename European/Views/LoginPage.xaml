@@ -43,18 +43,32 @@
                    TextColor="{StaticResource Danger}" FontSize="13" />
 
             <Button Text="Entrar" Style="{StaticResource PrimaryButton}"
-                    Command="{Binding LoginCommand}" Margin="0,8,0,0" />
+                    Command="{Binding LoginCommand}" Margin="0,8,0,0" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />
 
             <Button Text="Criar conta" Style="{StaticResource GhostButton}"
                     Command="{Binding IrParaCadastroCommand}" />
 
-            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="Contas de teste" Style="{StaticResource TitleSm}" />
-                    <Label Text="Aluno: kaique.souza@european.com · aluno1234" Style="{StaticResource BodySm}" />
-                    <Label Text="Professor: marina.frankin@european.com · professor1234" Style="{StaticResource BodySm}" />
-                    <Label Text="Admin: admin@european.com · admin1234" Style="{StaticResource BodySm}" />
-                    <Label Text="Veja European/MockData/USUARIOS.md para todas as contas." Style="{StaticResource BodySm}" />
+            <Label Text="Novos alunos podem criar a conta e aguardar a liberação da coordenação."
+                   Style="{StaticResource BodySm}" HorizontalTextAlignment="Center" />
+
+            <Border Style="{StaticResource Card}" Margin="0,8,0,0" IsVisible="{Binding PrecisaConfigurar}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                BackgroundColor="{StaticResource WarningSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Label Text="&#xe8b8;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Primeiro acesso" Style="{StaticResource TitleSm}" />
+                            <Label Text="Nenhuma conta de coordenação existe ainda. Crie a primeira para começar."
+                                   Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Button Text="Configurar coordenação" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding IrParaPrimeiroAcessoCommand}" />
                 </VerticalStackLayout>
             </Border>
 

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
              x:Class="European.Views.ModuloEditPage"
              x:DataType="vm:ModuloEditViewModel"
              Title="{Binding Title}"
@@ -11,23 +12,24 @@
     <ScrollView>
         <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
 
+            <controls:Cabecalho Titulo="{Binding Title}" Subtitulo="{Binding CursoNome}" />
+
             <VerticalStackLayout Spacing="8">
                 <Label Text="Título" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Titulo}" Placeholder="Título do módulo" TextColor="{StaticResource OnSurface}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Titulo}" Placeholder="Ex.: Módulo 1 — Parte Geral" TextColor="{StaticResource OnSurface}" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
-                <Label Text="Descrição" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="10">
-                    <Editor Text="{Binding Descricao}" Placeholder="Descrição" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
+                <Label Text="Descrição (opcional)" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource CampoTexto}">
+                    <Editor Text="{Binding Descricao}" Placeholder="Resumo do módulo" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
                 </Border>
             </VerticalStackLayout>
 
-            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
 
         </VerticalStackLayout>
     </ScrollView>

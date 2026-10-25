@@ -36,8 +36,13 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ProvaItem">
                     <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvasViewModel}}, Path=IniciarCommand, x:DataType=vm:ProvasViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
                         <VerticalStackLayout Spacing="10">
-                            <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
                                 <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
                                         BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
                                         StrokeThickness="0" StrokeShape="RoundRectangle 12">
@@ -47,12 +52,14 @@
                                     <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
                                     <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" />
                                 </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
                             </Grid>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                                 <Label Text="&#xe878;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
                                 <Label Grid.Column="1" Text="{Binding Prazo}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                                <Label Grid.Column="2" Text="{Binding Duracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="{Binding ResumoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                             </Grid>
+                            <Label Text="Prazo encerrado" Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}" IsVisible="{Binding Expirada}" />
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
@@ -67,6 +74,7 @@
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                 <Label Text="{Binding ProvaTitulo}" Style="{StaticResource TitleSm}" />
                                 <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" />
+                                <Label Text="{Binding AcertosTexto}" Style="{StaticResource BodySm}" />
                                 <Label Text="{Binding Data}" Style="{StaticResource BodySm}" />
                             </VerticalStackLayout>
                             <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">

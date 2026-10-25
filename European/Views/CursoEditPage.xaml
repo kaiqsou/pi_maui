@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
              x:Class="European.Views.CursoEditPage"
              x:DataType="vm:CursoEditViewModel"
              Title="{Binding Title}"
@@ -11,53 +12,49 @@
     <ScrollView>
         <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
 
+            <controls:Cabecalho Titulo="{Binding Title}" />
+
             <VerticalStackLayout Spacing="8">
                 <Label Text="Nome" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Nome}" Placeholder="Nome do curso" TextColor="{StaticResource OnSurface}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Nome}" Placeholder="Ex.: Mestrado em Direito Penal Econômico" TextColor="{StaticResource OnSurface}" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Descrição" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="10">
-                    <Editor Text="{Binding Descricao}" Placeholder="Descrição do curso" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
-                </Border>
-            </VerticalStackLayout>
-
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Categoria" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" TextColor="{StaticResource OnSurface}" />
+                <Border Style="{StaticResource CampoTexto}">
+                    <Editor Text="{Binding Descricao}" Placeholder="Uma ou duas frases sobre o curso" HeightRequest="80" TextColor="{StaticResource OnSurface}" />
                 </Border>
             </VerticalStackLayout>
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                <VerticalStackLayout Grid.Column="0" Spacing="8">
-                    <Label Text="Preço (R$)" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                        <Entry Text="{Binding Preco}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Categoria" Style="{StaticResource BodySm}" />
+                    <Border Style="{StaticResource Campo}">
+                        <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" TextColor="{StaticResource OnSurface}" />
                     </Border>
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1" Spacing="8">
                     <Label Text="Carga horária (h)" Style="{StaticResource BodySm}" />
-                    <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
+                    <Border Style="{StaticResource Campo}">
                         <Entry Text="{Binding CargaHoraria}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
                     </Border>
                 </VerticalStackLayout>
             </Grid>
 
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Grid.Column="0" Text="Publicado" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" />
-            </Grid>
+            <Border Style="{StaticResource Card}" Padding="14,10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Curso ativo" Style="{StaticResource BodyMd}" />
+                        <Label Text="Cursos inativos não aparecem para liberação de novos alunos." Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                </Grid>
+            </Border>
 
-            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}" />
+            <Button Text="Salvar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
 
         </VerticalStackLayout>
     </ScrollView>

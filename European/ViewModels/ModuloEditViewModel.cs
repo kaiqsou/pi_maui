@@ -1,5 +1,5 @@
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 
 namespace European.ViewModels
@@ -18,41 +18,44 @@ namespace European.ViewModels
 
         public string Titulo { get => _titulo; set => SetProperty(ref _titulo, value); }
         public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
-        public bool IsEdicao => _modulo != null;
+        public string CursoNome => _curso?.Nome ?? _modulo?.Curso?.Nome ?? string.Empty;
 
         public ICommand SalvarCommand { get; }
 
         public void Carregar(Curso? curso, Modulo? modulo)
         {
-            _curso = curso;
+            _curso = curso ?? modulo?.Curso;
             _modulo = modulo;
             Title = modulo == null ? "Novo módulo" : "Editar módulo";
-            OnPropertyChanged(nameof(IsEdicao));
+            OnPropertyChanged(nameof(CursoNome));
 
-            Titulo = modulo?.Titulo ?? string.Empty;
+            Titulo = modulo?.Titulo ?? $"Módulo {(_curso?.Modulos.Count ?? 0) + 1} — ";
             Descricao = modulo?.Descricao ?? string.Empty;
         }
 
         private async Task SalvarAsync()
         {
-            if (string.IsNullOrWhiteSpace(Titulo))
+            if (string.IsNullOrWhiteSpace(Titulo) || _curso == null)
             {
-                await Shell.Current.DisplayAlert("Módulo", "Informe o título.", "OK");
+                await AvisarAsync("Módulo", "Informe o título.");
                 return;
             }
 
-            if (_modulo == null && _curso != null)
+            var salvo = await ExecutarAsync(() => CursoRepositorio.AlterarAsync(_curso.Id, curso =>
             {
-                MockDataService.AddModulo(_curso, new Modulo { Titulo = Titulo, Descricao = Descricao });
-            }
-            else if (_modulo != null)
-            {
-                _modulo.Titulo = Titulo;
-                _modulo.Descricao = Descricao;
-                MockDataService.UpdateModulo(_modulo);
-            }
+                var modulo = _modulo == null ? null : curso.Modulos.FirstOrDefault(m => m.Id == _modulo.Id);
+                if (modulo == null)
+                {
+                    modulo = new Modulo { Id = MongoContext.NovoId(), Ordem = curso.Modulos.Count + 1 };
+                    curso.Modulos.Add(modulo);
+                }
 
-            await Shell.Current.GoToAsync("..");
+                modulo.Titulo = Titulo.Trim();
+                modulo.Descricao = Descricao.Trim();
+            }));
+
+            if (salvo)
+                await VoltarAsync();
         }
     }
 }

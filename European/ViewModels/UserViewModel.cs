@@ -1,5 +1,7 @@
-﻿using System.Windows.Input;
-using European.MockData;
+﻿using System.Net.Mail;
+using System.Windows.Input;
+using European.Data;
+using European.Enums;
 using European.Models;
 using European.Services;
 
@@ -10,36 +12,25 @@ namespace European.ViewModels
         private string _nome = string.Empty;
         private string _email = string.Empty;
         private string _senha = string.Empty;
+        private string _confirmacaoSenha = string.Empty;
         private string _mensagem = string.Empty;
-        private Usuario? _usuarioLogado;
+        private bool _precisaConfigurar;
 
         public UserViewModel()
         {
             LoginCommand = new Command(async () => await LoginAsync());
-            CadastroCommand = new Command(async () => await CadastrarAsync());
-            LogoutCommand = new Command(async () => await LogoutAsync());
+            CadastroCommand = new Command(async () => await CadastrarAsync(Roles.Aluno));
+            ConfigurarCoordenacaoCommand = new Command(async () => await CadastrarAsync(Roles.Coordenador));
             IrParaCadastroCommand = new Command(async () => await Shell.Current.GoToAsync("cadastro"));
+            IrParaPrimeiroAcessoCommand = new Command(async () => await Shell.Current.GoToAsync("primeiroacesso"));
             IrParaLoginCommand = new Command(async () => await Shell.Current.GoToAsync("//login"));
             Title = "Acesso";
         }
 
-        public string Nome
-        {
-            get => _nome;
-            set => SetProperty(ref _nome, value);
-        }
-
-        public string Email
-        {
-            get => _email;
-            set => SetProperty(ref _email, value);
-        }
-
-        public string Senha
-        {
-            get => _senha;
-            set => SetProperty(ref _senha, value);
-        }
+        public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
+        public string Email { get => _email; set => SetProperty(ref _email, value); }
+        public string Senha { get => _senha; set => SetProperty(ref _senha, value); }
+        public string ConfirmacaoSenha { get => _confirmacaoSenha; set => SetProperty(ref _confirmacaoSenha, value); }
 
         public string Mensagem
         {
@@ -53,23 +44,35 @@ namespace European.ViewModels
 
         public bool TemMensagem => !string.IsNullOrWhiteSpace(Mensagem);
 
-        public Usuario? UsuarioLogado
+        /// <summary>Verdadeiro enquanto não existe nenhuma conta de coordenação no banco.</summary>
+        public bool PrecisaConfigurar
         {
-            get => _usuarioLogado;
-            set
-            {
-                if (SetProperty(ref _usuarioLogado, value))
-                    OnPropertyChanged(nameof(IsLogado));
-            }
+            get => _precisaConfigurar;
+            set => SetProperty(ref _precisaConfigurar, value);
         }
-
-        public bool IsLogado => UsuarioLogado != null;
 
         public ICommand LoginCommand { get; }
         public ICommand CadastroCommand { get; }
-        public ICommand LogoutCommand { get; }
+        public ICommand ConfigurarCoordenacaoCommand { get; }
         public ICommand IrParaCadastroCommand { get; }
+        public ICommand IrParaPrimeiroAcessoCommand { get; }
         public ICommand IrParaLoginCommand { get; }
+
+        public async Task VerificarConfiguracaoAsync()
+        {
+            try
+            {
+                await MongoContext.InicializarAsync();
+                PrecisaConfigurar = !await UsuarioRepositorio.ExisteCoordenacaoAsync();
+                if (Mensagem.StartsWith("Sem conexão"))
+                    Mensagem = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(VerificarConfiguracaoAsync), ex);
+                Mensagem = "Sem conexão com o banco de dados. Verifique se o MongoDB está em execução.";
+            }
+        }
 
         private async Task LoginAsync()
         {
@@ -79,26 +82,34 @@ namespace European.ViewModels
                 return;
             }
 
-            var usuario = MockDataService.Usuarios()
-                .FirstOrDefault(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase));
-
-            if (usuario == null || !SenhaService.Verificar(Senha, usuario.SenhaHash))
+            await ExecutarAsync(async () =>
             {
-                Mensagem = "E-mail ou senha inválidos.";
-                return;
-            }
+                await MongoContext.InicializarAsync();
+                var usuario = await UsuarioRepositorio.PorEmailAsync(Email);
 
-            UsuarioLogado = usuario;
-            SessionService.Entrar(usuario);
-            Mensagem = string.Empty;
-            await IrParaInicioOuCatalogoAsync(usuario);
+                if (usuario == null || !SenhaService.Verificar(Senha, usuario.SenhaHash))
+                {
+                    Mensagem = "E-mail ou senha inválidos.";
+                    return;
+                }
+
+                Mensagem = string.Empty;
+                Senha = string.Empty;
+                await AcessoService.EntrarAsync(usuario);
+            });
         }
 
-        private async Task CadastrarAsync()
+        private async Task CadastrarAsync(Roles role)
         {
             if (string.IsNullOrWhiteSpace(Nome) || string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Senha))
             {
                 Mensagem = "Informe nome, e-mail e senha.";
+                return;
+            }
+
+            if (!EmailValido(Email))
+            {
+                Mensagem = "Informe um e-mail válido.";
                 return;
             }
 
@@ -108,41 +119,55 @@ namespace European.ViewModels
                 return;
             }
 
-            if (MockDataService.Usuarios().Any(u => u.Email.Equals(Email, StringComparison.OrdinalIgnoreCase)))
+            if (role == Roles.Coordenador && Senha != ConfirmacaoSenha)
             {
-                Mensagem = "Este e-mail já está cadastrado.";
+                Mensagem = "As senhas não conferem.";
                 return;
             }
 
-            SessionService.DefinirCadastroPendente(new DadosCadastro
+            await ExecutarAsync(async () =>
             {
-                Nome = Nome,
-                Email = Email,
-                Senha = Senha
+                await MongoContext.InicializarAsync();
+
+                // A conta inicial da coordenação só pode ser criada enquanto não houver nenhuma.
+                if (role == Roles.Coordenador && await UsuarioRepositorio.ExisteCoordenacaoAsync())
+                {
+                    Mensagem = "A coordenação já foi configurada. Faça login.";
+                    return;
+                }
+
+                var usuario = new Usuario
+                {
+                    Nome = Nome,
+                    Email = Email,
+                    SenhaHash = SenhaService.GerarHash(Senha),
+                    Roles = role,
+                    StatusAcesso = role == Roles.Coordenador ? StatusAcesso.Liberado : StatusAcesso.Pendente
+                };
+
+                if (!await UsuarioRepositorio.InserirAsync(usuario))
+                {
+                    Mensagem = "Este e-mail já está cadastrado.";
+                    return;
+                }
+
+                Mensagem = string.Empty;
+                Senha = string.Empty;
+                ConfirmacaoSenha = string.Empty;
+                await AcessoService.EntrarAsync(usuario);
             });
-
-            Mensagem = string.Empty;
-            await Shell.Current.GoToAsync("catalogo");
         }
 
-        private static async Task IrParaInicioOuCatalogoAsync(Usuario usuario)
+        public static bool EmailValido(string email)
         {
-            if (usuario.Roles != Enums.Roles.Aluno ||
-                MockDataService.Matriculas().Any(m => m.AlunoId == usuario.Id))
+            try
             {
-                await Shell.Current.GoToAsync("//main");
-                return;
+                return new MailAddress(email.Trim()).Address == email.Trim();
             }
-
-            await Shell.Current.GoToAsync("catalogo");
-        }
-
-        private async Task LogoutAsync()
-        {
-            UsuarioLogado = null;
-            SessionService.Sair();
-            Mensagem = string.Empty;
-            await Shell.Current.GoToAsync("//login");
+            catch (FormatException)
+            {
+                return false;
+            }
         }
     }
 }

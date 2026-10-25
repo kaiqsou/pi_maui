@@ -12,7 +12,8 @@
         <VerticalStackLayout Padding="28,32,28,28" Spacing="18">
 
             <Label Text="Criar conta" Style="{StaticResource TitleLg}" />
-            <Label Text="Preencha os dados para começar a estudar na European." Style="{StaticResource Muted}" />
+            <Label Text="Preencha seus dados. Depois do cadastro, a coordenação libera o seu acesso ao curso."
+                   Style="{StaticResource Muted}" />
 
             <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
                 <Label Text="Nome completo" Style="{StaticResource BodySm}" />

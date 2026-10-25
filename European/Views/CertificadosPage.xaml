@@ -11,7 +11,7 @@
 
         <VerticalStackLayout Grid.Row="0" Spacing="2">
             <Label Text="Certificados" Style="{StaticResource TitleLg}" />
-            <Label Text="Certificados de curso e de matéria" Style="{StaticResource Muted}" />
+            <Label Text="Certificado de conclusão do mestrado" Style="{StaticResource Muted}" />
         </VerticalStackLayout>
 
         <CollectionView Grid.Row="1" ItemsSource="{Binding Certificados}" SelectionMode="None" IsVisible="{Binding PossuiCertificado}">
@@ -45,7 +45,7 @@
                              IsVisible="{Binding PossuiCertificado, Converter={StaticResource InverseBool}}">
             <Label Text="&#xea3f;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
             <Label Text="Nenhum certificado ainda" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-            <Label Text="Conclua um curso ou uma matéria para emitir seus certificados." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+            <Label Text="O certificado é emitido ao concluir todas as aulas com aprovação nas provas." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
     </Grid>

@@ -5,6 +5,7 @@
              xmlns:models="clr-namespace:European.Models"
              x:Class="European.Views.CursoDetalhePage"
              x:DataType="vm:CursoDetalheViewModel"
+             x:Name="Pagina"
              Title="{Binding Title}"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
@@ -13,49 +14,58 @@
         <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
-                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                <Border Style="{StaticResource BackTile}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding VoltarCommand}" />
                     </Border.GestureRecognizers>
                     <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
-                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Conteúdo do curso" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
             </Grid>
 
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />
+
+            <!-- Resumo do curso -->
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="10">
-                    <Border Style="{StaticResource Pill}" HorizontalOptions="Start">
-                        <Label Text="{Binding Curso.Categoria}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
-                    </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Border Style="{StaticResource Pill}" HorizontalOptions="Start">
+                            <Label Text="{Binding Curso.Categoria}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                        </Border>
+                        <Button Grid.Column="1" Text="&#xe3c9;" Style="{StaticResource IconButton}"
+                                Command="{Binding EditarCursoCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
+                    </Grid>
                     <Label Text="{Binding Curso.Nome}" Style="{StaticResource TitleMd}" />
                     <Label Text="{Binding Curso.Descricao}" Style="{StaticResource Muted}" />
-                    <Label Text="{Binding PrecoFormatado}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{StaticResource BrandPrimary}" />
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                        <Label Grid.Column="0" Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
                         <Label Grid.Column="1" Text="{Binding CargaHorariaFormatada}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                        <Label Grid.Column="2" Text="{Binding TotalAulas, StringFormat='{0} aulas'}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                     </Grid>
-                    <Button Text="Matricular-se" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding MatricularCommand}" IsVisible="{Binding PodeMatricular}" />
-                    <Border Style="{StaticResource Pill}" HorizontalOptions="Start" IsVisible="{Binding IsMatriculado}">
-                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
-                            <Label Grid.Column="0" Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="14" TextColor="{StaticResource Success}" VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="Matriculado" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource Success}" />
-                        </Grid>
-                    </Border>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Text="&#xe8ef;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                        <Label Grid.Column="1" Text="{Binding ResumoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                        <Label Grid.Column="1" Text="{Binding ProfessoresTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <VerticalStackLayout Spacing="10"
-                                 IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}">
-                <Label Text="Gestão do curso" Style="{StaticResource TitleSm}" />
-                <Button Text="Novo módulo" Style="{StaticResource GhostButton}" HeightRequest="42"
-                        Command="{Binding NovoModuloCommand}" />
-            </VerticalStackLayout>
+            <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                    IsVisible="{Binding PodeCriarProvas}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Text="&#xe88e;" Style="{StaticResource IconPrimary}" VerticalOptions="Start" />
+                    <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}"
+                           Text="Use o + de cada matéria para adicionar aulas e o botão Nova prova para criar avaliações." />
+                </Grid>
+            </Border>
 
-            <Label Text="Conteúdo" Style="{StaticResource TitleSm}" />
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="Módulos" Style="{StaticResource SectionTitle}" />
+                <Button Grid.Column="1" Text="Novo módulo" Style="{StaticResource SoftButton}"
+                        Command="{Binding NovoModuloCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
+            </Grid>
 
             <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding ModulosPagina}">
                 <BindableLayout.ItemTemplate>
@@ -63,108 +73,95 @@
                         <Border Style="{StaticResource Card}">
                             <VerticalStackLayout Spacing="12">
 
-                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="4">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2">
+                                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                                         <Label Text="{Binding Modulo.Titulo}" Style="{StaticResource TitleSm}" />
-                                        <Label Text="{Binding Modulo.Descricao}" Style="{StaticResource BodySm}" />
+                                        <Label Text="{Binding Modulo.Descricao}" Style="{StaticResource BodySm}"
+                                               IsVisible="{Binding Modulo.Descricao, Converter={StaticResource NullToBool}}" />
                                     </VerticalStackLayout>
-                                    <Button Grid.Column="1" Text="&#xe3c9;" FontFamily="MaterialIcons" FontSize="18" Padding="0"
-                                            WidthRequest="36" HeightRequest="36" BackgroundColor="Transparent" TextColor="{StaticResource OnSurfaceVariant}"
+                                    <Button Grid.Column="1" Text="&#xe3c9;" Style="{StaticResource IconButton}"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=EditarModuloCommand, x:DataType=vm:CursoDetalheViewModel}"
                                             CommandParameter="{Binding Modulo}"
-                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                    <Button Grid.Column="2" Text="&#xe872;" FontFamily="MaterialIcons" FontSize="18" Padding="0"
-                                            WidthRequest="36" HeightRequest="36" BackgroundColor="Transparent" TextColor="{StaticResource Danger}"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
+                                    <Button Grid.Column="2" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirModuloCommand, x:DataType=vm:CursoDetalheViewModel}"
                                             CommandParameter="{Binding Modulo}"
-                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                    <Button Grid.Column="3" Text="&#xe145;" FontFamily="MaterialIcons" FontSize="18" Padding="0"
-                                            WidthRequest="36" HeightRequest="36" BackgroundColor="Transparent" TextColor="{StaticResource BrandPrimary}"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
+                                    <Button Grid.Column="3" Text="&#xe145;" Style="{StaticResource IconButton}" TextColor="{StaticResource BrandPrimary}"
+                                            ToolTipProperties.Text="Nova matéria"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=NovaMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                             CommandParameter="{Binding Modulo}"
-                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
                                 </Grid>
 
                                 <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Materias}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MateriaNode">
-                                            <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Outline}"
-                                                    StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12">
+                                            <Border Style="{StaticResource Painel}">
                                                 <VerticalStackLayout Spacing="10">
 
-                                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="4">
-                                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                    <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2">
+                                                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
                                                             <Label Text="{Binding Materia.Nome}" Style="{StaticResource TitleSm}" FontSize="15" />
-                                                            <Label Text="{Binding Materia.Descricao}" Style="{StaticResource BodySm}" />
+                                                            <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
                                                         </VerticalStackLayout>
-                                                        <Button Grid.Column="1" Text="&#xe3c9;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                WidthRequest="32" HeightRequest="32" BackgroundColor="Transparent" TextColor="{StaticResource OnSurfaceVariant}"
+                                                        <Button Grid.Column="1" Text="&#xe3c9;" Style="{StaticResource IconButton}" FontSize="16"
                                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=EditarMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                                 CommandParameter="{Binding Materia}"
-                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                                        <Button Grid.Column="2" Text="&#xe872;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                WidthRequest="32" HeightRequest="32" BackgroundColor="Transparent" TextColor="{StaticResource Danger}"
+                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
+                                                        <Button Grid.Column="2" Text="&#xe872;" Style="{StaticResource IconButton}" FontSize="16" TextColor="{StaticResource Danger}"
                                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                                 CommandParameter="{Binding Materia}"
-                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                                        <Button Grid.Column="3" Text="&#xe145;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                WidthRequest="32" HeightRequest="32" BackgroundColor="Transparent" TextColor="{StaticResource BrandPrimary}"
+                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
+                                                        <Button Grid.Column="3" Text="&#xe145;" Style="{StaticResource IconButton}" FontSize="16" TextColor="{StaticResource BrandPrimary}"
+                                                                ToolTipProperties.Text="Nova aula"
                                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=NovaAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                                 CommandParameter="{Binding Materia}"
-                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
+                                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
                                                     </Grid>
 
-                                                    <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Aulas}">
+                                                    <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding Aulas}">
                                                         <BindableLayout.ItemTemplate>
                                                             <DataTemplate x:DataType="models:Aula">
-                                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-                                                                    <Label Grid.Column="0" Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="16" VerticalOptions="Center" />
+                                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+                                                                    <Label Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="16" VerticalOptions="Center" />
                                                                     <Label Grid.Column="1" Text="{Binding Titulo}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                                                                    <Button Grid.Column="2" Text="&#xe3c9;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                            WidthRequest="30" HeightRequest="30" BackgroundColor="Transparent" TextColor="{StaticResource OnSurfaceVariant}"
+                                                                    <Label Grid.Column="2" Text="{Binding DuracaoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                                                    <Button Grid.Column="3" Text="&#xe3c9;" Style="{StaticResource IconButton}" FontSize="16" WidthRequest="30" HeightRequest="30"
                                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=EditarAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                                             CommandParameter="{Binding .}"
-                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                                                    <Button Grid.Column="3" Text="&#xe872;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                            WidthRequest="30" HeightRequest="30" BackgroundColor="Transparent" TextColor="{StaticResource Danger}"
+                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
+                                                                    <Button Grid.Column="4" Text="&#xe872;" Style="{StaticResource IconButton}" FontSize="16" WidthRequest="30" HeightRequest="30"
+                                                                            TextColor="{StaticResource Danger}"
                                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                                             CommandParameter="{Binding .}"
-                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
+                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </BindableLayout.ItemTemplate>
                                                     </VerticalStackLayout>
 
-                                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6"
-                                                          IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}">
-                                                        <Label Grid.Column="0" Text="Provas" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                                                        <Button Grid.Column="1" Text="Nova prova" FontSize="12" HeightRequest="32" Padding="10,0"
-                                                                HorizontalOptions="Start" BackgroundColor="{StaticResource BrandContainerSoft}"
-                                                                TextColor="{StaticResource BrandPrimary}" CornerRadius="10"
-                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=NovaProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
-                                                                CommandParameter="{Binding Materia}" />
-                                                    </Grid>
-
-                                                    <VerticalStackLayout Spacing="6" BindableLayout.ItemsSource="{Binding Provas}">
+                                                    <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding Provas}">
                                                         <BindableLayout.ItemTemplate>
-                                                            <DataTemplate x:DataType="models:Prova">
-                                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-                                                                    <Label Grid.Column="0" Text="&#xe862;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
-                                                                    <Label Grid.Column="1" Text="{Binding Titulo}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                                                                    <Button Grid.Column="2" Text="&#xe3c9;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                            WidthRequest="30" HeightRequest="30" BackgroundColor="Transparent" TextColor="{StaticResource OnSurfaceVariant}"
+                                                            <DataTemplate x:DataType="vm:ProvaNode">
+                                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                                                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                                                                    <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                                                        <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" />
+                                                                        <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
+                                                                    </VerticalStackLayout>
+                                                                    <Button Grid.Column="2" Text="&#xe3c9;" Style="{StaticResource IconButton}" FontSize="16" WidthRequest="30" HeightRequest="30"
                                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=EditarProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
-                                                                            CommandParameter="{Binding .}"
-                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
-                                                                    <Button Grid.Column="3" Text="&#xe872;" FontFamily="MaterialIcons" FontSize="16" Padding="0"
-                                                                            WidthRequest="30" HeightRequest="30" BackgroundColor="Transparent" TextColor="{StaticResource Danger}"
-                                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
-                                                                            CommandParameter="{Binding .}"
-                                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeGerenciar, x:DataType=vm:CursoDetalheViewModel}" />
+                                                                            CommandParameter="{Binding .}" IsVisible="{Binding PodeEditar}" />
                                                                 </Grid>
                                                             </DataTemplate>
                                                         </BindableLayout.ItemTemplate>
                                                     </VerticalStackLayout>
+
+                                                    <Button Text="Nova prova" Style="{StaticResource SoftButton}" HorizontalOptions="Start"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=NovaProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                            CommandParameter="{Binding Materia}"
+                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeCriarProvas, x:DataType=vm:CursoDetalheViewModel}" />
 
                                                 </VerticalStackLayout>
                                             </Border>

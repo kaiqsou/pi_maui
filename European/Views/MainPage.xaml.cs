@@ -20,30 +20,27 @@ namespace European.Views
             _viewModel.AbaAlterada += AoAlterarAba;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
             TrocarAbaVisivel();
-            RecarregarAba(_viewModel.AbaAtual);
+            await RecarregarAbaAsync(_viewModel.AbaAtual);
         }
 
-        private void AoAlterarAba()
+        private async void AoAlterarAba()
         {
             TrocarAbaVisivel();
-            RecarregarAba(_viewModel.AbaAtual);
+            await RecarregarAbaAsync(_viewModel.AbaAtual);
         }
 
-        private void RecarregarAba(string aba)
+        private Task RecarregarAbaAsync(string aba) => aba switch
         {
-            switch (aba)
-            {
-                case "inicio": _abaInicio.Recarregar(); break;
-                case "aulas": _abaAulas.Recarregar(); break;
-                case "provas": _abaProvas.Recarregar(); break;
-                case "desempenho": _abaDesempenho.Recarregar(); break;
-                case "certificados": _abaCertificados.Recarregar(); break;
-            }
-        }
+            "aulas" => _abaAulas.RecarregarAsync(),
+            "provas" => _abaProvas.RecarregarAsync(),
+            "desempenho" => _abaDesempenho.RecarregarAsync(),
+            "certificados" => _abaCertificados.RecarregarAsync(),
+            _ => _abaInicio.RecarregarAsync()
+        };
 
         private void TrocarAbaVisivel()
         {

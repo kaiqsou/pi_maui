@@ -11,10 +11,14 @@ namespace European.Models
         public Curso? Curso { get; set; }
         public StatusMatricula Status { get; set; } = StatusMatricula.Ativa;
         public double ProgressoPercentual { get; set; }
-        public bool IsActive { get; set; } = true;
+
+        /// <summary>Coordenador que liberou o acesso.</summary>
+        public string? LiberadaPorId { get; set; }
         public DateTime DataMatricula { get; set; } = DateTime.Now;
         public DateTime? DataConclusao { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+        public string CursoNome => Curso?.Nome ?? string.Empty;
     }
 }

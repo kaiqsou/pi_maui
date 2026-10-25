@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using European.MockData;
+using European.Data;
 using European.Models;
 using European.Services;
 
@@ -19,14 +19,24 @@ namespace European.ViewModels
         public string ProvaTitulo { get; set; } = string.Empty;
         public string MateriaNome { get; set; } = string.Empty;
         public double Nota { get; set; }
+        public string AcertosTexto { get; set; } = string.Empty;
         public bool Aprovado { get; set; }
         public string Data => DataRealizacao.ToString("dd/MM/yyyy");
         public DateTime DataRealizacao { get; set; }
+
+        public static ResultadoItem De(ResultadoProva resultado, Prova? prova) => new()
+        {
+            ProvaTitulo = prova?.Titulo ?? "Avaliação",
+            MateriaNome = prova?.Materia?.Nome ?? string.Empty,
+            Nota = resultado.NotaObtida,
+            AcertosTexto = $"{resultado.Acertos}/{resultado.TotalQuestoes} acertos",
+            Aprovado = resultado.NotaObtida >= (prova?.NotaCorte ?? ProgressoService.NotaCortePadrao),
+            DataRealizacao = resultado.DataRealizacao
+        };
     }
 
     public class DesempenhoViewModel : BaseViewModel
     {
-        private const double NotaCorte = 6;
         private double _mediaGeral;
         private bool _aprovado;
         private ObservableCollection<MateriaDesempenho> _materias = new();
@@ -67,34 +77,41 @@ namespace European.ViewModels
             set => SetProperty(ref _aprovado, value);
         }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             var materias = new ObservableCollection<MateriaDesempenho>();
             var resultados = new ObservableCollection<ResultadoItem>();
+            var notasGerais = new List<(ResultadoProva, Prova)>();
 
             if (aluno != null)
             {
-                var matriculas = MockDataService.Matriculas().Where(m => m.AlunoId == aluno.Id).ToList();
+                var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
+                var provas = await ProvaRepositorio.DosCursosAsync(matriculas.Select(m => m.CursoId));
+                var doAluno = await ResultadoRepositorio.DoAlunoAsync(aluno.Id);
 
                 foreach (var matricula in matriculas)
                 {
-                    if (matricula.Curso == null)
-                        continue;
+                    var progressos = await ProgressoRepositorio.DaMatriculaAsync(matricula.Id);
 
-                    foreach (var modulo in matricula.Curso.Modulos.OrderBy(m => m.Ordem))
+                    foreach (var modulo in matricula.Curso!.Modulos.OrderBy(m => m.Ordem))
                     {
                         foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
                         {
-                            var notas = MockDataService.Resultados()
-                                .Where(r => r.AlunoId == aluno.Id && (r.Prova?.MateriaId) == materia.Id)
-                                .Select(r => r.NotaObtida)
-                                .ToList();
+                            foreach (var prova in provas.Where(p => p.MateriaId == materia.Id))
+                                prova.Materia = materia;
 
-                            var media = notas.Count == 0 ? 0 : Math.Round(notas.Average(), 1);
+                            var notas = doAluno
+                                .Where(r => r.MateriaId == materia.Id)
+                                .Select(r => (Resultado: r, Prova: provas.FirstOrDefault(p => p.Id == r.ProvaId)))
+                                .Where(n => n.Prova != null)
+                                .Select(n => (n.Resultado, n.Prova!))
+                                .ToList();
+                            notasGerais.AddRange(notas);
 
                             var total = materia.Aulas.Count;
-                            var concluidas = materia.Aulas.Count(a => MockDataService.ProgressoDaAula(matricula.Id, a.Id)?.Concluida ?? false);
+                            var concluidas = materia.Aulas.Count(a => progressos.Any(p => p.AulaId == a.Id && p.Concluida));
+                            var media = Math.Round(ProgressoService.Media(notas), 1);
 
                             materias.Add(new MateriaDesempenho
                             {
@@ -102,30 +119,21 @@ namespace European.ViewModels
                                 ModuloTitulo = modulo.Titulo,
                                 Media = media,
                                 Progresso = total == 0 ? 0 : Math.Round(concluidas * 100.0 / total),
-                                Aprovado = notas.Count > 0 && media >= NotaCorte
+                                Aprovado = notas.Count > 0 && media >= ProgressoService.NotaCortePadrao
                             });
                         }
                     }
                 }
 
-                foreach (var resultado in MockDataService.Resultados().Where(r => r.AlunoId == aluno.Id))
-                {
-                    resultados.Add(new ResultadoItem
-                    {
-                        ProvaTitulo = resultado.Prova?.Titulo ?? "Avaliação",
-                        MateriaNome = resultado.Prova?.Materia?.Nome ?? string.Empty,
-                        Nota = resultado.NotaObtida,
-                        Aprovado = resultado.NotaObtida >= (resultado.Prova?.NotaCorte ?? NotaCorte),
-                        DataRealizacao = resultado.DataRealizacao
-                    });
-                }
+                foreach (var resultado in doAluno)
+                    resultados.Add(ResultadoItem.De(resultado, provas.FirstOrDefault(p => p.Id == resultado.ProvaId)));
             }
 
             Materias = materias;
             Resultados = resultados;
 
-            MediaGeral = Resultados.Count == 0 ? 0 : Math.Round(Resultados.Average(r => r.Nota), 1);
-            Aprovado = Resultados.Count > 0 && MediaGeral >= NotaCorte;
-        }
+            MediaGeral = Math.Round(ProgressoService.Media(notasGerais), 1);
+            Aprovado = notasGerais.Count > 0 && MediaGeral >= ProgressoService.NotaCortePadrao;
+        });
     }
 }

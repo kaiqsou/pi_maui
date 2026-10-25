@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
+             x:Class="European.Views.ContaNovaPage"
+             x:DataType="vm:ContaNovaViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+
+            <controls:Cabecalho Titulo="{Binding Title}" />
+            <Label Text="{Binding Descricao}" Style="{StaticResource Muted}" />
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Nome completo" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Nome}" Placeholder="Nome" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="E-mail" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Email}" Placeholder="email@exemplo.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Senha provisória" Style="{StaticResource BodySm}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Border Style="{StaticResource Campo}">
+                        <Entry Text="{Binding Senha}" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                    <Button Grid.Column="1" Text="Gerar" Style="{StaticResource SoftButton}" HeightRequest="44" Command="{Binding GerarSenhaCommand}" />
+                </Grid>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsAluno}">
+                <Label Text="Curso" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}"
+                            ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Button Text="Criar conta" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

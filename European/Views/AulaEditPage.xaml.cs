@@ -14,11 +14,11 @@ namespace European.Views
             BindingContext = _viewModel;
         }
 
-        public void ApplyQueryAttributes(IDictionary<string, object> query)
+        public async void ApplyQueryAttributes(IDictionary<string, object> query)
         {
             var materia = query.TryGetValue("Materia", out var m) ? m as Materia : null;
             var aula = query.TryGetValue("Aula", out var a) ? a as Aula : null;
-            _viewModel.Carregar(materia, aula);
+            await _viewModel.CarregarAsync(materia, aula);
         }
     }
 }

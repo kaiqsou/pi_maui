@@ -28,8 +28,6 @@
                 <WebView x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220" />
             </Border>
 
-            <Label Text="Vídeo de demonstração" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurfaceVariant}" />
-
             <Label Text="{Binding Aula.Titulo}" Style="{StaticResource TitleMd}" />
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                 <Label Grid.Column="0" Text="&#xea19;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
@@ -120,7 +118,7 @@
                                 <Label Grid.Column="0" Text="&#xe873;" Style="{StaticResource IconPrimary}" VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="2">
                                     <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
-                                    <Label Text="{Binding Tipo}" Style="{StaticResource BodySm}" />
+                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" LineBreakMode="TailTruncation" />
                                 </VerticalStackLayout>
                                 <Label Grid.Column="2" Text="&#xf090;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
                             </Grid>
@@ -128,6 +126,16 @@
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
             </VerticalStackLayout>
+
+            <Label Text="O professor ainda não anexou materiais a esta aula." Style="{StaticResource Muted}"
+                   HorizontalOptions="Center">
+                <Label.IsVisible>
+                    <MultiBinding Converter="{StaticResource TodosVerdadeiros}">
+                        <Binding Path="MostrarMateriais" />
+                        <Binding Path="PossuiMateriais" Converter="{StaticResource InverseBool}" />
+                    </MultiBinding>
+                </Label.IsVisible>
+            </Label>
 
         </VerticalStackLayout>
     </ScrollView>

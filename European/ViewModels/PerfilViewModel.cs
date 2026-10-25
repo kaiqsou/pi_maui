@@ -1,6 +1,6 @@
 using System.Windows.Input;
+using European.Data;
 using European.Enums;
-using European.MockData;
 using European.Models;
 using European.Services;
 
@@ -15,13 +15,8 @@ namespace European.ViewModels
         public PerfilViewModel()
         {
             Title = "Perfil";
-            LogoutCommand = new Command(async () =>
-            {
-                SessionService.Sair();
-                await Shell.Current.GoToAsync("//login");
-            });
-            GerenciarCommand = new Command(async () => await Shell.Current.GoToAsync("gerenciar"));
-            VoltarCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+            LogoutCommand = new Command(async () => await AcessoService.SairAsync());
+            VoltarCommand = new Command(async () => await VoltarAsync());
         }
 
         public Usuario? Usuario
@@ -35,30 +30,23 @@ namespace European.ViewModels
                     OnPropertyChanged(nameof(Email));
                     OnPropertyChanged(nameof(RoleTexto));
                     OnPropertyChanged(nameof(Iniciais));
-                    OnPropertyChanged(nameof(PodeGerenciar));
+                    OnPropertyChanged(nameof(IsAluno));
                 }
             }
         }
 
         public string Nome => Usuario?.Nome ?? string.Empty;
         public string Email => Usuario?.Email ?? string.Empty;
-        public string RoleTexto => Usuario?.Roles.ToString() ?? string.Empty;
-
-        public string Iniciais
+        public string RoleTexto => Usuario?.Roles switch
         {
-            get
-            {
-                var partes = (Usuario?.Nome ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                return partes.Length switch
-                {
-                    0 => "?",
-                    1 => partes[0][..1].ToUpper(),
-                    _ => $"{partes[0][..1]}{partes[^1][..1]}".ToUpper()
-                };
-            }
-        }
+            Roles.Coordenador or Roles.Administrador => "Coordenação",
+            Roles.Professor => "Professor",
+            Roles.Aluno => "Aluno",
+            _ => string.Empty
+        };
 
-        public bool PodeGerenciar => Usuario is { Roles: Roles.Administrador or Roles.Professor or Roles.Coordenador };
+        public string Iniciais => Usuario?.Iniciais ?? "?";
+        public bool IsAluno => Usuario?.Roles == Roles.Aluno;
 
         public int TotalCursos
         {
@@ -73,17 +61,16 @@ namespace European.ViewModels
         }
 
         public ICommand LogoutCommand { get; }
-        public ICommand GerenciarCommand { get; }
         public ICommand VoltarCommand { get; }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             Usuario = SessionService.UsuarioAtual;
-            if (Usuario == null)
+            if (Usuario == null || !IsAluno)
                 return;
 
-            TotalCursos = MockDataService.Matriculas().Count(m => m.AlunoId == Usuario.Id);
-            TotalCertificados = MockDataService.CertificadosDoAluno(Usuario.Id).Count;
-        }
+            TotalCursos = (await MatriculaRepositorio.AtivasDoAlunoAsync(Usuario.Id)).Count;
+            TotalCertificados = (await CertificadoRepositorio.DoAlunoAsync(Usuario.Id)).Count;
+        });
     }
 }

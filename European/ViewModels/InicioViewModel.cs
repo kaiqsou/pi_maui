@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 using European.Services;
 
@@ -73,9 +73,7 @@ namespace European.ViewModels
 
         public bool MostrarIniciarAulas => UltimaAula == null;
 
-        public string UltimaDuracao =>
-            UltimaAula == null ? string.Empty
-                : TimeSpan.FromSeconds(MockDataService.DuracaoVideosDaAula(UltimaAula)).ToString(@"mm\:ss");
+        public string UltimaDuracao => UltimaAula?.DuracaoTexto ?? string.Empty;
 
         public string UltimaCursoNome
         {
@@ -93,7 +91,7 @@ namespace European.ViewModels
         public ICommand IniciarAulasCommand { get; }
         public ICommand AbrirPerfilCommand { get; }
 
-        public void Carregar()
+        public Task CarregarAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             if (aluno == null)
@@ -101,40 +99,29 @@ namespace European.ViewModels
 
             Saudacao = $"Olá, {PrimeiroNome(aluno.Nome)}";
 
-            var matriculas = MockDataService.Matriculas().Where(m => m.AlunoId == aluno.Id).ToList();
+            var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
             TotalCursos = matriculas.Count;
             ProgressoMedio = matriculas.Count == 0 ? 0 : Math.Round(matriculas.Average(m => m.ProgressoPercentual));
 
-            var certificados = MockDataService.CertificadosDoAluno(aluno.Id);
+            var certificados = await CertificadoRepositorio.DoAlunoAsync(aluno.Id);
             TotalCertificados = certificados.Count;
-            var certificadosRecentes = new ObservableCollection<Certificado>();
-            foreach (var certificado in certificados.Take(3))
-                certificadosRecentes.Add(certificado);
-            CertificadosRecentes = certificadosRecentes;
+            CertificadosRecentes = new ObservableCollection<Certificado>(certificados.Take(3));
 
-            MatriculaAtiva = matriculas
-                .OrderByDescending(m => m.Status == Enums.StatusMatricula.Ativa)
-                .ThenByDescending(m => m.ProgressoPercentual)
-                .FirstOrDefault();
+            MatriculaAtiva = matriculas.OrderByDescending(m => m.ProgressoPercentual).FirstOrDefault();
 
             UltimaAula = null;
             if (MatriculaAtiva?.Curso != null)
             {
                 UltimaCursoNome = MatriculaAtiva.Curso.Nome;
 
-                var ultimoProgresso = MockDataService.ProgressosDaMatricula(MatriculaAtiva.Id)
+                var ultimoProgresso = (await ProgressoRepositorio.DaMatriculaAsync(MatriculaAtiva.Id))
                     .OrderByDescending(p => p.AtualizadoEm)
                     .FirstOrDefault();
 
                 if (ultimoProgresso != null)
-                {
-                    UltimaAula = MatriculaAtiva.Curso.Modulos
-                        .SelectMany(m => m.Materias)
-                        .SelectMany(x => x.Aulas)
-                        .FirstOrDefault(a => a.Id == ultimoProgresso.AulaId);
-                }
+                    UltimaAula = MatriculaAtiva.Curso.TodasAulas.FirstOrDefault(a => a.Id == ultimoProgresso.AulaId);
             }
-        }
+        });
 
         private async Task ContinuarAsync()
         {

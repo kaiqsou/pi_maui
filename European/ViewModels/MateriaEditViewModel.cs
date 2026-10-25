@@ -1,5 +1,5 @@
 using System.Windows.Input;
-using European.MockData;
+using European.Data;
 using European.Models;
 
 namespace European.ViewModels
@@ -18,16 +18,16 @@ namespace European.ViewModels
 
         public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
         public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
-        public bool IsEdicao => _materia != null;
+        public string ModuloTitulo => _modulo?.Titulo ?? string.Empty;
 
         public ICommand SalvarCommand { get; }
 
         public void Carregar(Modulo? modulo, Materia? materia)
         {
-            _modulo = modulo;
+            _modulo = modulo ?? materia?.Modulo;
             _materia = materia;
             Title = materia == null ? "Nova matéria" : "Editar matéria";
-            OnPropertyChanged(nameof(IsEdicao));
+            OnPropertyChanged(nameof(ModuloTitulo));
 
             Nome = materia?.Nome ?? string.Empty;
             Descricao = materia?.Descricao ?? string.Empty;
@@ -35,24 +35,31 @@ namespace European.ViewModels
 
         private async Task SalvarAsync()
         {
-            if (string.IsNullOrWhiteSpace(Nome))
+            var cursoId = _modulo?.Curso?.Id;
+            if (string.IsNullOrWhiteSpace(Nome) || _modulo == null || cursoId == null)
             {
-                await Shell.Current.DisplayAlert("Matéria", "Informe o nome.", "OK");
+                await AvisarAsync("Matéria", "Informe o nome.");
                 return;
             }
 
-            if (_materia == null && _modulo != null)
+            var salvo = await ExecutarAsync(() => CursoRepositorio.AlterarAsync(cursoId, curso =>
             {
-                MockDataService.AddMateria(_modulo, new Materia { Nome = Nome, Descricao = Descricao });
-            }
-            else if (_materia != null)
-            {
-                _materia.Nome = Nome;
-                _materia.Descricao = Descricao;
-                MockDataService.UpdateMateria(_materia);
-            }
+                var modulo = curso.Modulos.FirstOrDefault(m => m.Id == _modulo.Id)
+                    ?? throw new InvalidOperationException("O módulo foi removido.");
 
-            await Shell.Current.GoToAsync("..");
+                var materia = _materia == null ? null : modulo.Materias.FirstOrDefault(m => m.Id == _materia.Id);
+                if (materia == null)
+                {
+                    materia = new Materia { Id = MongoContext.NovoId(), Ordem = modulo.Materias.Count + 1 };
+                    modulo.Materias.Add(materia);
+                }
+
+                materia.Nome = Nome.Trim();
+                materia.Descricao = Descricao.Trim();
+            }));
+
+            if (salvo)
+                await VoltarAsync();
         }
     }
 }

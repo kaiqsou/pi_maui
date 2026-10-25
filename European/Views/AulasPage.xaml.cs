@@ -13,6 +13,6 @@ namespace European.Views
             BindingContext = _viewModel;
         }
 
-        public void Recarregar() => _viewModel.Carregar();
+        public Task RecarregarAsync() => _viewModel.CarregarAsync();
     }
 }

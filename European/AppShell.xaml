@@ -9,13 +9,28 @@
     Title="European">
 
     <FlyoutItem Route="login">
-        <ShellContent
-            ContentTemplate="{DataTemplate views:LoginPage}" />
+        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+    </FlyoutItem>
+
+    <!-- Áreas por perfil (ver AcessoService.RotaInicialAsync) -->
+    <FlyoutItem Route="coordenacao">
+        <ShellContent ContentTemplate="{DataTemplate views:CoordenacaoPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="professor">
+        <ShellContent ContentTemplate="{DataTemplate views:ProfessorPage}" />
     </FlyoutItem>
 
     <FlyoutItem Route="main">
-        <ShellContent
-            ContentTemplate="{DataTemplate views:MainPage}" />
+        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="certificados">
+        <ShellContent ContentTemplate="{DataTemplate views:SomenteCertificadosPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="aguardando">
+        <ShellContent ContentTemplate="{DataTemplate views:AguardandoAcessoPage}" />
     </FlyoutItem>
 
 </Shell>

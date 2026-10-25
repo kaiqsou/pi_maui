@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.ProvaRealizarPage"
+             x:DataType="vm:ProvaRealizarViewModel"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Cabeçalho com cronômetro -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="20,16,20,12">
+            <Border Style="{StaticResource BackTile}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding SairCommand}" />
+                </Border.GestureRecognizers>
+                <Label Text="&#xe5cd;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                <Label Text="{Binding Title}" Style="{StaticResource TitleSm}" LineBreakMode="TailTruncation" />
+                <Label Text="{Binding Subtitulo}" Style="{StaticResource BodySm}" />
+            </VerticalStackLayout>
+            <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Center" IsVisible="{Binding TemTempo}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding TempoAcabando}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{StaticResource DangerSoft}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <HorizontalStackLayout Spacing="4">
+                    <Label Text="&#xe425;" Style="{StaticResource IconPrimary}" FontSize="16" />
+                    <Label Text="{Binding TempoRestante}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" VerticalOptions="Center">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding TempoAcabando}" Value="True">
+                                <Setter Property="TextColor" Value="{StaticResource Danger}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </HorizontalStackLayout>
+            </Border>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20,4,20,20" Spacing="14">
+
+                <Border Style="{StaticResource Card}" IsVisible="{Binding TemInstrucoes}"
+                        BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent">
+                    <Label Text="{Binding Instrucoes}" Style="{StaticResource BodyMd}" />
+                </Border>
+
+                <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Questoes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:QuestaoResposta">
+                            <Border Style="{StaticResource Card}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <Border Style="{StaticResource Pill}" VerticalOptions="Start">
+                                            <Label Text="{Binding Numero}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}" />
+                                        </Border>
+                                        <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                                        <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
+                                    </Grid>
+
+                                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alternativas}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:AlternativaOpcao">
+                                                <Border Style="{StaticResource Painel}" Padding="12,10">
+                                                    <Border.Triggers>
+                                                        <DataTrigger TargetType="Border" Binding="{Binding Selecionada}" Value="True">
+                                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
+                                                            <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                                        </DataTrigger>
+                                                    </Border.Triggers>
+                                                    <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaRealizarViewModel}}, Path=SelecionarCommand, x:DataType=vm:ProvaRealizarViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Border.GestureRecognizers>
+                                                    <Grid ColumnDefinitions="28,*" ColumnSpacing="10">
+                                                        <Border WidthRequest="26" HeightRequest="26" StrokeShape="RoundRectangle 13"
+                                                                Stroke="{StaticResource Outline}" StrokeThickness="1" BackgroundColor="{StaticResource SurfaceCard}">
+                                                            <Border.Triggers>
+                                                                <DataTrigger TargetType="Border" Binding="{Binding Selecionada}" Value="True">
+                                                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
+                                                                    <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                                                </DataTrigger>
+                                                            </Border.Triggers>
+                                                            <Label Text="{Binding Letra}" FontSize="12" FontFamily="OpenSansSemibold"
+                                                                   HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                                                                <Label.Triggers>
+                                                                    <DataTrigger TargetType="Label" Binding="{Binding Selecionada}" Value="True">
+                                                                        <Setter Property="TextColor" Value="White" />
+                                                                    </DataTrigger>
+                                                                </Label.Triggers>
+                                                            </Label>
+                                                        </Border>
+                                                        <Label Grid.Column="1" Text="{Binding Texto}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto">
+            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+            <Button Grid.Row="1" Text="Enviar prova" Style="{StaticResource PrimaryButton}" Margin="20,12,20,16"
+                    Command="{Binding EnviarCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

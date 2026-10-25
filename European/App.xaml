@@ -19,6 +19,7 @@
             <conv:PercentToProgressConverter x:Key="PercentToProgress" />
             <conv:StatusMatriculaToColorConverter x:Key="StatusMatriculaToColor" />
             <conv:RoleToVisibilityConverter x:Key="RoleToVisibility" />
+            <conv:TodosVerdadeirosConverter x:Key="TodosVerdadeiros" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

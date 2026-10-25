@@ -6,6 +6,7 @@ namespace European.Views
     public partial class CursoDetalhePage : ContentPage, IQueryAttributable
     {
         private readonly CursoDetalheViewModel _viewModel;
+        private string? _cursoId;
 
         public CursoDetalhePage()
         {
@@ -17,14 +18,14 @@ namespace European.Views
         public void ApplyQueryAttributes(IDictionary<string, object> query)
         {
             if (query.TryGetValue("Curso", out var value) && value is Curso curso)
-                _viewModel.Carregar(curso);
+                _cursoId = curso.Id;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-            if (_viewModel.Curso != null)
-                _viewModel.Carregar(_viewModel.Curso);
+            if (_cursoId != null)
+                await _viewModel.CarregarAsync(_cursoId);
         }
     }
 }

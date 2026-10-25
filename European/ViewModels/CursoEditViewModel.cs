@@ -1,7 +1,6 @@
-using System.Globalization;
 using System.Windows.Input;
+using European.Data;
 using European.Enums;
-using European.MockData;
 using European.Models;
 
 namespace European.ViewModels
@@ -12,7 +11,6 @@ namespace European.ViewModels
         private string _nome = string.Empty;
         private string _descricao = string.Empty;
         private CategoriaEnum _categoria = CategoriaEnum.Educacao;
-        private string _preco = "0";
         private string _cargaHoraria = "0";
         private bool _isPublicado = true;
 
@@ -24,77 +22,60 @@ namespace European.ViewModels
         public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
         public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
         public CategoriaEnum Categoria { get => _categoria; set => SetProperty(ref _categoria, value); }
-        public string Preco { get => _preco; set => SetProperty(ref _preco, value); }
         public string CargaHoraria { get => _cargaHoraria; set => SetProperty(ref _cargaHoraria, value); }
         public bool IsPublicado { get => _isPublicado; set => SetProperty(ref _isPublicado, value); }
 
         public List<CategoriaEnum> Categorias { get; } = Enum.GetValues<CategoriaEnum>().ToList();
-
-        public bool IsEdicao => _curso != null;
 
         public ICommand SalvarCommand { get; }
 
         public void Carregar(Curso? curso)
         {
             _curso = curso;
-            OnPropertyChanged(nameof(IsEdicao));
+            Title = curso == null ? "Novo curso" : "Editar curso";
 
-            if (curso == null)
-            {
-                Title = "Novo curso";
-                Nome = string.Empty;
-                Descricao = string.Empty;
-                Categoria = CategoriaEnum.Educacao;
-                Preco = "0";
-                CargaHoraria = "0";
-                IsPublicado = true;
-                return;
-            }
-
-            Title = "Editar curso";
-            Nome = curso.Nome;
-            Descricao = curso.Descricao;
-            Categoria = curso.Categoria;
-            Preco = curso.Preco.ToString(CultureInfo.InvariantCulture);
-            CargaHoraria = curso.CargaHorariaHoras.ToString();
-            IsPublicado = curso.IsPublicado;
+            Nome = curso?.Nome ?? string.Empty;
+            Descricao = curso?.Descricao ?? string.Empty;
+            Categoria = curso?.Categoria ?? CategoriaEnum.Educacao;
+            CargaHoraria = (curso?.CargaHorariaHoras ?? 0).ToString();
+            IsPublicado = curso?.IsPublicado ?? true;
         }
 
         private async Task SalvarAsync()
         {
             if (string.IsNullOrWhiteSpace(Nome))
             {
-                await Shell.Current.DisplayAlert("Curso", "Informe o nome do curso.", "OK");
+                await AvisarAsync("Curso", "Informe o nome do curso.");
                 return;
             }
 
-            var preco = decimal.TryParse(Preco, NumberStyles.Any, CultureInfo.InvariantCulture, out var p) ? p : 0m;
-            var carga = int.TryParse(CargaHoraria, out var c) ? c : 0;
+            var carga = int.TryParse(CargaHoraria, out var c) ? Math.Max(0, c) : 0;
 
-            if (_curso == null)
+            void Aplicar(Curso curso)
             {
-                MockDataService.AddCurso(new Curso
+                curso.Nome = Nome.Trim();
+                curso.Descricao = Descricao.Trim();
+                curso.Categoria = Categoria;
+                curso.CargaHorariaHoras = carga;
+                curso.IsPublicado = IsPublicado;
+            }
+
+            var salvo = await ExecutarAsync(async () =>
+            {
+                if (_curso == null)
                 {
-                    Nome = Nome,
-                    Descricao = Descricao,
-                    Categoria = Categoria,
-                    Preco = preco,
-                    CargaHorariaHoras = carga,
-                    IsPublicado = IsPublicado
-                });
-            }
-            else
-            {
-                _curso.Nome = Nome;
-                _curso.Descricao = Descricao;
-                _curso.Categoria = Categoria;
-                _curso.Preco = preco;
-                _curso.CargaHorariaHoras = carga;
-                _curso.IsPublicado = IsPublicado;
-                MockDataService.UpdateCurso(_curso);
-            }
+                    var novo = new Curso();
+                    Aplicar(novo);
+                    await CursoRepositorio.SalvarAsync(novo);
+                }
+                else
+                {
+                    await CursoRepositorio.AlterarAsync(_curso.Id, Aplicar);
+                }
+            });
 
-            await Shell.Current.GoToAsync("..");
+            if (salvo)
+                await VoltarAsync();
         }
     }
 }
