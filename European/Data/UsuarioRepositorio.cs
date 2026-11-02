@@ -54,6 +54,19 @@ namespace European.Data
             }
         }
 
+        /// <summary>
+        /// Grava só a senha, sem sobrescrever o resto do cadastro (ex.: acesso alterado pela coordenação).
+        /// <paramref name="provisoria"/> = true quando é a coordenação que define a senha: o usuário troca no próximo login.
+        /// </summary>
+        public static async Task AtualizarSenhaAsync(string usuarioId, string senhaHash, bool provisoria = false)
+        {
+            var update = Builders<Usuario>.Update
+                .Set(u => u.SenhaHash, senhaHash)
+                .Set(u => u.SenhaProvisoria, provisoria)
+                .Set(u => u.UpdatedAt, DateTime.Now);
+            await Colecao.UpdateOneAsync(u => u.Id == usuarioId, update);
+        }
+
         public static async Task AtualizarAsync(Usuario usuario)
         {
             usuario.UpdatedAt = DateTime.Now;

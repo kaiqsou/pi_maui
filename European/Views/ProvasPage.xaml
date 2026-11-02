@@ -6,14 +6,15 @@
              x:DataType="vm:ProvasViewModel"
              BackgroundColor="{StaticResource Surface}">
 
-    <Grid RowDefinitions="Auto,Auto,*" Padding="20,24,20,0" RowSpacing="14">
+    <!-- A margem lateral fica dentro de cada parte para a barra de rolagem ficar na borda, sem cobrir os cards. -->
+    <Grid RowDefinitions="Auto,Auto,*" Padding="0,24,0,0" RowSpacing="14">
 
-        <VerticalStackLayout Grid.Row="0" Spacing="2">
+        <VerticalStackLayout Grid.Row="0" Spacing="2" Margin="20,0">
             <Label Text="Provas" Style="{StaticResource TitleLg}" />
             <Label Text="Avaliações disponíveis e realizadas" Style="{StaticResource Muted}" />
         </VerticalStackLayout>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="20,0">
             <Button Grid.Column="0" Text="Disponíveis" Command="{Binding SelecionarAbaCommand}" CommandParameter="disponiveis" Style="{StaticResource GhostButton}" HeightRequest="42">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding MostrarDisponiveis}" Value="True">
@@ -35,7 +36,7 @@
         <CollectionView Grid.Row="2" ItemsSource="{Binding Disponiveis}" SelectionMode="None" IsVisible="{Binding MostrarDisponiveis}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ProvaItem">
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                    <Border Style="{StaticResource Card}" Margin="20,0,20,10">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvasViewModel}}, Path=IniciarCommand, x:DataType=vm:ProvasViewModel}"
@@ -69,16 +70,24 @@
         <CollectionView Grid.Row="2" ItemsSource="{Binding Realizadas}" SelectionMode="None" IsVisible="{Binding MostrarRealizadas}">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ResultadoItem">
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                    <Border Style="{StaticResource Card}" Margin="20,0,20,10">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                 <Label Text="{Binding ProvaTitulo}" Style="{StaticResource TitleSm}" />
                                 <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" />
-                                <Label Text="{Binding AcertosTexto}" Style="{StaticResource BodySm}" />
+                                <Label Text="{Binding AcertosTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource Warning}">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding Corrigida}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
                                 <Label Text="{Binding Data}" Style="{StaticResource BodySm}" />
+                                <Label Text="{Binding ComentariosTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}"
+                                       Margin="0,6,0,0" IsVisible="{Binding TemComentarios}" />
                             </VerticalStackLayout>
                             <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
-                                <Label Text="{Binding Nota, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="15" TextColor="{StaticResource BrandPrimary}" />
+                                <Label Text="{Binding NotaTexto}" FontFamily="OpenSansSemibold" FontSize="15" TextColor="{StaticResource BrandPrimary}" />
                             </Border>
                         </Grid>
                     </Border>
@@ -86,14 +95,14 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center"
+        <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center" Margin="20,0"
                              IsVisible="{Binding MostrarVazioDisponiveis}">
             <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
             <Label Text="Nenhuma prova disponível" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
             <Label Text="No momento não há avaliações abertas. Volte em breve." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
-        <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center"
+        <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center" Margin="20,0"
                              IsVisible="{Binding MostrarVazioRealizadas}">
             <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
             <Label Text="Nenhuma prova realizada" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />

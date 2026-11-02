@@ -32,6 +32,7 @@ namespace European.Data
         public static IMongoCollection<ResultadoProva> Resultados => Banco.GetCollection<ResultadoProva>("resultados");
         public static IMongoCollection<Certificado> Certificados => Banco.GetCollection<Certificado>("certificados");
         public static IMongoCollection<Sala> Salas => Banco.GetCollection<Sala>("salas");
+        public static IMongoCollection<SolicitacaoMatricula> Solicitacoes => Banco.GetCollection<SolicitacaoMatricula>("solicitacoes");
 
         public static GridFSBucket Arquivos => new(Banco, new GridFSBucketOptions { BucketName = "arquivos" });
 
@@ -51,6 +52,9 @@ namespace European.Data
 
                 await Usuarios.Indexes.CreateOneAsync(new CreateIndexModel<Usuario>(
                     Builders<Usuario>.IndexKeys.Ascending(u => u.Email),
+                    new CreateIndexOptions { Unique = true }));
+                await Solicitacoes.Indexes.CreateOneAsync(new CreateIndexModel<SolicitacaoMatricula>(
+                    Builders<SolicitacaoMatricula>.IndexKeys.Ascending(s => s.Email),
                     new CreateIndexOptions { Unique = true }));
                 await Matriculas.Indexes.CreateOneAsync(new CreateIndexModel<Matricula>(
                     Builders<Matricula>.IndexKeys.Ascending(m => m.AlunoId).Ascending(m => m.CursoId)));

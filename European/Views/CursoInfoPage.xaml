@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.CursoInfoPage"
+             x:DataType="vm:CursoInfoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <!-- Botão de escolher fica fixo embaixo; o conteúdo rola acima dele -->
+    <Grid RowDefinitions="*,Auto">
+
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20,16,20,20" Spacing="18">
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
+                            BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding VoltarCommand}" />
+                        </Border.GestureRecognizers>
+                        <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <Label Grid.Column="1" Text="Detalhes do curso" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+                </Grid>
+
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="160" IsVisible="{Binding TemCapa}">
+                    <Image Source="{Binding Curso.CapaUrl}" Aspect="AspectFill" />
+                </Border>
+
+                <VerticalStackLayout Spacing="8">
+                    <Border Style="{StaticResource Pill}" HorizontalOptions="Start">
+                        <Label Text="{Binding CategoriaTexto}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                    </Border>
+                    <Label Text="{Binding Nome}" Style="{StaticResource TitleLg}" />
+                </VerticalStackLayout>
+
+                <!-- números principais -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="10,12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding CargaTexto}" Style="{StaticResource TitleMd}" HorizontalOptions="Center" />
+                            <Label Text="Carga horária" Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="1" Style="{StaticResource Card}" Padding="10,12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding ModulosTexto}" Style="{StaticResource TitleMd}" HorizontalOptions="Center" />
+                            <Label Text="Módulos" Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource Card}" Padding="10,12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding AulasTexto}" Style="{StaticResource TitleMd}" HorizontalOptions="Center" />
+                            <Label Text="Aulas" Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Sobre o curso" Style="{StaticResource TitleSm}" />
+                    <Label Text="{Binding Descricao}" Style="{StaticResource BodyMd}" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding TemModulos}">
+                    <Label Text="O que você vai estudar" Style="{StaticResource TitleSm}" />
+                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Modulos}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ModuloResumo">
+                                <Grid ColumnDefinitions="32,*" ColumnSpacing="12">
+                                    <Border Grid.Column="0" WidthRequest="32" HeightRequest="32" VerticalOptions="Center"
+                                            BackgroundColor="{StaticResource BrandContainerSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 10">
+                                        <Label Text="{Binding Numero}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                        <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                                        <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Text="&#xea3f;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                    <Label Grid.Column="1" Text="Certificado de conclusão ao terminar todos os módulos com aprovação pela média em todas as matérias."
+                           Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- rodapé fixo: preço e escolha -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto">
+            <BoxView Grid.Row="0" HeightRequest="1" Color="{StaticResource Outline}" />
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="16" Padding="20,12,20,16" BackgroundColor="{StaticResource SurfaceCard}">
+                <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
+                    <Label Text="Valor" Style="{StaticResource BodySm}" />
+                    <Label Text="{Binding PrecoTexto}" Style="{StaticResource TitleMd}" TextColor="{StaticResource BrandPrimary}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="Escolher este curso" Style="{StaticResource PrimaryButton}" Command="{Binding EscolherCommand}" />
+            </Grid>
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

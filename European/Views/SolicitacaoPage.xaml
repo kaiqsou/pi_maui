@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
+             x:Class="European.Views.SolicitacaoPage"
+             x:DataType="vm:SolicitacaoViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <!-- Cabeçalho fixo; só o conteúdo abaixo dele rola -->
+    <Grid RowDefinitions="Auto,*">
+        <controls:Cabecalho Titulo="Solicitação de matrícula" Margin="20,16,20,12" />
+
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="20,4,20,28" Spacing="16">
+
+            <!-- Candidato -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
+                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
+                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="White"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                            <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                            <Label Text="{Binding Email}" Style="{StaticResource BodySm}" />
+                            <Label Text="{Binding CriadaEmTexto}" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Border Style="{StaticResource Painel}" Padding="12,10">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="{Binding StatusTexto}" Style="{StaticResource TitleSm}" FontSize="14" />
+                            <Label Text="Ainda não é usuário: a conta só é criada ao liberar a matrícula." Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Pedido -->
+            <Border Style="{StaticResource Card}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Grid.Column="1" Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="20" TextColor="{StaticResource Warning}">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding Pago}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource DangerSoft}" Stroke="Transparent" Padding="12,10"
+                            IsVisible="{Binding TemPendencia}">
+                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Liberar matrícula" Style="{StaticResource PrimaryButton}" Command="{Binding LiberarCommand}"
+                    IsEnabled="{Binding PodeLiberar}" />
+            <Label Text="Só é possível liberar depois que o pagamento for feito." Style="{StaticResource BodySm}" HorizontalOptions="Center"
+                   IsVisible="{Binding Pago, Converter={StaticResource InverseBool}}" />
+            <Button Text="Não liberar" Style="{StaticResource GhostButton}" Command="{Binding NaoLiberarCommand}"
+                    TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+    </Grid>
+
+</ContentPage>

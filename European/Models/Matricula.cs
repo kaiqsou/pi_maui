@@ -20,5 +20,14 @@ namespace European.Models
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
         public string CursoNome => Curso?.Nome ?? string.Empty;
+
+        /// <summary>Depois de concluir o curso (emissão do certificado), o aluno ainda pode reassistir as aulas por este período.</summary>
+        public const int MesesAcessoAposConclusao = 6;
+
+        public DateTime? AcessoAte => Status == StatusMatricula.Concluida ? DataConclusao?.AddMonths(MesesAcessoAposConclusao) : null;
+
+        /// <summary>Ativa, ou concluída e ainda dentro da validade de acesso às aulas.</summary>
+        public bool AcessoAulasVigente => Status == StatusMatricula.Ativa
+            || (Status == StatusMatricula.Concluida && AcessoAte.HasValue && AcessoAte.Value > DateTime.Now);
     }
 }

@@ -20,7 +20,26 @@ namespace European.ViewModels
         public ContaNovaViewModel()
         {
             GerarSenhaCommand = new Command(() => Senha = GerarSenha());
+            CopiarSenhaCommand = new Command(async () => await CopiarSenhaAsync());
             SalvarCommand = new Command(async () => await SalvarAsync());
+        }
+
+        private const string IconeCopiar = "";   // content_copy
+        private const string IconeCopiado = "";  // check
+        private string _copiarIcone = IconeCopiar;
+
+        public string CopiarIcone { get => _copiarIcone; private set => SetProperty(ref _copiarIcone, value); }
+        public ICommand CopiarSenhaCommand { get; }
+
+        private async Task CopiarSenhaAsync()
+        {
+            if (string.IsNullOrEmpty(Senha))
+                return;
+
+            await Clipboard.Default.SetTextAsync(Senha);
+            CopiarIcone = IconeCopiado;
+            await Task.Delay(1500);
+            CopiarIcone = IconeCopiar;
         }
 
         public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
@@ -79,6 +98,7 @@ namespace European.ViewModels
                 Nome = Nome,
                 Email = Email,
                 SenhaHash = SenhaService.GerarHash(Senha),
+                SenhaProvisoria = true,
                 Roles = _role,
                 StatusAcesso = StatusAcesso.Liberado
             };

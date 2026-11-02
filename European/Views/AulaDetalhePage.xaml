@@ -9,8 +9,10 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+    <!-- Voltar e o vídeo ficam fixos no topo; o restante (detalhes, aulas e materiais) rola por baixo. -->
+    <!-- A margem lateral fica dentro do conteúdo para a barra de rolagem ficar na borda, sem cobrir os cards. -->
+    <Grid RowDefinitions="Auto,*" Padding="0,16,0,0" RowSpacing="16">
+        <VerticalStackLayout Grid.Row="0" Spacing="16" Padding="20,0">
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                 <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
@@ -27,8 +29,11 @@
             <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="220">
                 <WebView x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220" />
             </Border>
+        </VerticalStackLayout>
 
-            <Label Text="{Binding Aula.Titulo}" Style="{StaticResource TitleMd}" />
+        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+        <VerticalStackLayout Padding="20,0,20,28" Spacing="16">
+
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                 <Label Grid.Column="0" Text="&#xea19;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
                 <Label Grid.Column="1" Text="{Binding MateriaNome}" Style="{StaticResource Muted}" VerticalOptions="Center" />
@@ -66,16 +71,21 @@
                 </Button>
             </Grid>
 
-            <VerticalStackLayout Spacing="10" IsVisible="{Binding MostrarAulas}"
+            <!-- Lista compacta: só título e duração; o ícone à direita indica concluída ou bloqueada. -->
+            <VerticalStackLayout Spacing="6" IsVisible="{Binding MostrarAulas}"
                                  BindableLayout.ItemsSource="{Binding AulasDoModulo}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:AulaItem">
-                        <Border Style="{StaticResource Card}" Padding="14" BackgroundColor="{StaticResource SurfaceCard}">
+                        <Border Style="{StaticResource Card}" Padding="12,8" MinimumHeightRequest="48"
+                                StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource SurfaceCard}">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding IsSelecionada}" Value="True">
                                     <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
                                     <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
                                     <Setter Property="StrokeThickness" Value="1.5" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
+                                    <Setter Property="Opacity" Value="0.55" />
                                 </DataTrigger>
                             </Border.Triggers>
                             <Border.GestureRecognizers>
@@ -83,19 +93,16 @@
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AulaViewModel}}, Path=AbrirAulaCommand, x:DataType=vm:AulaViewModel}"
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12">
-                                <Label Grid.Column="0" Text="&#xe1c4;" Style="{StaticResource IconPrimary}" VerticalOptions="Center" />
-                                <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                    <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" TextColor="{StaticResource BrandPrimary}" />
-                                    <Label Text="{Binding Aula.Titulo}" Style="{StaticResource TitleSm}" />
-                                    <Label Text="{Binding Duracao}" Style="{StaticResource BodySm}" IsVisible="{Binding Liberada}" />
-                                    <Label Text="Bloqueada" Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}"
-                                           IsVisible="{Binding Bloqueada}" />
-                                </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18"
+                            <Grid ColumnDefinitions="24,*,Auto,20" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="18" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{Binding Aula.Titulo}" FontFamily="OpenSansSemibold" FontSize="14"
+                                       TextColor="{StaticResource OnSurface}" MaxLines="2" LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="{Binding Duracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                <Label Grid.Column="3" Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18"
                                        TextColor="{StaticResource Success}" VerticalOptions="Center"
                                        IsVisible="{Binding Concluida}" />
-                                <Label Grid.Column="2" Text="&#xe897;" Style="{StaticResource Icon}" FontSize="18"
+                                <Label Grid.Column="3" Text="&#xe897;" Style="{StaticResource Icon}" FontSize="18"
                                        TextColor="{StaticResource Danger}" VerticalOptions="Center"
                                        IsVisible="{Binding Bloqueada}" />
                             </Grid>
@@ -138,6 +145,7 @@
             </Label>
 
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

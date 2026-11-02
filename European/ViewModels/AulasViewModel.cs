@@ -19,6 +19,7 @@ namespace European.ViewModels
 
         public string Duracao => Aula.DuracaoTexto;
         public string Descricao => Aula.Descricao;
+        public bool TemDescricao => !string.IsNullOrWhiteSpace(Aula.Descricao);
         public bool Bloqueada => !Liberada;
         public bool PodeAssistir => Liberada && !Concluida;
         public string MateriaNome => Aula.Materia?.Nome ?? string.Empty;
@@ -76,6 +77,11 @@ namespace European.ViewModels
             ? _modulos[_indicePagina].Titulo
             : string.Empty;
 
+        public bool SemAulas => AulasPagina.Count == 0;
+        public string MensagemSemAulas => _modulos.Count == 0
+            ? "Ainda não há aulas disponíveis para você."
+            : "Ainda não há aulas neste módulo.";
+
         public ICommand AbrirAulaCommand { get; }
         public ICommand PaginaAnteriorCommand { get; }
         public ICommand PaginaProximaCommand { get; }
@@ -90,7 +96,8 @@ namespace European.ViewModels
 
             if (aluno != null)
             {
-                matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
+                // inclui a matrícula concluída: ao terminar a última aula o curso continua visível
+                matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
 
                 var matriculaAtiva = matriculas.FirstOrDefault();
                 MatriculaAtiva = matriculaAtiva;
@@ -171,6 +178,8 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(PodePaginaProxima));
             OnPropertyChanged(nameof(IndicadorPagina));
             OnPropertyChanged(nameof(ModuloAtualTitulo));
+            OnPropertyChanged(nameof(SemAulas));
+            OnPropertyChanged(nameof(MensagemSemAulas));
         }
 
         private async Task AbrirAulaAsync(AulaItem? item)

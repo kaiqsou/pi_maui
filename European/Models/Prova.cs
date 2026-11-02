@@ -1,4 +1,6 @@
-﻿namespace European.Models
+﻿using European.Enums;
+
+namespace European.Models
 {
     public class Prova
     {
@@ -29,14 +31,21 @@
         public bool Expirada => Prazo.HasValue && Prazo.Value < DateTime.Now;
         public string DuracaoTexto => DuracaoMinutos > 0 ? $"{DuracaoMinutos} min" : "Sem limite";
         public string PrazoTexto => Prazo?.ToString("dd/MM/yyyy HH:mm") ?? "Sem prazo";
+        public bool TemDissertativas => Questoes.Any(q => q.IsDissertativa);
     }
 
     public class Questao
     {
         public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public TipoQuestao Tipo { get; set; } = TipoQuestao.Alternativas;
         public string Enunciado { get; set; } = string.Empty;
         public double Peso { get; set; } = 1;
         public List<string> Alternativas { get; set; } = new();
         public int IndiceCorreta { get; set; }
+
+        /// <summary>Dissertativa: resposta de referência, visível só para o professor na correção.</summary>
+        public string RespostaEsperada { get; set; } = string.Empty;
+
+        public bool IsDissertativa => Tipo == TipoQuestao.Dissertativa;
     }
 }

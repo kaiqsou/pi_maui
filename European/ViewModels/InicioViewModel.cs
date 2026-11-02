@@ -6,29 +6,38 @@ using European.Services;
 
 namespace European.ViewModels
 {
+    /// <summary>
+    /// Tela inicial do aluno: só o que ajuda a decidir o próximo passo — continuar a aula, ver o
+    /// andamento do curso, provas pendentes e, quando houver, o certificado.
+    /// </summary>
     public class InicioViewModel : BaseViewModel
     {
+        private const int MaxProvasPendentes = 3;
+
         private string _saudacao = string.Empty;
-        private double _progressoMedio;
-        private int _totalCursos;
-        private int _totalCertificados;
         private Aula? _ultimaAula;
         private string _ultimaCursoNome = string.Empty;
         private Matricula? _matriculaAtiva;
-        private ObservableCollection<Certificado> _certificadosRecentes = new();
+        private string _cardTitulo = string.Empty;
+        private string _botaoTexto = string.Empty;
+        private string _ultimaDuracao = string.Empty;
+        private double _ultimaPercentual;
+        private double _progressoCurso;
+        private string _aulasTexto = string.Empty;
+        private string _moduloTexto = string.Empty;
+        private ObservableCollection<ProvaItem> _provasPendentes = new();
+        private int _totalProvasPendentes;
+        private Certificado? _certificado;
+        private string _validadeTexto = string.Empty;
 
         public InicioViewModel()
         {
             Title = "Início";
             ContinuarCommand = new Command(async () => await ContinuarAsync());
             IniciarAulasCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("aulas"));
+            AbrirProvasCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("provas"));
+            AbrirCertificadoCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("certificados"));
             AbrirPerfilCommand = new Command(async () => await Shell.Current.GoToAsync("perfil"));
-        }
-
-        public ObservableCollection<Certificado> CertificadosRecentes
-        {
-            get => _certificadosRecentes;
-            private set => SetProperty(ref _certificadosRecentes, value);
         }
 
         public string Saudacao
@@ -37,24 +46,32 @@ namespace European.ViewModels
             set => SetProperty(ref _saudacao, value);
         }
 
-        public double ProgressoMedio
+        public Matricula? MatriculaAtiva
         {
-            get => _progressoMedio;
-            set => SetProperty(ref _progressoMedio, value);
+            get => _matriculaAtiva;
+            set
+            {
+                if (SetProperty(ref _matriculaAtiva, value))
+                {
+                    OnPropertyChanged(nameof(TemCurso));
+                    OnPropertyChanged(nameof(SemCurso));
+                    OnPropertyChanged(nameof(MostrarIniciarAulas));
+                }
+            }
         }
 
-        public int TotalCursos
+        public bool TemCurso => MatriculaAtiva != null;
+        public bool SemCurso => MatriculaAtiva == null;
+
+        public string UltimaCursoNome
         {
-            get => _totalCursos;
-            set => SetProperty(ref _totalCursos, value);
+            get => _ultimaCursoNome;
+            set => SetProperty(ref _ultimaCursoNome, value);
         }
 
-        public int TotalCertificados
-        {
-            get => _totalCertificados;
-            set => SetProperty(ref _totalCertificados, value);
-        }
+        // ---- Continuar estudando ----
 
+        /// <summary>A aula em que o aluno parou: a primeira ainda não concluída, na ordem do curso.</summary>
         public Aula? UltimaAula
         {
             get => _ultimaAula;
@@ -64,31 +81,123 @@ namespace European.ViewModels
                 {
                     OnPropertyChanged(nameof(TemUltimaAula));
                     OnPropertyChanged(nameof(MostrarIniciarAulas));
-                    OnPropertyChanged(nameof(UltimaDuracao));
                 }
             }
         }
 
         public bool TemUltimaAula => UltimaAula != null;
 
-        public bool MostrarIniciarAulas => UltimaAula == null;
+        /// <summary>Todas as aulas já concluídas: o card oferece rever as aulas.</summary>
+        public bool MostrarIniciarAulas => UltimaAula == null && MatriculaAtiva != null;
 
-        public string UltimaDuracao => UltimaAula?.DuracaoTexto ?? string.Empty;
-
-        public string UltimaCursoNome
+        public string CardTitulo
         {
-            get => _ultimaCursoNome;
-            set => SetProperty(ref _ultimaCursoNome, value);
+            get => _cardTitulo;
+            private set => SetProperty(ref _cardTitulo, value);
         }
 
-        public Matricula? MatriculaAtiva
+        public string BotaoTexto
         {
-            get => _matriculaAtiva;
-            set => SetProperty(ref _matriculaAtiva, value);
+            get => _botaoTexto;
+            private set => SetProperty(ref _botaoTexto, value);
+        }
+
+        /// <summary>"Parou em 03:25 de 07:08" quando a aula foi assistida pela metade; senão, só a duração.</summary>
+        public string UltimaDuracao
+        {
+            get => _ultimaDuracao;
+            private set => SetProperty(ref _ultimaDuracao, value);
+        }
+
+        /// <summary>De 0 a 100, quanto da aula atual já foi assistido.</summary>
+        public double UltimaPercentual
+        {
+            get => _ultimaPercentual;
+            private set
+            {
+                if (SetProperty(ref _ultimaPercentual, value))
+                    OnPropertyChanged(nameof(UltimaIniciada));
+            }
+        }
+
+        public bool UltimaIniciada => UltimaPercentual > 0;
+
+        // ---- Andamento do curso ----
+
+        public double ProgressoCurso
+        {
+            get => _progressoCurso;
+            private set => SetProperty(ref _progressoCurso, value);
+        }
+
+        public string AulasTexto
+        {
+            get => _aulasTexto;
+            private set => SetProperty(ref _aulasTexto, value);
+        }
+
+        public string ModuloTexto
+        {
+            get => _moduloTexto;
+            private set
+            {
+                if (SetProperty(ref _moduloTexto, value))
+                    OnPropertyChanged(nameof(TemModuloTexto));
+            }
+        }
+
+        public bool TemModuloTexto => !string.IsNullOrEmpty(ModuloTexto);
+
+        // ---- Provas pendentes ----
+
+        public ObservableCollection<ProvaItem> ProvasPendentes
+        {
+            get => _provasPendentes;
+            private set
+            {
+                if (SetProperty(ref _provasPendentes, value))
+                    OnPropertyChanged(nameof(TemProvasPendentes));
+            }
+        }
+
+        public bool TemProvasPendentes => ProvasPendentes.Count > 0;
+
+        public int TotalProvasPendentes
+        {
+            get => _totalProvasPendentes;
+            private set
+            {
+                if (SetProperty(ref _totalProvasPendentes, value))
+                    OnPropertyChanged(nameof(ProvasPendentesTexto));
+            }
+        }
+
+        public string ProvasPendentesTexto => TotalProvasPendentes == 1 ? "1 prova para fazer" : $"{TotalProvasPendentes} provas para fazer";
+
+        // ---- Certificado ----
+
+        public Certificado? Certificado
+        {
+            get => _certificado;
+            private set
+            {
+                if (SetProperty(ref _certificado, value))
+                    OnPropertyChanged(nameof(TemCertificado));
+            }
+        }
+
+        public bool TemCertificado => Certificado != null;
+
+        public string ValidadeTexto
+        {
+            get => _validadeTexto;
+            private set => SetProperty(ref _validadeTexto, value);
         }
 
         public ICommand ContinuarCommand { get; }
         public ICommand IniciarAulasCommand { get; }
+        public ICommand AbrirProvasCommand { get; }
+        public ICommand AbrirCertificadoCommand { get; }
         public ICommand AbrirPerfilCommand { get; }
 
         public Task CarregarAsync() => ExecutarAsync(async () =>
@@ -99,29 +208,96 @@ namespace European.ViewModels
 
             Saudacao = $"Olá, {PrimeiroNome(aluno.Nome)}";
 
-            var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
-            TotalCursos = matriculas.Count;
-            ProgressoMedio = matriculas.Count == 0 ? 0 : Math.Round(matriculas.Average(m => m.ProgressoPercentual));
+            // inclui a matrícula concluída (dentro da validade), para o aluno poder rever as aulas; ativas vêm primeiro
+            var matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
+            MatriculaAtiva = matriculas.FirstOrDefault(m => m.Curso != null);
+            UltimaCursoNome = MatriculaAtiva?.Curso?.Nome ?? string.Empty;
 
-            var certificados = await CertificadoRepositorio.DoAlunoAsync(aluno.Id);
-            TotalCertificados = certificados.Count;
-            CertificadosRecentes = new ObservableCollection<Certificado>(certificados.Take(3));
+            await CarregarContinuarEAndamentoAsync();
+            await CarregarProvasPendentesAsync(aluno.Id, matriculas);
 
-            MatriculaAtiva = matriculas.OrderByDescending(m => m.ProgressoPercentual).FirstOrDefault();
-
-            UltimaAula = null;
-            if (MatriculaAtiva?.Curso != null)
+            Certificado = (await CertificadoRepositorio.DoAlunoAsync(aluno.Id)).FirstOrDefault();
+            if (Certificado != null)
             {
-                UltimaCursoNome = MatriculaAtiva.Curso.Nome;
-
-                var ultimoProgresso = (await ProgressoRepositorio.DaMatriculaAsync(MatriculaAtiva.Id))
-                    .OrderByDescending(p => p.AtualizadoEm)
-                    .FirstOrDefault();
-
-                if (ultimoProgresso != null)
-                    UltimaAula = MatriculaAtiva.Curso.TodasAulas.FirstOrDefault(a => a.Id == ultimoProgresso.AulaId);
+                var acessoAte = MatriculaAtiva?.AcessoAte ?? Certificado.EmitidoEm.AddMonths(Matricula.MesesAcessoAposConclusao);
+                ValidadeTexto = $"Aulas disponíveis até {acessoAte:dd/MM/yyyy}";
+            }
+            else
+            {
+                ValidadeTexto = string.Empty;
             }
         });
+
+        private async Task CarregarContinuarEAndamentoAsync()
+        {
+            var curso = MatriculaAtiva?.Curso;
+            Aula? proxima = null;
+            ProgressoAula? progresso = null;
+            var algumProgresso = false;
+            var concluidas = new HashSet<string>();
+
+            if (MatriculaAtiva != null && curso != null)
+            {
+                var progressos = await ProgressoRepositorio.DaMatriculaAsync(MatriculaAtiva.Id);
+                concluidas = progressos.Where(p => p.Concluida).Select(p => p.AulaId).ToHashSet();
+                algumProgresso = progressos.Count > 0;
+
+                // as aulas são liberadas em sequência, então a primeira não concluída é sempre onde o aluno parou
+                proxima = curso.TodasAulas.FirstOrDefault(a => !concluidas.Contains(a.Id));
+                progresso = proxima == null ? null : progressos.FirstOrDefault(p => p.AulaId == proxima.Id);
+            }
+
+            UltimaAula = proxima;
+            OnPropertyChanged(nameof(MostrarIniciarAulas));
+
+            var posicao = progresso?.UltimaPosicaoSegundos ?? 0;
+            UltimaPercentual = progresso?.PercentualAssistido ?? 0;
+
+            if (proxima == null)
+            {
+                CardTitulo = "Todas as aulas concluídas";
+                BotaoTexto = "Rever aulas";
+                UltimaDuracao = string.Empty;
+            }
+            else if (posicao >= 1)
+            {
+                CardTitulo = "Continuar de onde parou";
+                BotaoTexto = "Continuar aula";
+                UltimaDuracao = proxima.DuracaoSegundos > 0
+                    ? $"Parou em {Tempo(posicao)} de {proxima.DuracaoTexto}"
+                    : $"Parou em {Tempo(posicao)}";
+            }
+            else
+            {
+                CardTitulo = algumProgresso ? "Próxima aula" : "Comece seus estudos";
+                BotaoTexto = algumProgresso ? "Assistir próxima aula" : "Assistir primeira aula";
+                UltimaDuracao = proxima.DuracaoSegundos > 0 ? proxima.DuracaoTexto : string.Empty;
+            }
+
+            // andamento: aulas concluídas e em qual módulo o aluno está
+            var totalAulas = curso?.TotalAulas ?? 0;
+            var feitas = curso?.TodasAulas.Count(a => concluidas.Contains(a.Id)) ?? 0;
+            ProgressoCurso = totalAulas == 0 ? 0 : Math.Round(feitas * 100.0 / totalAulas);
+            AulasTexto = totalAulas == 0 ? "Nenhuma aula publicada ainda" : $"{feitas} de {totalAulas} aulas concluídas";
+
+            var modulos = curso?.Modulos.OrderBy(m => m.Ordem).ToList() ?? new List<Modulo>();
+            var moduloAtual = proxima?.Materia?.Modulo;
+            ModuloTexto = moduloAtual == null || modulos.Count == 0
+                ? string.Empty
+                : $"Módulo {modulos.IndexOf(moduloAtual) + 1} de {modulos.Count} · {moduloAtual.Titulo}";
+        }
+
+        private async Task CarregarProvasPendentesAsync(string alunoId, List<Matricula> matriculas)
+        {
+            var provas = await ProvaService.VisiveisParaAlunoAsync(alunoId, matriculas);
+            var respondidas = (await ResultadoRepositorio.DoAlunoAsync(alunoId)).Select(r => r.ProvaId).ToHashSet();
+
+            // VisiveisParaAlunoAsync já ordena pelo prazo mais próximo
+            var pendentes = provas.Where(p => !respondidas.Contains(p.Id) && !p.Expirada).ToList();
+            TotalProvasPendentes = pendentes.Count;
+            ProvasPendentes = new ObservableCollection<ProvaItem>(
+                pendentes.Take(MaxProvasPendentes).Select(p => new ProvaItem { Prova = p }));
+        }
 
         private async Task ContinuarAsync()
         {
@@ -135,6 +311,9 @@ namespace European.ViewModels
             };
             await Shell.Current.GoToAsync("aula", parametros);
         }
+
+        private static string Tempo(double segundos)
+            => TimeSpan.FromSeconds(segundos).ToString(segundos >= 3600 ? @"h\:mm\:ss" : @"mm\:ss");
 
         private static string PrimeiroNome(string nome)
             => string.IsNullOrWhiteSpace(nome) ? string.Empty : nome.Split(' ')[0];

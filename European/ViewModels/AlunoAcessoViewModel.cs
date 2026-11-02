@@ -53,6 +53,8 @@ namespace European.ViewModels
                     OnPropertyChanged(nameof(Email));
                     OnPropertyChanged(nameof(Iniciais));
                     OnPropertyChanged(nameof(PodeRemover));
+                    OnPropertyChanged(nameof(Pago));
+                    OnPropertyChanged(nameof(PagamentoTexto));
                 }
             }
         }
@@ -61,6 +63,12 @@ namespace European.ViewModels
         public string Email => Aluno?.Email ?? string.Empty;
         public string Iniciais => Aluno?.Iniciais ?? "?";
         public bool PodeRemover => Aluno?.StatusAcesso == StatusAcesso.Liberado;
+
+        /// <summary>Pagamento feito na solicitação de matrícula (contas criadas pela coordenação não têm).</summary>
+        public bool Pago => Aluno?.PagamentoEm != null;
+        public string PagamentoTexto => Aluno is { PagamentoEm: { } quando, FormaPagamento: { } forma }
+            ? $"Pago via {PagamentoService.Nome(forma)} em {quando:dd/MM/yyyy HH:mm}"
+            : string.Empty;
 
         public string StatusTexto { get => _statusTexto; private set => SetProperty(ref _statusTexto, value); }
         public string StatusDescricao { get => _statusDescricao; private set => SetProperty(ref _statusDescricao, value); }
@@ -101,7 +109,7 @@ namespace European.ViewModels
             var ativas = matriculas.Count(m => m.Status == StatusMatricula.Ativa);
             (StatusTexto, StatusDescricao) = Aluno.StatusAcesso switch
             {
-                StatusAcesso.Pendente => ("Aguardando liberação", "O aluno criou a conta e ainda não tem acesso. Escolha o curso abaixo e libere."),
+                StatusAcesso.Pendente =>("Aguardando liberação", "O aluno criou a conta e ainda não tem acesso. Escolha o curso abaixo e libere."),
                 StatusAcesso.Removido => (matriculas.Count > 0 ? "Ex-aluno" : "Sem acesso", "O acesso foi removido. Se já foi aluno, ele vê apenas o próprio certificado."),
                 _ when ativas > 0 => ("Acesso liberado", $"Acessa aulas e provas de {ativas} curso(s)."),
                 _ => ("Sem curso ativo", "Conta liberada, mas sem matrícula ativa: o aluno vê apenas o certificado.")
@@ -204,8 +212,8 @@ namespace European.ViewModels
                 return;
             }
 
-            Aluno.SenhaHash = SenhaService.GerarHash(senha);
-            if (await ExecutarAsync(() => UsuarioRepositorio.AtualizarAsync(Aluno)))
+            var hash = SenhaService.GerarHash(senha);
+            if (await ExecutarAsync(() => UsuarioRepositorio.AtualizarSenhaAsync(Aluno.Id, hash, provisoria: true)))
                 await AvisarAsync("Senha", "Senha alterada. Informe a nova senha ao aluno.");
         }
     }

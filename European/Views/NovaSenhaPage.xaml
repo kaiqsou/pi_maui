@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.NovaSenhaPage"
+             x:DataType="vm:NovaSenhaViewModel"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource Surface}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,60,28,28" Spacing="18">
+
+            <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center">
+                <Label Text="&#xe897;" Style="{StaticResource IconPrimary}" FontSize="36" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+
+            <Label Text="Defina sua senha" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
+            <Label Style="{StaticResource Muted}" HorizontalTextAlignment="Center">
+                <Label.FormattedText>
+                    <FormattedString>
+                        <Span Text="Olá, " />
+                        <Span Text="{Binding PrimeiroNome}" />
+                        <Span Text="! Você entrou com uma senha provisória. Crie a sua senha para continuar." />
+                    </FormattedString>
+                </Label.FormattedText>
+            </Label>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Nova senha" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding NovaSenha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Confirmar nova senha" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Confirmacao}" IsPassword="True" ReturnCommand="{Binding SalvarCommand}" TextColor="{StaticResource OnSurface}" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+
+            <Button Text="Salvar e continuar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+            <Button Text="Sair" Style="{StaticResource GhostButton}" Command="{Binding SairCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

@@ -61,6 +61,12 @@ namespace European.Data
             return await Colecao.Find(Builders<ResultadoProva>.Filter.In(r => r.ProvaId, ids)).ToListAsync();
         }
 
+        public static async Task<ResultadoProva?> PorIdAsync(string id)
+            => await Colecao.Find(r => r.Id == id).FirstOrDefaultAsync();
+
+        public static async Task AtualizarAsync(ResultadoProva resultado)
+            => await Colecao.ReplaceOneAsync(r => r.Id == resultado.Id, resultado);
+
         public static async Task<bool> ExisteAsync(string alunoId, string provaId)
             => await Colecao.Find(r => r.AlunoId == alunoId && r.ProvaId == provaId).AnyAsync();
 

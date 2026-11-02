@@ -8,10 +8,12 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+    <!-- Cabeçalho fixo; só o conteúdo abaixo dele rola -->
+    <Grid RowDefinitions="Auto,*">
+        <controls:Cabecalho Titulo="Acesso do aluno" Margin="20,16,20,12" />
 
-            <controls:Cabecalho Titulo="Acesso do aluno" />
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="20,4,20,28" Spacing="16">
 
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="12">
@@ -31,6 +33,11 @@
                             <Label Text="{Binding StatusDescricao}" Style="{StaticResource BodySm}" />
                         </VerticalStackLayout>
                     </Border>
+                    <!-- Pagamento feito na solicitação de matrícula -->
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" IsVisible="{Binding Pago}">
+                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource Success}" />
+                        <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
                 </VerticalStackLayout>
             </Border>
 
@@ -92,5 +99,6 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
 </ContentPage>

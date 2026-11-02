@@ -20,6 +20,7 @@ namespace European.ViewModels
         public List<Aula> Aulas { get; set; } = new();
         public List<ProvaNode> Provas { get; set; } = new();
         public string Resumo => $"{Aulas.Count} aula(s) · {Provas.Count} prova(s)";
+        public bool SemConteudo => Aulas.Count == 0 && Provas.Count == 0;
     }
 
     public class ModuloNode
@@ -34,7 +35,8 @@ namespace European.ViewModels
     /// </summary>
     public class CursoDetalheViewModel : BaseViewModel
     {
-        private const int ModulosPorPagina = 2;
+        // uma página por módulo, como na aba Aulas do aluno
+        private const int ModulosPorPagina = 1;
 
         private Curso? _curso;
         private string _professoresTexto = string.Empty;
@@ -59,7 +61,28 @@ namespace European.ViewModels
             EditarProvaCommand = new Command<ProvaNode>(async p => await IrAsync("provaedit", new() { ["Prova"] = p.Prova }));
             PaginaAnteriorCommand = new Command(() => MudarPagina(-1));
             PaginaProximaCommand = new Command(() => MudarPagina(1));
+
+            // menus "⋮" e toque nos itens: concentram as ações e deixam a tela limpa
+            OpcoesCursoCommand = new Command(async () => await OpcoesCursoAsync());
+            OpcoesModuloCommand = new Command(async () => await OpcoesModuloAsync());
+            OpcoesMateriaCommand = new Command<MateriaNode>(async m => await OpcoesMateriaAsync(m));
+            OpcoesAulaCommand = new Command<Aula>(async a => await OpcoesAulaAsync(a));
+            AbrirProvaCommand = new Command<ProvaNode>(async p => { if (p?.PodeEditar == true) await IrAsync("provaedit", new() { ["Prova"] = p.Prova }); });
         }
+
+        public ICommand OpcoesCursoCommand { get; }
+        public ICommand OpcoesModuloCommand { get; }
+        public ICommand OpcoesMateriaCommand { get; }
+        public ICommand OpcoesAulaCommand { get; }
+        public ICommand AbrirProvaCommand { get; }
+
+        /// <summary>Módulo exibido na página atual.</summary>
+        public ModuloNode? ModuloAtual => ModulosPagina.FirstOrDefault();
+        public string ModuloAtualTitulo => ModuloAtual?.Modulo.Titulo ?? string.Empty;
+        public bool TemModulos => _todosModulos.Count > 0;
+        public bool SemModulos => !TemModulos;
+        public bool ModuloSemMaterias => ModuloAtual != null && ModuloAtual.Materias.Count == 0;
+        public bool TemOpcoesModulo => PodeEditarEstrutura && ModuloAtual != null;
 
         public Curso? Curso
         {
@@ -85,7 +108,7 @@ namespace European.ViewModels
         public bool TemPaginacao => TotalPaginas > 1;
         public bool PodePaginaAnterior => _indicePagina > 0;
         public bool PodePaginaProxima => _indicePagina < TotalPaginas - 1;
-        public string IndicadorPagina => $"Página {PaginaAtual} de {TotalPaginas}";
+        public string IndicadorPagina => $"{PaginaAtual} / {TotalPaginas}";
 
         public string CargaHorariaFormatada => Curso == null ? string.Empty : $"{Curso.CargaHorariaHoras} horas";
         public string ResumoTexto => Curso == null ? string.Empty : $"{Curso.Modulos.Count} módulos · {Curso.TotalMaterias} matérias · {Curso.TotalAulas} aulas";
@@ -140,6 +163,7 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(PodeEditarEstrutura));
             OnPropertyChanged(nameof(PodeEditarAulas));
             OnPropertyChanged(nameof(PodeCriarProvas));
+            OnPropertyChanged(nameof(TemOpcoesModulo));
         });
 
         private void MontarModulos(List<Prova> provas)
@@ -194,6 +218,82 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(PodePaginaAnterior));
             OnPropertyChanged(nameof(PodePaginaProxima));
             OnPropertyChanged(nameof(IndicadorPagina));
+            OnPropertyChanged(nameof(ModuloAtual));
+            OnPropertyChanged(nameof(ModuloAtualTitulo));
+            OnPropertyChanged(nameof(TemModulos));
+            OnPropertyChanged(nameof(SemModulos));
+            OnPropertyChanged(nameof(ModuloSemMaterias));
+            OnPropertyChanged(nameof(TemOpcoesModulo));
+        }
+
+        private async Task OpcoesCursoAsync()
+        {
+            if (Curso == null || !PodeEditarEstrutura)
+                return;
+
+            var escolha = await Shell.Current.DisplayActionSheet(Curso.Nome, "Cancelar", "Excluir curso", "Editar curso");
+            if (escolha == "Editar curso")
+            {
+                EditarCursoCommand.Execute(null);
+                return;
+            }
+
+            if (escolha != "Excluir curso" ||
+                !await ConfirmarAsync($"Excluir \"{Curso.Nome}\"?\n\nMatrículas, progresso, provas, notas e materiais do curso serão apagados. Certificados já emitidos são mantidos."))
+                return;
+
+            if (await ExecutarAsync(() => CursoRepositorio.ExcluirAsync(Curso.Id)))
+                await VoltarAsync();
+        }
+
+        private async Task OpcoesModuloAsync()
+        {
+            var modulo = ModuloAtual?.Modulo;
+            if (modulo == null || !PodeEditarEstrutura)
+                return;
+
+            var escolha = await Shell.Current.DisplayActionSheet(modulo.Titulo, "Cancelar", "Excluir módulo", "Nova matéria", "Editar módulo");
+            switch (escolha)
+            {
+                case "Nova matéria": NovaMateriaCommand.Execute(modulo); break;
+                case "Editar módulo": EditarModuloCommand.Execute(modulo); break;
+                case "Excluir módulo": await ExcluirModuloAsync(modulo); break;
+            }
+        }
+
+        private async Task OpcoesMateriaAsync(MateriaNode? node)
+        {
+            if (node == null)
+                return;
+
+            var opcoes = new List<string>();
+            if (PodeEditarAulas) opcoes.Add("Nova aula");
+            if (PodeCriarProvas) opcoes.Add("Nova prova");
+            if (PodeEditarEstrutura) opcoes.Add("Editar matéria");
+            if (opcoes.Count == 0 && !PodeEditarEstrutura)
+                return;
+
+            var escolha = await Shell.Current.DisplayActionSheet(node.Materia.Nome, "Cancelar",
+                PodeEditarEstrutura ? "Excluir matéria" : null, opcoes.ToArray());
+            switch (escolha)
+            {
+                case "Nova aula": NovaAulaCommand.Execute(node.Materia); break;
+                case "Nova prova": NovaProvaCommand.Execute(node.Materia); break;
+                case "Editar matéria": EditarMateriaCommand.Execute(node.Materia); break;
+                case "Excluir matéria": await ExcluirMateriaAsync(node.Materia); break;
+            }
+        }
+
+        private async Task OpcoesAulaAsync(Aula? aula)
+        {
+            if (aula == null || !PodeEditarAulas)
+                return;
+
+            var escolha = await Shell.Current.DisplayActionSheet(aula.Titulo, "Cancelar", "Excluir aula", "Editar aula");
+            if (escolha == "Editar aula")
+                EditarAulaCommand.Execute(aula);
+            else if (escolha == "Excluir aula")
+                await ExcluirAulaAsync(aula);
         }
 
         private static Task IrAsync(string rota, Dictionary<string, object> parametros)

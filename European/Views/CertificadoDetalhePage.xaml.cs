@@ -1,4 +1,5 @@
 using European.Models;
+using European.Services;
 using European.ViewModels;
 
 namespace European.Views
@@ -23,16 +24,19 @@ namespace European.Views
         private async void OnBaixarClicked(object sender, EventArgs e)
         {
             var certificado = _viewModel.Certificado;
-            if (certificado?.UrlPdf is null)
+            if (certificado == null)
                 return;
 
             try
             {
-                await Launcher.Default.OpenAsync(certificado.UrlPdf);
+                var caminho = await CertificadoPdf.BaixarAsync(certificado);
+                if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                    await DisplayAlert("Certificado", $"PDF salvo em:\n{caminho}", "OK");
             }
-            catch
+            catch (Exception ex)
             {
-                await DisplayAlert("Certificado", "Download indisponível no ambiente de teste.", "OK");
+                CrashLogger.Registrar(nameof(CertificadoDetalhePage), ex);
+                await DisplayAlert("Certificado", $"Não foi possível gerar o PDF: {ex.Message}", "OK");
             }
         }
     }

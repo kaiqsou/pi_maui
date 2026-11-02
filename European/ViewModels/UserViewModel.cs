@@ -7,8 +7,35 @@ using European.Services;
 
 namespace European.ViewModels
 {
+    /// <summary>Curso oferecido na tela de cadastro, com o estado de seleção.</summary>
+    public class CursoCadastroItem : BaseViewModel
+    {
+        private bool _selecionado;
+
+        public Curso Curso { get; init; } = new();
+        public string Nome => Curso.Nome;
+        public string Descricao => Curso.Descricao;
+        public bool TemDescricao => !string.IsNullOrWhiteSpace(Curso.Descricao);
+        public string PrecoTexto => Curso.Preco <= 0 ? "Gratuito" : Curso.Preco.ToString("C", PagamentoViewModel.PtBr);
+        public string CargaTexto => Curso.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras} horas" : string.Empty;
+
+        public bool Selecionado
+        {
+            get => _selecionado;
+            set => SetProperty(ref _selecionado, value);
+        }
+    }
+
     public class UserViewModel : BaseViewModel
     {
+        /// <summary>Cursos por página na etapa de escolha do curso.</summary>
+        private const int CursosPorPagina = 4;
+
+        private List<CursoCadastroItem> _cursos = new();
+        private CursoCadastroItem? _cursoSelecionado;
+        private IReadOnlyList<CursoCadastroItem> _cursosPagina = new List<CursoCadastroItem>();
+        private int _indicePagina;
+        private int _etapa = 1;
         private string _nome = string.Empty;
         private string _email = string.Empty;
         private string _senha = string.Empty;
@@ -19,11 +46,17 @@ namespace European.ViewModels
         public UserViewModel()
         {
             LoginCommand = new Command(async () => await LoginAsync());
-            CadastroCommand = new Command(async () => await CadastrarAsync(Roles.Aluno));
-            ConfigurarCoordenacaoCommand = new Command(async () => await CadastrarAsync(Roles.Coordenador));
+            CadastroCommand = new Command(async () => await EnviarSolicitacaoAsync());
+            ConfigurarCoordenacaoCommand = new Command(async () => await ConfigurarCoordenacaoAsync());
             IrParaCadastroCommand = new Command(async () => await Shell.Current.GoToAsync("cadastro"));
             IrParaPrimeiroAcessoCommand = new Command(async () => await Shell.Current.GoToAsync("primeiroacesso"));
             IrParaLoginCommand = new Command(async () => await Shell.Current.GoToAsync("//login"));
+            AvancarEtapaCommand = new Command(async () => await AvancarEtapaAsync());
+            VoltarEtapaCommand = new Command(() => Etapa = 1);
+            SelecionarCursoCommand = new Command<CursoCadastroItem>(SelecionarCurso);
+            VerDetalhesCommand = new Command<CursoCadastroItem>(async item => await VerDetalhesAsync(item));
+            PaginaAnteriorCommand = new Command(() => MudarPagina(-1));
+            PaginaProximaCommand = new Command(() => MudarPagina(1));
             Title = "Acesso";
         }
 
@@ -51,12 +84,67 @@ namespace European.ViewModels
             set => SetProperty(ref _precisaConfigurar, value);
         }
 
+        // ---- Etapas do cadastro: 1 = seus dados, 2 = escolha do curso ----
+
+        public int Etapa
+        {
+            get => _etapa;
+            private set
+            {
+                if (SetProperty(ref _etapa, value))
+                {
+                    Mensagem = string.Empty;
+                    OnPropertyChanged(nameof(EtapaDados));
+                    OnPropertyChanged(nameof(EtapaCurso));
+                    OnPropertyChanged(nameof(EtapaTexto));
+                    OnPropertyChanged(nameof(EtapaTitulo));
+                }
+            }
+        }
+
+        public bool EtapaDados => Etapa == 1;
+        public bool EtapaCurso => Etapa == 2;
+        public string EtapaTexto => $"Etapa {Etapa} de 2";
+        public string EtapaTitulo => Etapa == 1 ? "Seus dados" : "Escolha o curso";
+
+        // ---- Cursos (etapa 2), paginados ----
+
+        public List<CursoCadastroItem> Cursos
+        {
+            get => _cursos;
+            private set
+            {
+                if (SetProperty(ref _cursos, value))
+                    OnPropertyChanged(nameof(SemCursos));
+            }
+        }
+
+        public bool SemCursos => Cursos.Count == 0;
+
+        public IReadOnlyList<CursoCadastroItem> CursosPagina
+        {
+            get => _cursosPagina;
+            private set => SetProperty(ref _cursosPagina, value);
+        }
+
+        public int TotalPaginas => Math.Max(1, (int)Math.Ceiling(Cursos.Count / (double)CursosPorPagina));
+        public bool TemPaginacao => TotalPaginas > 1;
+        public bool PodePaginaAnterior => _indicePagina > 0;
+        public bool PodePaginaProxima => _indicePagina < TotalPaginas - 1;
+        public string IndicadorPagina => $"{_indicePagina + 1} / {TotalPaginas}";
+
         public ICommand LoginCommand { get; }
         public ICommand CadastroCommand { get; }
         public ICommand ConfigurarCoordenacaoCommand { get; }
         public ICommand IrParaCadastroCommand { get; }
         public ICommand IrParaPrimeiroAcessoCommand { get; }
         public ICommand IrParaLoginCommand { get; }
+        public ICommand AvancarEtapaCommand { get; }
+        public ICommand VoltarEtapaCommand { get; }
+        public ICommand SelecionarCursoCommand { get; }
+        public ICommand VerDetalhesCommand { get; }
+        public ICommand PaginaAnteriorCommand { get; }
+        public ICommand PaginaProximaCommand { get; }
 
         public async Task VerificarConfiguracaoAsync()
         {
@@ -74,6 +162,78 @@ namespace European.ViewModels
             }
         }
 
+        public async Task CarregarCursosAsync()
+        {
+            try
+            {
+                await MongoContext.InicializarAsync();
+                var cursos = (await CursoRepositorio.ListarAsync()).Where(c => c.IsPublicado).ToList();
+                Cursos = cursos.Select(c => new CursoCadastroItem { Curso = c }).ToList();
+                _indicePagina = 0;
+                AplicarPagina();
+
+                // com um único curso (o mestrado), ele já vem marcado
+                if (Cursos.Count == 1)
+                    SelecionarCurso(Cursos[0]);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(CarregarCursosAsync), ex);
+                Mensagem = "Sem conexão com o banco de dados. Verifique se o MongoDB está em execução.";
+            }
+        }
+
+        /// <summary>Chamado ao voltar da página de detalhes com "Escolher este curso".</summary>
+        public void SelecionarCursoPorId(string cursoId)
+        {
+            var item = Cursos.FirstOrDefault(c => c.Curso.Id == cursoId);
+            if (item == null)
+                return;
+
+            SelecionarCurso(item);
+            _indicePagina = Cursos.IndexOf(item) / CursosPorPagina;
+            AplicarPagina();
+        }
+
+        private void SelecionarCurso(CursoCadastroItem? item)
+        {
+            if (item == null)
+                return;
+
+            foreach (var curso in Cursos)
+                curso.Selecionado = ReferenceEquals(curso, item);
+            _cursoSelecionado = item;
+            Mensagem = string.Empty;
+        }
+
+        private static async Task VerDetalhesAsync(CursoCadastroItem? item)
+        {
+            if (item != null)
+                await Shell.Current.GoToAsync("cursoinfo", new Dictionary<string, object> { ["Curso"] = item.Curso });
+        }
+
+        private void MudarPagina(int delta)
+        {
+            var novo = _indicePagina + delta;
+            if (novo < 0 || novo >= TotalPaginas)
+                return;
+
+            _indicePagina = novo;
+            AplicarPagina();
+        }
+
+        private void AplicarPagina()
+        {
+            CursosPagina = Cursos.Skip(_indicePagina * CursosPorPagina).Take(CursosPorPagina).ToList();
+            OnPropertyChanged(nameof(TotalPaginas));
+            OnPropertyChanged(nameof(TemPaginacao));
+            OnPropertyChanged(nameof(PodePaginaAnterior));
+            OnPropertyChanged(nameof(PodePaginaProxima));
+            OnPropertyChanged(nameof(IndicadorPagina));
+        }
+
+        // ---- Login ----
+
         private async Task LoginAsync()
         {
             if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Senha))
@@ -87,39 +247,121 @@ namespace European.ViewModels
                 await MongoContext.InicializarAsync();
                 var usuario = await UsuarioRepositorio.PorEmailAsync(Email);
 
-                if (usuario == null || !SenhaService.Verificar(Senha, usuario.SenhaHash))
+                if (usuario != null && SenhaService.Verificar(Senha, usuario.SenhaHash))
                 {
-                    Mensagem = "E-mail ou senha inválidos.";
+                    Mensagem = string.Empty;
+                    Senha = string.Empty;
+                    await AcessoService.EntrarAsync(usuario);
+                    return;
+                }
+
+                // ainda não é usuário: pode ser um candidato com solicitação em andamento
+                var solicitacao = usuario == null ? await SolicitacaoRepositorio.PorEmailAsync(Email) : null;
+                if (solicitacao != null && SenhaService.Verificar(Senha, solicitacao.SenhaHash))
+                {
+                    Mensagem = string.Empty;
+                    Senha = string.Empty;
+                    await AcessoService.EntrarCandidatoAsync(solicitacao);
+                    return;
+                }
+
+                Mensagem = "E-mail ou senha inválidos.";
+            });
+        }
+
+        // ---- Cadastro do aluno (vira solicitação; a conta só é criada quando a coordenação libera) ----
+
+        private async Task AvancarEtapaAsync()
+        {
+            if (!DadosValidos())
+                return;
+
+            var disponivel = false;
+            if (!await ExecutarAsync(async () =>
+                {
+                    await MongoContext.InicializarAsync();
+                    disponivel = await UsuarioRepositorio.PorEmailAsync(Email) == null
+                                 && await SolicitacaoRepositorio.PorEmailAsync(Email) == null;
+                }))
+                return;
+
+            if (!disponivel)
+            {
+                Mensagem = "Este e-mail já está cadastrado ou tem uma solicitação em andamento. Faça login.";
+                return;
+            }
+
+            Etapa = 2;
+        }
+
+        private async Task EnviarSolicitacaoAsync()
+        {
+            if (!DadosValidos())
+            {
+                Etapa = 1;
+                return;
+            }
+
+            if (_cursoSelecionado == null)
+            {
+                Mensagem = "Escolha o curso que deseja fazer.";
+                return;
+            }
+
+            await ExecutarAsync(async () =>
+            {
+                var solicitacao = new SolicitacaoMatricula
+                {
+                    Nome = Nome,
+                    Email = Email,
+                    SenhaHash = SenhaService.GerarHash(Senha),
+                    CursoId = _cursoSelecionado.Curso.Id
+                };
+
+                if (!await SolicitacaoRepositorio.InserirAsync(solicitacao))
+                {
+                    Mensagem = "Este e-mail já está cadastrado ou tem uma solicitação em andamento. Faça login.";
                     return;
                 }
 
                 Mensagem = string.Empty;
                 Senha = string.Empty;
-                await AcessoService.EntrarAsync(usuario);
+                await AcessoService.EntrarCandidatoAsync(solicitacao);
             });
         }
 
-        private async Task CadastrarAsync(Roles role)
+        private bool DadosValidos()
         {
             if (string.IsNullOrWhiteSpace(Nome) || string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Senha))
             {
                 Mensagem = "Informe nome, e-mail e senha.";
-                return;
+                return false;
             }
 
             if (!EmailValido(Email))
             {
                 Mensagem = "Informe um e-mail válido.";
-                return;
+                return false;
             }
 
             if (!SenhaService.EhValida(Senha, out var erroSenha))
             {
                 Mensagem = erroSenha;
-                return;
+                return false;
             }
 
-            if (role == Roles.Coordenador && Senha != ConfirmacaoSenha)
+            Mensagem = string.Empty;
+            return true;
+        }
+
+        // ---- Primeira conta da coordenação ----
+
+        private async Task ConfigurarCoordenacaoAsync()
+        {
+            if (!DadosValidos())
+                return;
+
+            if (Senha != ConfirmacaoSenha)
             {
                 Mensagem = "As senhas não conferem.";
                 return;
@@ -130,7 +372,7 @@ namespace European.ViewModels
                 await MongoContext.InicializarAsync();
 
                 // A conta inicial da coordenação só pode ser criada enquanto não houver nenhuma.
-                if (role == Roles.Coordenador && await UsuarioRepositorio.ExisteCoordenacaoAsync())
+                if (await UsuarioRepositorio.ExisteCoordenacaoAsync())
                 {
                     Mensagem = "A coordenação já foi configurada. Faça login.";
                     return;
@@ -141,8 +383,8 @@ namespace European.ViewModels
                     Nome = Nome,
                     Email = Email,
                     SenhaHash = SenhaService.GerarHash(Senha),
-                    Roles = role,
-                    StatusAcesso = role == Roles.Coordenador ? StatusAcesso.Liberado : StatusAcesso.Pendente
+                    Roles = Roles.Coordenador,
+                    StatusAcesso = StatusAcesso.Liberado
                 };
 
                 if (!await UsuarioRepositorio.InserirAsync(usuario))

@@ -11,42 +11,129 @@
     <ScrollView>
         <VerticalStackLayout Padding="28,32,28,28" Spacing="18">
 
-            <Label Text="Criar conta" Style="{StaticResource TitleLg}" />
-            <Label Text="Preencha seus dados. Depois do cadastro, a coordenação libera o seu acesso ao curso."
-                   Style="{StaticResource Muted}" />
-
-            <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
-                <Label Text="Nome completo" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Nome}" Placeholder="Seu nome" TextColor="{StaticResource OnSurface}" />
-                </Border>
+            <VerticalStackLayout Spacing="6">
+                <Label Text="{Binding EtapaTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource BrandPrimary}" FontFamily="OpenSansSemibold" />
+                <Label Text="{Binding EtapaTitulo}" Style="{StaticResource TitleLg}" />
+                <!-- indicador das etapas -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="6" Margin="0,4,0,0">
+                    <BoxView Grid.Column="0" HeightRequest="4" CornerRadius="2" Color="{StaticResource BrandPrimary}" />
+                    <BoxView Grid.Column="1" HeightRequest="4" CornerRadius="2" Color="{StaticResource Outline}">
+                        <BoxView.Triggers>
+                            <DataTrigger TargetType="BoxView" Binding="{Binding EtapaCurso}" Value="True">
+                                <Setter Property="Color" Value="{StaticResource BrandPrimary}" />
+                            </DataTrigger>
+                        </BoxView.Triggers>
+                    </BoxView>
+                </Grid>
             </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="E-mail" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
-                </Border>
+            <!-- Etapa 1: dados pessoais -->
+            <VerticalStackLayout Spacing="18" IsVisible="{Binding EtapaDados}">
+                <Label Text="Informe seus dados de acesso. Sua conta só é criada depois que a coordenação liberar a matrícula."
+                       Style="{StaticResource Muted}" />
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Nome completo" Style="{StaticResource BodySm}" />
+                    <Border Style="{StaticResource Campo}">
+                        <Entry Text="{Binding Nome}" Placeholder="Seu nome" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="E-mail" Style="{StaticResource BodySm}" />
+                    <Border Style="{StaticResource Campo}">
+                        <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Senha" Style="{StaticResource BodySm}" />
+                    <Border Style="{StaticResource Campo}">
+                        <Entry Text="{Binding Senha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+
+                <Button Text="Continuar" Style="{StaticResource PrimaryButton}" Command="{Binding AvancarEtapaCommand}" Margin="0,8,0,0"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                <Button Text="Já tenho conta? Entrar" Style="{StaticResource GhostButton}" Command="{Binding IrParaLoginCommand}" />
             </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Senha" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Senha}" Placeholder="••••••" IsPassword="True" TextColor="{StaticResource OnSurface}" />
-                </Border>
+            <!-- Etapa 2: escolha do curso (paginada) -->
+            <VerticalStackLayout Spacing="14" IsVisible="{Binding EtapaCurso}">
+                <Label Text="Toque em um curso para escolher. Use &quot;Ver detalhes&quot; para saber mais antes de comprar."
+                       Style="{StaticResource Muted}" />
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding CursosPagina}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CursoCadastroItem">
+                            <Border Style="{StaticResource Card}" Padding="14" StrokeShape="RoundRectangle 14">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Selecionado}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
+                                        <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                        <Setter Property="StrokeThickness" Value="1.5" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UserViewModel}}, Path=SelecionarCursoCommand, x:DataType=vm:UserViewModel}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Grid Grid.Column="0" VerticalOptions="Center">
+                                            <Label Text="&#xe836;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}"
+                                                   IsVisible="{Binding Selecionado, Converter={StaticResource InverseBool}}" />
+                                            <Label Text="&#xe837;" Style="{StaticResource IconPrimary}" IsVisible="{Binding Selecionado}" />
+                                        </Grid>
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                            <Label Text="{Binding CargaTexto}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="2" Text="{Binding PrecoTexto}" FontFamily="OpenSansSemibold" FontSize="15"
+                                               TextColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                                    </Grid>
+                                    <Label Text="{Binding Descricao}" Style="{StaticResource BodySm}" MaxLines="2"
+                                           LineBreakMode="TailTruncation" IsVisible="{Binding TemDescricao}" />
+                                    <Label Text="Ver detalhes" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold"
+                                           TextColor="{StaticResource BrandPrimary}" HorizontalOptions="Start">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UserViewModel}}, Path=VerDetalhesCommand, x:DataType=vm:UserViewModel}"
+                                                CommandParameter="{Binding .}" />
+                                        </Label.GestureRecognizers>
+                                    </Label>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Label Text="Nenhum curso com inscrições abertas no momento." Style="{StaticResource Muted}"
+                       IsVisible="{Binding SemCursos}" />
+
+                <!-- paginação: só aparece quando houver mais de uma página de cursos -->
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" IsVisible="{Binding TemPaginacao}">
+                    <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
+                            WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                            BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                            IsEnabled="{Binding PodePaginaAnterior}" Command="{Binding PaginaAnteriorCommand}" />
+                    <Label Grid.Column="1" Text="{Binding IndicadorPagina}" Style="{StaticResource BodySm}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
+                            WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                            BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                            IsEnabled="{Binding PodePaginaProxima}" Command="{Binding PaginaProximaCommand}" />
+                </Grid>
+
+                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+
+                <Button Text="Continuar para o pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding CadastroCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                <Button Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}" />
             </VerticalStackLayout>
-
-            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}"
-                   TextColor="{StaticResource Danger}" FontSize="13" />
-
-            <Button Text="Cadastrar" Style="{StaticResource PrimaryButton}"
-                    Command="{Binding CadastroCommand}" Margin="0,8,0,0" />
-
-            <Button Text="Já tenho conta? Entrar" Style="{StaticResource GhostButton}"
-                    Command="{Binding IrParaLoginCommand}" />
 
         </VerticalStackLayout>
     </ScrollView>

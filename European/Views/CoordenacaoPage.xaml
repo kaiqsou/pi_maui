@@ -11,7 +11,7 @@
     <ContentPage.Resources>
         <!-- Item de pessoa (aluno/professor) com chip de status -->
         <DataTemplate x:Key="PessoaTemplate" x:DataType="vm:PessoaItem">
-            <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="14">
+            <Border Style="{StaticResource Card}" Margin="20,0,20,10" Padding="14">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding Abrir}" CommandParameter="{Binding .}" />
                 </Border.GestureRecognizers>
@@ -63,59 +63,58 @@
             </Border>
         </Grid>
 
+        <!--
+            Em cada aba o cabeçalho fica fixo e só a lista rola. A margem lateral fica nos itens,
+            para a barra de rolagem ficar na borda e não passar por cima dos cards.
+        -->
+
         <!-- Cursos -->
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Cursos}" SelectionMode="None" IsVisible="{Binding MostrarCursos}" Margin="20,8,20,0">
-            <CollectionView.Header>
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Cursos" Style="{StaticResource TitleSm}" />
-                        <Label Text="Crie e organize módulos e matérias." Style="{StaticResource BodySm}" />
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarCursos}">
+            <Grid ColumnDefinitions="*,Auto" Margin="20,0">
+                <Label Text="Cursos" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                <Button Grid.Column="1" Text="Novo curso" Style="{StaticResource SoftButton}" Command="{Binding NovoCursoCommand}" VerticalOptions="Center" />
+            </Grid>
+            <CollectionView Grid.Row="1" ItemsSource="{Binding Cursos}" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:CursoResumo">
+                        <Border Style="{StaticResource Card}" Margin="20,0,20,10" Padding="14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CoordenacaoViewModel}}, Path=AbrirCursoCommand, x:DataType=vm:CoordenacaoViewModel}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                                <Border Style="{StaticResource IconTile}" VerticalOptions="Center">
+                                    <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" MaxLines="2" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Estrutura}" Style="{StaticResource BodySm}" />
+                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
+                        <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
+                        <Label Text="Nenhum curso criado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Novo curso" Style="{StaticResource SoftButton}" Command="{Binding NovoCursoCommand}" VerticalOptions="Center" />
-                </Grid>
-            </CollectionView.Header>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="vm:CursoResumo">
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CoordenacaoViewModel}}, Path=AbrirCursoCommand, x:DataType=vm:CoordenacaoViewModel}"
-                                                  CommandParameter="{Binding .}" />
-                        </Border.GestureRecognizers>
-                        <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
-                            <Border Style="{StaticResource IconTile}">
-                                <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
-                                <Label Text="{Binding Estrutura}" Style="{StaticResource BodySm}" />
-                                <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
-                            </VerticalStackLayout>
-                            <Button Grid.Column="2" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}" VerticalOptions="Start"
-                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CoordenacaoViewModel}}, Path=ExcluirCursoCommand, x:DataType=vm:CoordenacaoViewModel}"
-                                    CommandParameter="{Binding .}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </Grid>
 
         <!-- Alunos -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12" Padding="20,8,20,0" IsVisible="{Binding MostrarAlunos}">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Alunos" Style="{StaticResource TitleSm}" />
-                    <Label Text="Libere o acesso pelo e-mail cadastrado." Style="{StaticResource BodySm}" />
-                </VerticalStackLayout>
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarAlunos}">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="20,0">
+                <Label Text="Alunos" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                <Button Grid.Column="1" Text="Liberar" Style="{StaticResource SoftButton}" ToolTipProperties.Text="Liberar acesso pelo e-mail"
+                        Command="{Binding LiberarPorEmailCommand}" VerticalOptions="Center" />
+                <Button Grid.Column="2" Text="Nova conta" Style="{StaticResource SoftButton}" Command="{Binding CriarContaAlunoCommand}" VerticalOptions="Center" />
             </Grid>
 
-            <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="10">
-                <Button Text="Liberar por e-mail" Style="{StaticResource PrimaryButton}" FontSize="13" MinimumHeightRequest="42" Padding="8"
-                        Command="{Binding LiberarPorEmailCommand}" />
-                <Button Grid.Column="1" Text="Criar conta" Style="{StaticResource GhostButton}" FontSize="13" MinimumHeightRequest="42" Padding="8"
-                        Command="{Binding CriarContaAlunoCommand}" />
-            </Grid>
-
-            <VerticalStackLayout Grid.Row="2" Spacing="10">
+            <VerticalStackLayout Grid.Row="1" Spacing="10" Margin="20,0">
                 <Border Style="{StaticResource Campo}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                         <Label Text="&#xe8b6;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource OnSurfaceVariant}" />
@@ -150,7 +149,7 @@
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
-            <CollectionView Grid.Row="3" ItemsSource="{Binding Alunos}" SelectionMode="None" ItemTemplate="{StaticResource PessoaTemplate}">
+            <CollectionView Grid.Row="2" ItemsSource="{Binding Alunos}" SelectionMode="None" ItemTemplate="{StaticResource PessoaTemplate}">
                 <CollectionView.EmptyView>
                     <VerticalStackLayout Spacing="8" Padding="0,30" HorizontalOptions="Center">
                         <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
@@ -161,25 +160,21 @@
         </Grid>
 
         <!-- Professores -->
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Professores}" SelectionMode="None" IsVisible="{Binding MostrarProfessores}" Margin="20,8,20,0"
-                        ItemTemplate="{StaticResource PessoaTemplate}">
-            <CollectionView.Header>
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
-                    <VerticalStackLayout Spacing="2">
-                        <Label Text="Professores" Style="{StaticResource TitleSm}" />
-                        <Label Text="Acesso ao app e cursos de cada professor." Style="{StaticResource BodySm}" />
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarProfessores}">
+            <Grid ColumnDefinitions="*,Auto" Margin="20,0">
+                <Label Text="Professores" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                <Button Grid.Column="1" Text="Adicionar" Style="{StaticResource SoftButton}" Command="{Binding AdicionarProfessorCommand}" VerticalOptions="Center" />
+            </Grid>
+            <CollectionView Grid.Row="1" ItemsSource="{Binding Professores}" SelectionMode="None" ItemTemplate="{StaticResource PessoaTemplate}">
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
+                        <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
+                        <Label Text="Nenhum professor cadastrado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
+                        <Label Text="Use Adicionar para criar ou liberar a conta de um professor." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Adicionar" Style="{StaticResource SoftButton}" Command="{Binding AdicionarProfessorCommand}" VerticalOptions="Center" />
-                </Grid>
-            </CollectionView.Header>
-            <CollectionView.EmptyView>
-                <VerticalStackLayout Spacing="8" Padding="0,40" HorizontalOptions="Center">
-                    <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                    <Label Text="Nenhum professor cadastrado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                    <Label Text="Use Adicionar para criar ou liberar a conta de um professor." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </CollectionView.EmptyView>
-        </CollectionView>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </Grid>
 
         <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}"
                            VerticalOptions="Start" HeightRequest="24" />

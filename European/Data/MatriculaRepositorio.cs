@@ -1,5 +1,6 @@
 using European.Enums;
 using European.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace European.Data
@@ -22,6 +23,13 @@ namespace European.Data
 
         public static async Task<List<Matricula>> AtivasDoAlunoAsync(string alunoId)
             => (await DoAlunoAsync(alunoId)).Where(m => m.Status == StatusMatricula.Ativa).ToList();
+
+        /// <summary>Matrículas cujo conteúdo o aluno ainda consulta: ativas primeiro, depois as concluídas dentro da validade.</summary>
+        public static async Task<List<Matricula>> ComConteudoDoAlunoAsync(string alunoId)
+            => (await DoAlunoAsync(alunoId))
+                .Where(m => m.AcessoAulasVigente)
+                .OrderBy(m => m.Status == StatusMatricula.Ativa ? 0 : 1)
+                .ToList();
 
         public static async Task<List<Matricula>> DosAlunosAsync(IEnumerable<string> alunoIds)
         {
@@ -85,11 +93,16 @@ namespace European.Data
     {
         private static IMongoCollection<Certificado> Colecao => MongoContext.Certificados;
 
+        // Versões antigas emitiam certificados por matéria (campo MateriaId); só o certificado final do curso vale.
+        private static readonly FilterDefinition<Certificado> SomenteFinal =
+            Builders<Certificado>.Filter.Eq("MateriaId", BsonNull.Value);
+
         public static async Task<List<Certificado>> DoAlunoAsync(string alunoId)
-            => await Colecao.Find(c => c.AlunoId == alunoId).SortByDescending(c => c.EmitidoEm).ToListAsync();
+            => await Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.AlunoId, alunoId) & SomenteFinal)
+                .SortByDescending(c => c.EmitidoEm).ToListAsync();
 
         public static async Task<bool> ExisteParaMatriculaAsync(string matriculaId)
-            => await Colecao.Find(c => c.MatriculaId == matriculaId).AnyAsync();
+            => await Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.MatriculaId, matriculaId) & SomenteFinal).AnyAsync();
 
         public static async Task InserirAsync(Certificado certificado)
         {

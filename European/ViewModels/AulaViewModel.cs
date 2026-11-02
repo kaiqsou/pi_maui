@@ -36,7 +36,7 @@ namespace European.ViewModels
                 {
                     OnPropertyChanged(nameof(DuracaoFormatada));
                     OnPropertyChanged(nameof(MateriaNome));
-                    OnPropertyChanged(nameof(VideoSource));
+                    // VideoSource é notificado em AtualizarProgresso, depois de saber o minuto em que o aluno parou
                 }
             }
         }
@@ -255,6 +255,7 @@ namespace European.ViewModels
 
             _duracaoSegundos = 0;
             OnPropertyChanged(nameof(DuracaoFormatada));
+            OnPropertyChanged(nameof(VideoSource));
         }
 
         private async Task CarregarMateriaisAsync()

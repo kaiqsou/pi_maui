@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
@@ -8,11 +8,12 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollView>
-            <VerticalStackLayout Padding="20,16,20,24" Spacing="16">
+    <!-- Cabeçalho fixo; só o conteúdo abaixo dele rola -->
+    <Grid RowDefinitions="Auto,*,Auto">
+        <controls:Cabecalho Titulo="Professor" Margin="20,16,20,12" />
 
-                <controls:Cabecalho Titulo="Professor" />
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20,4,20,24" Spacing="16">
 
                 <Border Style="{StaticResource Card}">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
@@ -34,22 +35,80 @@
                     </Grid>
                 </Border>
 
-                <VerticalStackLayout Spacing="2">
+                <Label Text="{Binding ResumoTexto}" Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+
+                <!-- Cursos: o professor só cadastra aulas e provas nos cursos marcados -->
+                <VerticalStackLayout Spacing="8">
                     <Label Text="Cursos que leciona" Style="{StaticResource TitleSm}" />
-                    <Label Text="O professor só cadastra aulas e provas nos cursos marcados." Style="{StaticResource BodySm}" />
+                    <Border Style="{StaticResource Card}" Padding="14,4">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Cursos}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CursoAtribuicao">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="0,6">
+                                        <Label Text="{Binding Nome}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
+                                        <Switch Grid.Column="1" IsToggled="{Binding Atribuido}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Cursos}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:CursoAtribuicao">
-                            <Border Style="{StaticResource Card}" Padding="14,10">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                    <Label Text="{Binding Nome}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                                    <Switch Grid.Column="1" IsToggled="{Binding Atribuido}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                <!-- Turmas criadas pelo professor -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Turmas" Style="{StaticResource TitleSm}" />
+                    <Border Style="{StaticResource Card}" Padding="14,4" IsVisible="{Binding TemTurmas}">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Turmas}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:TurmaResumo">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="0,8">
+                                        <Label Text="&#xe7ef;" Style="{StaticResource IconPrimary}" FontSize="20" VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                            <Label Text="{Binding Nome}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                                            <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Label Text="Nenhuma turma criada." Style="{StaticResource Muted}"
+                           IsVisible="{Binding TemTurmas, Converter={StaticResource InverseBool}}" />
+                </VerticalStackLayout>
+
+                <!-- Provas criadas pelo professor; toque abre as notas -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Provas" Style="{StaticResource TitleSm}" />
+                    <Border Style="{StaticResource Card}" Padding="14,4" IsVisible="{Binding TemProvas}">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Provas}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ProvaDoProfessor">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="0,8">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorAcessoViewModel}}, Path=AbrirProvaCommand, x:DataType=vm:ProfessorAcessoViewModel}"
+                                                CommandParameter="{Binding .}" />
+                                        </Grid.GestureRecognizers>
+                                        <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="20" TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                            <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                                            <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Center" BackgroundColor="{StaticResource Outline}">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Publicada}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource SuccessSoft}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Label Text="{Binding StatusTexto}" FontFamily="OpenSansSemibold" FontSize="11" TextColor="{StaticResource OnSurface}" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Label Text="Nenhuma prova criada." Style="{StaticResource Muted}"
+                           IsVisible="{Binding TemProvas, Converter={StaticResource InverseBool}}" />
                 </VerticalStackLayout>
 
                 <Button Text="Redefinir senha" Style="{StaticResource GhostButton}" Command="{Binding RedefinirSenhaCommand}" />
@@ -66,7 +125,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" RowDefinitions="Auto,Auto">
+        <Grid Grid.Row="2" RowDefinitions="Auto,Auto">
             <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
             <Button Grid.Row="1" Text="Salvar cursos" Style="{StaticResource PrimaryButton}" Margin="20,12,20,16"
                     Command="{Binding SalvarCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />

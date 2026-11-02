@@ -12,6 +12,10 @@ namespace European.ViewModels
         public double Media { get; set; }
         public double Progresso { get; set; }
         public bool Aprovado { get; set; }
+        public bool Reprovado { get; set; }
+
+        /// <summary>"Aprovado", "Abaixo da nota de corte" ou quantas provas da matéria já foram corrigidas.</summary>
+        public string SituacaoTexto { get; set; } = string.Empty;
     }
 
     public class ResultadoItem
@@ -21,17 +25,30 @@ namespace European.ViewModels
         public double Nota { get; set; }
         public string AcertosTexto { get; set; } = string.Empty;
         public bool Aprovado { get; set; }
+        public bool Corrigida { get; set; }
         public string Data => DataRealizacao.ToString("dd/MM/yyyy");
         public DateTime DataRealizacao { get; set; }
+
+        /// <summary>Nota só aparece depois da correção do professor.</summary>
+        public string NotaTexto => Corrigida ? Nota.ToString("0.0") : "—";
+
+        /// <summary>Comentários do professor nas questões ("Questão 2: …").</summary>
+        public string ComentariosTexto { get; set; } = string.Empty;
+        public bool TemComentarios => !string.IsNullOrEmpty(ComentariosTexto);
 
         public static ResultadoItem De(ResultadoProva resultado, Prova? prova) => new()
         {
             ProvaTitulo = prova?.Titulo ?? "Avaliação",
             MateriaNome = prova?.Materia?.Nome ?? string.Empty,
             Nota = resultado.NotaObtida,
-            AcertosTexto = $"{resultado.Acertos}/{resultado.TotalQuestoes} acertos",
-            Aprovado = resultado.NotaObtida >= (prova?.NotaCorte ?? ProgressoService.NotaCortePadrao),
-            DataRealizacao = resultado.DataRealizacao
+            Corrigida = resultado.Corrigida,
+            AcertosTexto = resultado.Corrigida ? "Corrigida" : "Aguardando correção do professor",
+            Aprovado = resultado.Corrigida && resultado.NotaObtida >= (prova?.NotaCorte ?? ProgressoService.NotaCortePadrao),
+            DataRealizacao = resultado.DataRealizacao,
+            ComentariosTexto = !resultado.Corrigida ? string.Empty : string.Join("\n", resultado.Comentarios
+                .Select((c, i) => (Comentario: c?.Trim() ?? string.Empty, Numero: i + 1))
+                .Where(c => c.Comentario.Length > 0)
+                .Select(c => $"Questão {c.Numero}: {c.Comentario}"))
         };
     }
 
@@ -40,7 +57,6 @@ namespace European.ViewModels
         private double _mediaGeral;
         private bool _aprovado;
         private ObservableCollection<MateriaDesempenho> _materias = new();
-        private ObservableCollection<ResultadoItem> _resultados = new();
 
         public DesempenhoViewModel()
         {
@@ -50,14 +66,14 @@ namespace European.ViewModels
         public ObservableCollection<MateriaDesempenho> Materias
         {
             get => _materias;
-            private set => SetProperty(ref _materias, value);
+            private set
+            {
+                if (SetProperty(ref _materias, value))
+                    OnPropertyChanged(nameof(SemMaterias));
+            }
         }
 
-        public ObservableCollection<ResultadoItem> Resultados
-        {
-            get => _resultados;
-            private set => SetProperty(ref _resultados, value);
-        }
+        public bool SemMaterias => Materias.Count == 0;
 
         public double MediaGeral
         {
@@ -81,14 +97,19 @@ namespace European.ViewModels
         {
             var aluno = SessionService.UsuarioAtual;
             var materias = new ObservableCollection<MateriaDesempenho>();
-            var resultados = new ObservableCollection<ResultadoItem>();
             var notasGerais = new List<(ResultadoProva, Prova)>();
 
             if (aluno != null)
             {
-                var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
-                var provas = await ProvaRepositorio.DosCursosAsync(matriculas.Select(m => m.CursoId));
-                var doAluno = await ResultadoRepositorio.DoAlunoAsync(aluno.Id);
+                var matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
+                var salas = (await SalaRepositorio.DoAlunoAsync(aluno.Id)).Select(s => s.Id).ToHashSet();
+                // provas que contam para o aluno: publicadas, do curso inteiro ou da sala dele
+                var provas = (await ProvaRepositorio.DosCursosAsync(matriculas.Select(m => m.CursoId)))
+                    .Where(p => p.IsPublicada && p.Questoes.Count > 0)
+                    .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
+                    .ToList();
+                // só entram na média as provas que o professor já corrigiu
+                var doAluno = (await ResultadoRepositorio.DoAlunoAsync(aluno.Id)).Where(r => r.Corrigida).ToList();
 
                 foreach (var matricula in matriculas)
                 {
@@ -111,26 +132,31 @@ namespace European.ViewModels
 
                             var total = materia.Aulas.Count;
                             var concluidas = materia.Aulas.Count(a => progressos.Any(p => p.AulaId == a.Id && p.Concluida));
-                            var media = Math.Round(ProgressoService.Media(notas), 1);
+
+                            // mesma regra do certificado: aprovação pela média da matéria
+                            var provasDaMateria = provas.Where(p => p.MateriaId == materia.Id).ToList();
+                            var avaliacao = ProgressoService.AvaliarMateria(provasDaMateria, doAluno);
+                            var feitas = provasDaMateria.Count(p => doAluno.Any(r => r.ProvaId == p.Id));
 
                             materias.Add(new MateriaDesempenho
                             {
                                 Nome = materia.Nome,
                                 ModuloTitulo = modulo.Titulo,
-                                Media = media,
+                                Media = avaliacao.Media,
                                 Progresso = total == 0 ? 0 : Math.Round(concluidas * 100.0 / total),
-                                Aprovado = notas.Count > 0 && media >= ProgressoService.NotaCortePadrao
+                                Aprovado = avaliacao.Aprovada,
+                                Reprovado = avaliacao.Completa && provasDaMateria.Count > 0 && !avaliacao.Aprovada,
+                                SituacaoTexto = provasDaMateria.Count == 0 ? "Sem provas ainda"
+                                    : avaliacao.Aprovada ? $"Aprovado · nota de corte {avaliacao.NotaCorte:0.0}"
+                                    : avaliacao.Completa ? $"Abaixo da nota de corte ({avaliacao.NotaCorte:0.0})"
+                                    : $"{feitas} de {provasDaMateria.Count} prova(s) corrigida(s) · nota de corte {avaliacao.NotaCorte:0.0}"
                             });
                         }
                     }
                 }
-
-                foreach (var resultado in doAluno)
-                    resultados.Add(ResultadoItem.De(resultado, provas.FirstOrDefault(p => p.Id == resultado.ProvaId)));
             }
 
             Materias = materias;
-            Resultados = resultados;
 
             MediaGeral = Math.Round(ProgressoService.Media(notasGerais), 1);
             Aprovado = notasGerais.Count > 0 && MediaGeral >= ProgressoService.NotaCortePadrao;

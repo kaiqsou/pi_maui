@@ -8,19 +8,27 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <Grid RowDefinitions="Auto,*" Padding="20,16,20,0" RowSpacing="16">
+    <!-- Cabeçalho e resumo fixos; só a lista de entregas rola -->
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12" Padding="0,16,0,0">
 
-        <controls:Cabecalho Titulo="Notas da prova" Subtitulo="{Binding Title}" />
+        <controls:Cabecalho Titulo="Correção e notas" Subtitulo="{Binding Title}" Margin="20,0" />
 
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Resultados}" SelectionMode="None">
-            <CollectionView.Header>
-                <Border Style="{StaticResource Card}" Margin="0,0,0,12" BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent">
-                    <Label Text="{Binding Resumo}" Style="{StaticResource BodyMd}" />
-                </Border>
-            </CollectionView.Header>
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="20,0" BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Label Text="&#xe8f5;" Style="{StaticResource IconPrimary}" FontSize="20" VerticalOptions="Start" IsVisible="{Binding ModoCego}" />
+                <Label Grid.Column="1" Text="{Binding Resumo}" Style="{StaticResource BodyMd}" />
+            </Grid>
+        </Border>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Resultados}" SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ResultadoAlunoItem">
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="14">
+                    <Border Style="{StaticResource Card}" Margin="20,0,20,10" Padding="14">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaResultadosViewModel}}, Path=AbrirCommand, x:DataType=vm:ProvaResultadosViewModel}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
                         <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
                             <Border Style="{StaticResource IconTile}" VerticalOptions="Center">
                                 <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" TextColor="{StaticResource BrandPrimary}"
@@ -30,13 +38,20 @@
                                 <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
                                 <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
                             </VerticalStackLayout>
-                            <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Center" BackgroundColor="{StaticResource DangerSoft}">
+                            <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Center" BackgroundColor="{StaticResource WarningSoft}">
                                 <Border.Triggers>
+                                    <MultiTrigger TargetType="Border">
+                                        <MultiTrigger.Conditions>
+                                            <BindingCondition Binding="{Binding Corrigida}" Value="True" />
+                                            <BindingCondition Binding="{Binding Aprovado}" Value="False" />
+                                        </MultiTrigger.Conditions>
+                                        <Setter Property="BackgroundColor" Value="{StaticResource DangerSoft}" />
+                                    </MultiTrigger>
                                     <DataTrigger TargetType="Border" Binding="{Binding Aprovado}" Value="True">
                                         <Setter Property="BackgroundColor" Value="{StaticResource SuccessSoft}" />
                                     </DataTrigger>
                                 </Border.Triggers>
-                                <Label Text="{Binding Nota, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="15" TextColor="{StaticResource OnSurface}" />
+                                <Label Text="{Binding NotaTexto}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource OnSurface}" />
                             </Border>
                         </Grid>
                     </Border>

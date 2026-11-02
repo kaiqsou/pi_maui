@@ -6,67 +6,75 @@
              x:DataType="vm:DesempenhoViewModel"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
+    <!-- Título e média geral ficam fixos; só a lista de matérias rola. -->
+    <!-- A margem lateral fica dentro de cada parte para a barra de rolagem ficar na borda, sem cobrir os cards. -->
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="0,24,0,0" RowSpacing="18">
 
-            <VerticalStackLayout Spacing="2">
-                <Label Text="Desempenho" Style="{StaticResource TitleLg}" />
-                <Label Text="Acompanhe suas notas e progresso" Style="{StaticResource Muted}" />
-            </VerticalStackLayout>
-
-            <Border Style="{StaticResource Card}">
-                <VerticalStackLayout Spacing="2">
-                    <Label Text="Média geral" Style="{StaticResource Muted}" />
-                    <Label Text="{Binding MediaTexto}" Style="{StaticResource TitleLg}" FontSize="40" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Label Text="Por matéria" Style="{StaticResource TitleSm}" />
-
-            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Materias}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:MateriaDesempenho">
-                        <Border Style="{StaticResource Card}" Padding="14">
-                            <VerticalStackLayout Spacing="10">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
-                                        <Label Text="{Binding ModuloTitulo}" Style="{StaticResource BodySm}" />
-                                    </VerticalStackLayout>
-                                    <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
-                                        <Label Text="{Binding Media, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
-                                    </Border>
-                                </Grid>
-                                <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
-                                <Label Text="{Binding Progresso, Converter={StaticResource PercentageText}, StringFormat='Progresso: {0}'}" Style="{StaticResource BodySm}" />
-                            </VerticalStackLayout>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
-
-            <Label Text="Resultados" Style="{StaticResource TitleSm}" />
-
-            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Resultados}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ResultadoItem">
-                        <Border Style="{StaticResource Card}" Padding="14">
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                    <Label Text="{Binding ProvaTitulo}" Style="{StaticResource TitleSm}" />
-                                    <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" />
-                                    <Label Text="{Binding Data}" Style="{StaticResource BodySm}" />
-                                </VerticalStackLayout>
-                                <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
-                                    <Label Text="{Binding Nota, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="15" TextColor="{StaticResource BrandPrimary}" />
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </VerticalStackLayout>
-
+        <VerticalStackLayout Grid.Row="0" Spacing="2" Margin="20,0">
+            <Label Text="Desempenho" Style="{StaticResource TitleLg}" />
+            <Label Text="Acompanhe suas notas e progresso" Style="{StaticResource Muted}" />
         </VerticalStackLayout>
-    </ScrollView>
+
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="20,0">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Média geral" Style="{StaticResource Muted}" />
+                <Label Text="{Binding MediaTexto}" Style="{StaticResource TitleLg}" FontSize="40" />
+            </VerticalStackLayout>
+        </Border>
+
+        <Label Grid.Row="2" Text="Por matéria" Style="{StaticResource TitleSm}" Margin="20,0" />
+
+        <ScrollView Grid.Row="3" VerticalScrollBarVisibility="Default">
+            <VerticalStackLayout Spacing="10" Padding="20,0,20,20">
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Materias}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MateriaDesempenho">
+                            <Border Style="{StaticResource Card}" Padding="14">
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                            <Label Text="{Binding ModuloTitulo}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
+                                            <Label Text="{Binding Media, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
+                                        </Border>
+                                    </Grid>
+                                    <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
+                                    <Label Text="{Binding Progresso, Converter={StaticResource PercentageText}, StringFormat='Progresso: {0}'}" Style="{StaticResource BodySm}" />
+                                    <!-- aprovação pela média da matéria (mesma regra do certificado) -->
+                                    <Label Text="{Binding SituacaoTexto}" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Aprovado}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Reprovado}" Value="True">
+                                                <Setter Property="TextColor" Value="{StaticResource Danger}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Border Style="{StaticResource Card}" Padding="14" IsVisible="{Binding SemMaterias}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Nenhuma matéria disponível" Style="{StaticResource TitleSm}" />
+                            <Label Text="As matérias do curso aparecerão aqui" Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                        <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
+                            <Label Text="{Binding MediaTexto}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
 
 </ContentView>

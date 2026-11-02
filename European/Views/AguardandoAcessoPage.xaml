@@ -10,15 +10,37 @@
     <ScrollView>
         <VerticalStackLayout Padding="28,60,28,28" Spacing="18">
 
-            <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
-                    BackgroundColor="{StaticResource WarningSoft}">
-                <Label Text="&#xe88b;" Style="{StaticResource Icon}" FontSize="36" TextColor="{StaticResource Warning}"
-                       HorizontalOptions="Center" VerticalOptions="Center" />
-            </Border>
+            <!-- Aguardando -->
+            <VerticalStackLayout Spacing="18" IsVisible="{Binding SemPendencia}">
+                <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
+                        BackgroundColor="{StaticResource WarningSoft}">
+                    <Label Text="&#xe88b;" Style="{StaticResource Icon}" FontSize="36" TextColor="{StaticResource Warning}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Aguardando liberação" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
+                <Label Text="Seu cadastro foi recebido. Assim que a coordenação liberar o seu acesso ao curso, as aulas e provas aparecerão aqui."
+                       Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
 
-            <Label Text="Aguardando liberação" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
-            <Label Text="Seu cadastro foi recebido. Assim que a coordenação liberar o seu acesso ao curso, as aulas e provas aparecerão aqui."
-                   Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+            <!-- Não liberado: pendência informada pela coordenação -->
+            <VerticalStackLayout Spacing="18" IsVisible="{Binding TemPendencia}">
+                <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
+                        BackgroundColor="{StaticResource DangerSoft}">
+                    <Label Text="&#xe000;" Style="{StaticResource Icon}" FontSize="36" TextColor="{StaticResource Danger}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Cadastro com pendência" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
+                <Label Text="A coordenação ainda não liberou o seu acesso. Resolva a pendência abaixo para continuar."
+                       Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource DangerSoft}" Stroke="Transparent">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Motivo" Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}" FontFamily="OpenSansSemibold" />
+                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodyMd}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Button Text="Refazer pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding RefazerPagamentoCommand}"
+                        IsVisible="{Binding PodeRefazerPagamento}" />
+            </VerticalStackLayout>
 
             <Border Style="{StaticResource Card}">
                 <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
@@ -33,7 +55,22 @@
                 </Grid>
             </Border>
 
-            <Label Text="Informe este e-mail à coordenação do seu curso." Style="{StaticResource BodySm}" HorizontalOptions="Center" />
+            <!-- Pedido de matrícula: curso escolhido e pagamento -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding TemPedido}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Grid.Column="1" Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="20" TextColor="{StaticResource Success}" />
+                        <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Informe este e-mail à coordenação do seu curso." Style="{StaticResource BodySm}" HorizontalOptions="Center"
+                   IsVisible="{Binding TemPedido, Converter={StaticResource InverseBool}}" />
 
             <Button Text="Verificar novamente" Style="{StaticResource PrimaryButton}" Command="{Binding VerificarCommand}" />
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />

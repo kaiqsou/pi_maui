@@ -17,6 +17,7 @@ namespace European.Views
         {
             if (query.TryGetValue("Usuario", out var valor) && valor is Usuario professor)
                 await _viewModel.CarregarAsync(professor.Id);
+            query.Clear();
         }
     }
 }

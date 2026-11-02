@@ -47,37 +47,90 @@ namespace European.Services
             return lista.Sum(n => n.Resultado.NotaNormalizada * Math.Max(0, n.Prova.Peso)) / pesos;
         }
 
-        /// <summary>Recalcula o percentual da matrícula e emite o certificado quando o curso é concluído com aprovação.</summary>
-        public static async Task AtualizarAsync(Matricula matricula)
+        /// <summary>Situação do aluno numa matéria: média ponderada das provas corrigidas e aprovação pela média.</summary>
+        public sealed record AvaliacaoMateria(double Media, double NotaCorte, bool Completa, bool Aprovada);
+
+        /// <summary>
+        /// Regra única de aprovação (Desempenho e certificado): a matéria é aprovada quando todas as provas
+        /// exigidas dela foram corrigidas e a média ponderada (0 a 10, pelo peso de cada prova) atinge a nota de corte.
+        /// Se as provas tiverem notas de corte diferentes, vale a maior (convertida para 0 a 10).
+        /// </summary>
+        public static AvaliacaoMateria AvaliarMateria(IReadOnlyCollection<Prova> provasExigidas, IEnumerable<ResultadoProva> corrigidos)
         {
-            var curso = matricula.Curso ?? await CursoRepositorio.PorIdAsync(matricula.CursoId);
-            if (curso == null)
-                return;
+            var notas = corrigidos
+                .Where(r => r.Corrigida)
+                .Select(r => (Resultado: r, Prova: provasExigidas.FirstOrDefault(p => p.Id == r.ProvaId)))
+                .Where(n => n.Prova != null)
+                .Select(n => (n.Resultado, n.Prova!))
+                .ToList();
+
+            var media = Math.Round(Media(notas), 1);
+            var corte = provasExigidas.Count == 0
+                ? NotaCortePadrao
+                : provasExigidas.Max(p => p.NotaCorte / Math.Max(1, p.NotaMaxima) * 10);
+            var completa = provasExigidas.All(p => notas.Any(n => n.Item2.Id == p.Id));
+
+            return new AvaliacaoMateria(media, Math.Round(corte, 1), completa, completa && provasExigidas.Count > 0 && media >= corte);
+        }
+
+        /// <summary>Quanto falta para o certificado final: módulos com todas as aulas concluídas e matérias aprovadas pela média.</summary>
+        public sealed record SituacaoCertificado(
+            int AulasConcluidas, int TotalAulas,
+            int ModulosConcluidos, int TotalModulos,
+            int MateriasAprovadas, int TotalMateriasComProva,
+            double MediaFinal)
+        {
+            public bool Apto => TotalModulos > 0 && ModulosConcluidos == TotalModulos && MateriasAprovadas == TotalMateriasComProva;
+        }
+
+        public static async Task<SituacaoCertificado> SituacaoAsync(Matricula matricula, Curso curso)
+        {
+            var progressos = await ProgressoRepositorio.DaMatriculaAsync(matricula.Id);
+            var concluidas = progressos.Where(p => p.Concluida).Select(p => p.AulaId).ToHashSet();
 
             var aulas = curso.TodasAulas.ToList();
-            var progressos = await ProgressoRepositorio.DaMatriculaAsync(matricula.Id);
-            var concluidas = aulas.Count(a => progressos.Any(p => p.AulaId == a.Id && p.Concluida));
+            // módulos ainda sem aulas não contam: não há o que finalizar neles
+            var modulos = curso.Modulos.Where(m => m.Materias.Any(x => x.Aulas.Count > 0)).ToList();
+            var modulosConcluidos = modulos.Count(m => m.Materias.SelectMany(x => x.Aulas).All(a => concluidas.Contains(a.Id)));
 
-            matricula.ProgressoPercentual = aulas.Count == 0 ? 0 : Math.Round(concluidas * 100.0 / aulas.Count);
+            // provas exigidas: as publicadas que o aluno enxerga (do curso inteiro ou da sala dele)
+            var salas = (await SalaRepositorio.DoAlunoAsync(matricula.AlunoId)).Select(s => s.Id).ToHashSet();
+            var provas = (await ProvaRepositorio.DosCursosAsync(new[] { curso.Id }))
+                .Where(p => p.IsPublicada && p.Questoes.Count > 0)
+                .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
+                .ToList();
+            // só contam as provas já corrigidas pelo professor
+            var resultados = (await ResultadoRepositorio.DoAlunoAsync(matricula.AlunoId))
+                .Where(r => r.CursoId == curso.Id && r.Corrigida).ToList();
 
-            var provas = (await ProvaRepositorio.DosCursosAsync(new[] { curso.Id })).Where(p => p.IsPublicada).ToList();
-            var resultados = (await ResultadoRepositorio.DoAlunoAsync(matricula.AlunoId)).Where(r => r.CursoId == curso.Id).ToList();
             var notas = resultados
                 .Select(r => (Resultado: r, Prova: provas.FirstOrDefault(p => p.Id == r.ProvaId)))
                 .Where(n => n.Prova != null)
                 .Select(n => (n.Resultado, n.Prova!))
                 .ToList();
 
-            // Aprovado quando cada matéria com prova publicada tem média >= nota de corte.
-            var aprovado = provas.GroupBy(p => p.MateriaId).All(grupo =>
-            {
-                var daMateria = notas.Where(n => n.Item2.MateriaId == grupo.Key).ToList();
-                var corte = grupo.Max(p => p.NotaCorte / Math.Max(1, p.NotaMaxima) * 10);
-                return daMateria.Count > 0 && Media(daMateria) >= corte;
-            });
+            // aprovação pela média de cada matéria que tem prova (uma prova baixa pode ser compensada pelas outras)
+            var materias = provas.GroupBy(p => p.MateriaId).ToList();
+            var aprovadas = materias.Count(g => AvaliarMateria(g.ToList(), resultados).Aprovada);
 
-            var concluiu = aulas.Count > 0 && concluidas == aulas.Count && aprovado;
-            if (concluiu && matricula.Status == StatusMatricula.Ativa)
+            return new SituacaoCertificado(
+                aulas.Count(a => concluidas.Contains(a.Id)), aulas.Count,
+                modulosConcluidos, modulos.Count,
+                aprovadas, materias.Count,
+                Math.Round(Media(notas), 1));
+        }
+
+        /// <summary>Recalcula o percentual da matrícula e emite o certificado final quando todos os módulos e provas foram concluídos com aprovação.</summary>
+        public static async Task AtualizarAsync(Matricula matricula)
+        {
+            var curso = matricula.Curso ?? await CursoRepositorio.PorIdAsync(matricula.CursoId);
+            if (curso == null)
+                return;
+
+            var situacao = await SituacaoAsync(matricula, curso);
+            matricula.ProgressoPercentual = situacao.TotalAulas == 0 ? 0 : Math.Round(situacao.AulasConcluidas * 100.0 / situacao.TotalAulas);
+
+            if (situacao.Apto && matricula.Status == StatusMatricula.Ativa)
             {
                 matricula.Status = StatusMatricula.Concluida;
                 matricula.DataConclusao = DateTime.Now;
@@ -97,8 +150,9 @@ namespace European.Services
                     AlunoNome = aluno?.Nome ?? string.Empty,
                     CursoNome = curso.Nome,
                     CargaHorariaHoras = curso.CargaHorariaHoras,
-                    MediaFinal = Math.Round(Media(notas), 1),
-                    EmitidoEm = DateTime.Now
+                    MediaFinal = situacao.MediaFinal,
+                    // a validade do acesso às aulas (Matricula.AcessoAte) conta a partir desta data
+                    EmitidoEm = matricula.DataConclusao ?? DateTime.Now
                 });
             }
         }

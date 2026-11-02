@@ -10,6 +10,7 @@ namespace European
 
             // Acesso
             Routing.RegisterRoute("cadastro", typeof(CadastroPage));
+            Routing.RegisterRoute("cursoinfo", typeof(CursoInfoPage));
             Routing.RegisterRoute("primeiroacesso", typeof(PrimeiroAcessoPage));
             Routing.RegisterRoute("perfil", typeof(PerfilPage));
 
@@ -28,10 +29,12 @@ namespace European
             // Professor
             Routing.RegisterRoute("provaedit", typeof(ProvaEditPage));
             Routing.RegisterRoute("provaresultados", typeof(ProvaResultadosPage));
+            Routing.RegisterRoute("correcao", typeof(CorrecaoPage));
             Routing.RegisterRoute("salaedit", typeof(SalaEditPage));
 
             // Coordenação
             Routing.RegisterRoute("alunoacesso", typeof(AlunoAcessoPage));
+            Routing.RegisterRoute("solicitacao", typeof(SolicitacaoPage));
             Routing.RegisterRoute("professoracesso", typeof(ProfessorAcessoPage));
             Routing.RegisterRoute("contanova", typeof(ContaNovaPage));
         }

@@ -9,10 +9,12 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+    <!-- Cabeçalho fixo; só o conteúdo abaixo dele rola -->
+    <Grid RowDefinitions="Auto,*">
+        <controls:Cabecalho Titulo="{Binding Title}" Subtitulo="{Binding ModuloTitulo}" Margin="20,16,20,12" />
 
-            <controls:Cabecalho Titulo="{Binding Title}" Subtitulo="{Binding ModuloTitulo}" />
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="20,4,20,28" Spacing="16">
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Nome" Style="{StaticResource BodySm}" />
@@ -33,5 +35,6 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
 </ContentPage>

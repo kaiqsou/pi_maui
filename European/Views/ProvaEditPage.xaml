@@ -10,12 +10,37 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <Grid RowDefinitions="*,Auto">
+    <!--
+        Assistente em 3 etapas (Dados → Regras → Questões): "Continuar" valida a etapa atual e
+        só a última etapa salva. Na etapa Questões aparece uma questão por vez, com a paginação < >.
+    -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <controls:Cabecalho Titulo="{Binding Title}" Margin="20,16,20,12" />
 
-        <ScrollView Grid.Row="0">
-            <VerticalStackLayout Padding="20,16,20,24" Spacing="16">
+        <!-- indicador de etapas -->
+        <VerticalStackLayout Grid.Row="1" Spacing="6" Padding="20,0,20,12">
+            <Label Text="{Binding EtapaTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource BrandPrimary}" FontFamily="OpenSansSemibold" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
+                <BoxView Grid.Column="0" HeightRequest="4" CornerRadius="2" Color="{StaticResource BrandPrimary}" />
+                <BoxView Grid.Column="1" HeightRequest="4" CornerRadius="2" Color="{StaticResource Outline}">
+                    <BoxView.Triggers>
+                        <DataTrigger TargetType="BoxView" Binding="{Binding EtapaRegrasAtingida}" Value="True">
+                            <Setter Property="Color" Value="{StaticResource BrandPrimary}" />
+                        </DataTrigger>
+                    </BoxView.Triggers>
+                </BoxView>
+                <BoxView Grid.Column="2" HeightRequest="4" CornerRadius="2" Color="{StaticResource Outline}">
+                    <BoxView.Triggers>
+                        <DataTrigger TargetType="BoxView" Binding="{Binding EtapaQuestoesAtingida}" Value="True">
+                            <Setter Property="Color" Value="{StaticResource BrandPrimary}" />
+                        </DataTrigger>
+                    </BoxView.Triggers>
+                </BoxView>
+            </Grid>
+        </VerticalStackLayout>
 
-                <controls:Cabecalho Titulo="{Binding Title}" />
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="20,0,20,20" Spacing="16">
 
                 <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
                         IsVisible="{Binding TemEntregas}">
@@ -26,23 +51,23 @@
                     </Grid>
                 </Border>
 
-                <!-- Dados gerais -->
-                <Border Style="{StaticResource Card}">
+                <!-- Seção 1: dados da prova -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding MostrarDados}">
                     <VerticalStackLayout Spacing="14">
-                        <Label Text="Dados da prova" Style="{StaticResource TitleSm}" />
-
                         <VerticalStackLayout Spacing="8">
                             <Label Text="Curso" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}"
+                                <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}" Title="Selecione o curso"
                                         ItemDisplayBinding="{Binding Nome, x:DataType=models:Curso}" TextColor="{StaticResource OnSurface}" />
                             </Border>
+                            <Label Text="Você ainda não leciona nenhum curso. Peça à coordenação para vincular você." Style="{StaticResource BodySm}"
+                                   TextColor="{StaticResource Danger}" IsVisible="{Binding SemCursos}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="8">
                             <Label Text="Matéria" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Picker ItemsSource="{Binding Materias}" SelectedItem="{Binding MateriaSelecionada}"
+                                <Picker ItemsSource="{Binding Materias}" SelectedItem="{Binding MateriaSelecionada}" Title="Selecione a matéria"
                                         ItemDisplayBinding="{Binding Texto, x:DataType=vm:MateriaOpcao}" TextColor="{StaticResource OnSurface}" />
                             </Border>
                         </VerticalStackLayout>
@@ -72,11 +97,9 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Configurações -->
-                <Border Style="{StaticResource Card}">
+                <!-- Seção 2: regras e notas -->
+                <Border Style="{StaticResource Card}" IsVisible="{Binding MostrarRegras}">
                     <VerticalStackLayout Spacing="14">
-                        <Label Text="Regras e notas" Style="{StaticResource TitleSm}" />
-
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="14">
                             <VerticalStackLayout Spacing="8">
                                 <Label Text="Tempo (min, 0 = livre)" Style="{StaticResource BodySm}" />
@@ -85,7 +108,7 @@
                                 </Border>
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="8">
-                                <Label Text="Peso da prova (opcional)" Style="{StaticResource BodySm}" />
+                                <Label Text="Peso da prova" Style="{StaticResource BodySm}" />
                                 <Border Style="{StaticResource Campo}">
                                     <Entry Text="{Binding Peso}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
                                 </Border>
@@ -104,22 +127,39 @@
                             </VerticalStackLayout>
                         </Grid>
 
+                        <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+
                         <Grid ColumnDefinitions="*,Auto">
                             <VerticalStackLayout Spacing="2">
-                                <Label Text="Definir prazo de entrega" Style="{StaticResource BodyMd}" />
-                                <Label Text="Depois do prazo a prova fica indisponível." Style="{StaticResource BodySm}" />
+                                <Label Text="Prazo de entrega" Style="{StaticResource BodyMd}" />
+                                <Label Text="Depois do prazo, a prova fica indisponível." Style="{StaticResource BodySm}" />
                             </VerticalStackLayout>
                             <Switch Grid.Column="1" IsToggled="{Binding TemPrazo}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
                         </Grid>
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="{Binding TemPrazo}">
-                            <Border Style="{StaticResource Campo}">
-                                <DatePicker Date="{Binding PrazoData}" Format="dd/MM/yyyy" TextColor="{StaticResource OnSurface}" />
-                            </Border>
-                            <Border Grid.Column="1" Style="{StaticResource Campo}">
-                                <TimePicker Time="{Binding PrazoHora}" Format="HH:mm" TextColor="{StaticResource OnSurface}" />
-                            </Border>
-                        </Grid>
+                        <!-- data numa linha; hora : minuto na linha de baixo, com espaço para os seletores -->
+                        <VerticalStackLayout Spacing="10" IsVisible="{Binding TemPrazo}">
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Data" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource Campo}">
+                                    <DatePicker Date="{Binding PrazoData}" Format="dd/MM/yyyy" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="6">
+                                <Label Text="Horário" Style="{StaticResource BodySm}" />
+                                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
+                                    <Border Style="{StaticResource Campo}" Padding="10,2">
+                                        <Picker ItemsSource="{Binding Horas}" SelectedItem="{Binding HoraPrazo}"
+                                                HorizontalOptions="Fill" TextColor="{StaticResource OnSurface}" />
+                                    </Border>
+                                    <Label Grid.Column="1" Text=":" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
+                                    <Border Grid.Column="2" Style="{StaticResource Campo}" Padding="10,2">
+                                        <Picker ItemsSource="{Binding Minutos}" SelectedItem="{Binding MinutoPrazo}"
+                                                HorizontalOptions="Fill" TextColor="{StaticResource OnSurface}" />
+                                    </Border>
+                                </Grid>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
 
                         <Grid ColumnDefinitions="*,Auto">
                             <VerticalStackLayout Spacing="2">
@@ -131,100 +171,150 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Questões -->
-                <Grid ColumnDefinitions="*,Auto">
-                    <VerticalStackLayout Spacing="0">
-                        <Label Text="Questões" Style="{StaticResource TitleSm}" />
-                        <Label Text="{Binding ResumoQuestoes}" Style="{StaticResource BodySm}" />
-                    </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="Adicionar questão" Style="{StaticResource SoftButton}" Command="{Binding AdicionarQuestaoCommand}" />
-                </Grid>
+                <!-- Seção 3: questões, uma por vez -->
+                <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarQuestoes}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="{Binding ResumoQuestoes}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Nova questão" Style="{StaticResource SoftButton}" Command="{Binding AdicionarQuestaoCommand}" />
+                    </Grid>
 
-                <VerticalStackLayout Spacing="14" BindableLayout.ItemsSource="{Binding Questoes}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="vm:QuestaoEdicao">
-                            <Border Style="{StaticResource Card}">
-                                <VerticalStackLayout Spacing="12">
-                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
-                                        <Border Style="{StaticResource Pill}" VerticalOptions="Center">
-                                            <Label Text="{Binding Numero, StringFormat='Questão {0}'}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
-                                        </Border>
-                                        <Label Grid.Column="2" Text="Peso" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                                        <Grid Grid.Column="3" ColumnDefinitions="64,Auto" ColumnSpacing="2">
-                                            <Border Style="{StaticResource Campo}" Padding="8,0">
-                                                <Entry Text="{Binding Peso}" Keyboard="Numeric" HorizontalTextAlignment="Center" TextColor="{StaticResource OnSurface}" />
+                    <Border Style="{StaticResource Card}" BindingContext="{Binding QuestaoAtual}" x:DataType="vm:QuestaoEdicao">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="Auto,*,Auto,64,Auto" ColumnSpacing="8">
+                                <Border Style="{StaticResource Pill}" VerticalOptions="Center">
+                                    <Label Text="{Binding Numero, StringFormat='Questão {0}'}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                                </Border>
+                                <Label Grid.Column="2" Text="Peso" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                <Border Grid.Column="3" Style="{StaticResource Campo}" Padding="8,0">
+                                    <Entry Text="{Binding Peso}" Keyboard="Numeric" HorizontalTextAlignment="Center" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                                <Button Grid.Column="4" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}"
+                                        ToolTipProperties.Text="Remover questão"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverQuestaoAtualCommand, x:DataType=vm:ProvaEditViewModel}" />
+                            </Grid>
+
+                            <!-- tipo da questão -->
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                <Button Grid.Column="0" Text="Alternativas" Style="{StaticResource GhostButton}" HeightRequest="38" MinimumHeightRequest="38"
+                                        Padding="4,0" FontSize="13"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=TipoQuestaoCommand, x:DataType=vm:ProvaEditViewModel}"
+                                        CommandParameter="alternativas">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsAlternativas}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Grid.Column="1" Text="Dissertativa" Style="{StaticResource GhostButton}" HeightRequest="38" MinimumHeightRequest="38"
+                                        Padding="4,0" FontSize="13"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=TipoQuestaoCommand, x:DataType=vm:ProvaEditViewModel}"
+                                        CommandParameter="dissertativa">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsDissertativa}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
+                                            <Setter Property="TextColor" Value="White" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                            </Grid>
+
+                            <Border Style="{StaticResource CampoTexto}">
+                                <Editor Text="{Binding Enunciado}" Placeholder="Enunciado da questão" AutoSize="TextChanges"
+                                        MinimumHeightRequest="50" TextColor="{StaticResource OnSurface}" />
+                            </Border>
+
+                            <!-- dissertativa: o aluno escreve; o professor corrige depois -->
+                            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsDissertativa}">
+                                <Label Text="Resposta esperada (opcional, só você vê na correção)" Style="{StaticResource BodySm}" />
+                                <Border Style="{StaticResource CampoTexto}">
+                                    <Editor Text="{Binding RespostaEsperada}" Placeholder="Pontos que a resposta deve abordar" AutoSize="TextChanges"
+                                            MinimumHeightRequest="50" TextColor="{StaticResource OnSurface}" />
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <Label Text="Toque na letra para marcar a alternativa correta." Style="{StaticResource BodySm}" IsVisible="{Binding IsAlternativas}" />
+
+                            <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alternativas}" IsVisible="{Binding IsAlternativas}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:AlternativaEdicao">
+                                        <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="8">
+                                            <Border WidthRequest="30" HeightRequest="30" StrokeShape="RoundRectangle 15" VerticalOptions="Center"
+                                                    Stroke="{StaticResource Outline}" StrokeThickness="1.5" BackgroundColor="{StaticResource SurfaceCard}">
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding Correta}" Value="True">
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
+                                                        <Setter Property="Stroke" Value="{StaticResource Success}" />
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=MarcarCorretaCommand, x:DataType=vm:ProvaEditViewModel}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <Label Text="{Binding Letra}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}"
+                                                       HorizontalOptions="Center" VerticalOptions="Center">
+                                                    <Label.Triggers>
+                                                        <DataTrigger TargetType="Label" Binding="{Binding Correta}" Value="True">
+                                                            <Setter Property="TextColor" Value="White" />
+                                                        </DataTrigger>
+                                                    </Label.Triggers>
+                                                </Label>
                                             </Border>
-                                            <Button Grid.Column="1" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverQuestaoCommand, x:DataType=vm:ProvaEditViewModel}"
+                                            <Border Grid.Column="1" Style="{StaticResource Campo}">
+                                                <Entry Text="{Binding Texto}" Placeholder="Texto da alternativa" TextColor="{StaticResource OnSurface}" />
+                                            </Border>
+                                            <Button Grid.Column="2" Text="&#xe5cd;" Style="{StaticResource IconButton}"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
                                                     CommandParameter="{Binding .}" />
                                         </Grid>
-                                    </Grid>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
 
-                                    <Border Style="{StaticResource CampoTexto}">
-                                        <Editor Text="{Binding Enunciado}" Placeholder="Enunciado da questão" AutoSize="TextChanges"
-                                                MinimumHeightRequest="50" TextColor="{StaticResource OnSurface}" />
-                                    </Border>
+                            <Button Text="+ Alternativa" Style="{StaticResource SoftButton}" HorizontalOptions="Start" IsVisible="{Binding IsAlternativas}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=AdicionarAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
+                                    CommandParameter="{Binding .}" />
+                        </VerticalStackLayout>
+                    </Border>
 
-                                    <Label Text="Toque no círculo para marcar a alternativa correta." Style="{StaticResource BodySm}" />
-
-                                    <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alternativas}">
-                                        <BindableLayout.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:AlternativaEdicao">
-                                                <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="8">
-                                                    <Border WidthRequest="30" HeightRequest="30" StrokeShape="RoundRectangle 15" VerticalOptions="Center"
-                                                            Stroke="{StaticResource Outline}" StrokeThickness="1.5" BackgroundColor="{StaticResource SurfaceCard}">
-                                                        <Border.Triggers>
-                                                            <DataTrigger TargetType="Border" Binding="{Binding Correta}" Value="True">
-                                                                <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
-                                                                <Setter Property="Stroke" Value="{StaticResource Success}" />
-                                                            </DataTrigger>
-                                                        </Border.Triggers>
-                                                        <Border.GestureRecognizers>
-                                                            <TapGestureRecognizer
-                                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=MarcarCorretaCommand, x:DataType=vm:ProvaEditViewModel}"
-                                                                CommandParameter="{Binding .}" />
-                                                        </Border.GestureRecognizers>
-                                                        <Label Text="{Binding Letra}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}"
-                                                               HorizontalOptions="Center" VerticalOptions="Center">
-                                                            <Label.Triggers>
-                                                                <DataTrigger TargetType="Label" Binding="{Binding Correta}" Value="True">
-                                                                    <Setter Property="TextColor" Value="White" />
-                                                                </DataTrigger>
-                                                            </Label.Triggers>
-                                                        </Label>
-                                                    </Border>
-                                                    <Border Grid.Column="1" Style="{StaticResource Campo}">
-                                                        <Entry Text="{Binding Texto}" Placeholder="Texto da alternativa" TextColor="{StaticResource OnSurface}" />
-                                                    </Border>
-                                                    <Button Grid.Column="2" Text="&#xe5cd;" Style="{StaticResource IconButton}"
-                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
-                                                            CommandParameter="{Binding .}" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </BindableLayout.ItemTemplate>
-                                    </VerticalStackLayout>
-
-                                    <Button Text="+ Alternativa" Style="{StaticResource SoftButton}" HorizontalOptions="Start"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=AdicionarAlternativaCommand, x:DataType=vm:ProvaEditViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                </VerticalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+                    <!-- paginação das questões (< 1 / 5 >) -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                        <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
+                                WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                                BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                                IsEnabled="{Binding PodeQuestaoAnterior}" Command="{Binding QuestaoAnteriorCommand}" />
+                        <Label Grid.Column="1" Text="{Binding IndicadorQuestao}" Style="{StaticResource BodySm}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
+                                WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
+                                BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                                IsEnabled="{Binding PodeQuestaoProxima}" Command="{Binding QuestaoProximaCommand}" />
+                    </Grid>
                 </VerticalStackLayout>
 
-                <Button Text="Adicionar questão" Style="{StaticResource GhostButton}" Command="{Binding AdicionarQuestaoCommand}" />
-
                 <Button Text="Excluir prova" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
-                        Command="{Binding ExcluirCommand}" IsVisible="{Binding IsEdicao}" />
+                        Command="{Binding ExcluirCommand}">
+                    <Button.IsVisible>
+                        <MultiBinding Converter="{StaticResource TodosVerdadeiros}">
+                            <Binding Path="IsEdicao" />
+                            <Binding Path="MostrarDados" />
+                        </MultiBinding>
+                    </Button.IsVisible>
+                </Button>
 
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1" RowDefinitions="Auto,Auto">
+        <!-- rodapé: Voltar / Continuar (na última etapa, "Salvar prova") -->
+        <Grid Grid.Row="3" RowDefinitions="Auto,Auto">
             <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
-            <Button Grid.Row="1" Text="Salvar prova" Style="{StaticResource PrimaryButton}" Margin="20,12,20,16"
-                    Command="{Binding SalvarCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="20,12,20,16">
+                <Button Grid.Column="0" Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}"
+                        IsVisible="{Binding PodeVoltarEtapa}" />
+                <Button Grid.Column="1" Text="{Binding BotaoAvancarTexto}" Style="{StaticResource PrimaryButton}" Command="{Binding AvancarCommand}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+            </Grid>
         </Grid>
 
     </Grid>

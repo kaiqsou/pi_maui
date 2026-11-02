@@ -29,6 +29,14 @@
         <ShellContent ContentTemplate="{DataTemplate views:SomenteCertificadosPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Route="novasenha">
+        <ShellContent ContentTemplate="{DataTemplate views:NovaSenhaPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="pagamento">
+        <ShellContent ContentTemplate="{DataTemplate views:PagamentoPage}" />
+    </FlyoutItem>
+
     <FlyoutItem Route="aguardando">
         <ShellContent ContentTemplate="{DataTemplate views:AguardandoAcessoPage}" />
     </FlyoutItem>

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 using European.Data;
+using European.Enums;
 using European.Models;
 using European.Services;
 
@@ -33,10 +34,29 @@ namespace European.ViewModels
         private int _numero;
         private string _enunciado = string.Empty;
         private string _peso = "1";
+        private TipoQuestao _tipo = TipoQuestao.Alternativas;
+        private string _respostaEsperada = string.Empty;
 
         public int Numero { get => _numero; set => SetProperty(ref _numero, value); }
         public string Enunciado { get => _enunciado; set => SetProperty(ref _enunciado, value); }
         public string Peso { get => _peso; set => SetProperty(ref _peso, value); }
+        public string RespostaEsperada { get => _respostaEsperada; set => SetProperty(ref _respostaEsperada, value); }
+
+        public TipoQuestao Tipo
+        {
+            get => _tipo;
+            set
+            {
+                if (SetProperty(ref _tipo, value))
+                {
+                    OnPropertyChanged(nameof(IsDissertativa));
+                    OnPropertyChanged(nameof(IsAlternativas));
+                }
+            }
+        }
+
+        public bool IsDissertativa => Tipo == TipoQuestao.Dissertativa;
+        public bool IsAlternativas => Tipo == TipoQuestao.Alternativas;
         public ObservableCollection<AlternativaEdicao> Alternativas { get; } = new();
 
         public void Renumerar()
@@ -86,9 +106,112 @@ namespace European.ViewModels
             AdicionarAlternativaCommand = new Command<QuestaoEdicao>(q => q?.NovaAlternativa());
             RemoverAlternativaCommand = new Command<AlternativaEdicao>(RemoverAlternativa);
             MarcarCorretaCommand = new Command<AlternativaEdicao>(MarcarCorreta);
+            TipoQuestaoCommand = new Command<string>(tipo =>
+            {
+                if (QuestaoAtual != null)
+                    QuestaoAtual.Tipo = tipo == "dissertativa" ? TipoQuestao.Dissertativa : TipoQuestao.Alternativas;
+            });
+            AvancarCommand = new Command(async () => await AvancarAsync());
+            VoltarEtapaCommand = new Command(() => Secao = Secao == "questoes" ? "regras" : "dados");
+            QuestaoAnteriorCommand = new Command(() => IrParaQuestao(_indiceQuestao - 1));
+            QuestaoProximaCommand = new Command(() => IrParaQuestao(_indiceQuestao + 1));
+            RemoverQuestaoAtualCommand = new Command(async () => await RemoverQuestaoAsync(QuestaoAtual));
+        }
+
+        // ---- Etapas: dados → regras → questões (uma questão por vez). Só salva depois de passar por todas. ----
+
+        private string _secao = "dados";
+        private int _indiceQuestao;
+
+        public string Secao
+        {
+            get => _secao;
+            set
+            {
+                if (SetProperty(ref _secao, value))
+                {
+                    OnPropertyChanged(nameof(MostrarDados));
+                    OnPropertyChanged(nameof(MostrarRegras));
+                    OnPropertyChanged(nameof(MostrarQuestoes));
+                    OnPropertyChanged(nameof(Etapa));
+                    OnPropertyChanged(nameof(EtapaTexto));
+                    OnPropertyChanged(nameof(PodeVoltarEtapa));
+                    OnPropertyChanged(nameof(BotaoAvancarTexto));
+                    OnPropertyChanged(nameof(EtapaRegrasAtingida));
+                    OnPropertyChanged(nameof(EtapaQuestoesAtingida));
+                }
+            }
+        }
+
+        public bool MostrarDados => Secao == "dados";
+        public bool MostrarRegras => Secao == "regras";
+        public bool MostrarQuestoes => Secao == "questoes";
+        public int Etapa => Secao switch { "regras" => 2, "questoes" => 3, _ => 1 };
+        public string EtapaTexto => Etapa switch
+        {
+            1 => "Etapa 1 de 3 · Dados da prova",
+            2 => "Etapa 2 de 3 · Regras e notas",
+            _ => "Etapa 3 de 3 · Questões"
+        };
+        public bool EtapaRegrasAtingida => Etapa >= 2;
+        public bool EtapaQuestoesAtingida => Etapa >= 3;
+        public bool PodeVoltarEtapa => Etapa > 1;
+        public string BotaoAvancarTexto => Etapa < 3 ? "Continuar" : "Salvar prova";
+        public string QuestoesAbaTexto => $"Questões ({Questoes.Count})";
+
+        public ICommand AvancarCommand { get; }
+        public ICommand VoltarEtapaCommand { get; }
+        public ICommand TipoQuestaoCommand { get; }
+
+        /// <summary>"Continuar" valida só a etapa atual; na última etapa vira "Salvar prova".</summary>
+        private async Task AvancarAsync()
+        {
+            var erro = Etapa switch
+            {
+                1 => ValidarDados(),
+                2 => ValidarRegras(),
+                _ => null
+            };
+
+            if (erro != null)
+            {
+                await AvisarAsync("Prova", erro);
+                return;
+            }
+
+            if (Etapa == 1)
+                Secao = "regras";
+            else if (Etapa == 2)
+                Secao = "questoes";
+            else
+                await SalvarAsync();
+        }
+
+        public QuestaoEdicao? QuestaoAtual => _indiceQuestao >= 0 && _indiceQuestao < Questoes.Count ? Questoes[_indiceQuestao] : null;
+        public string IndicadorQuestao => Questoes.Count == 0 ? "0 / 0" : $"{_indiceQuestao + 1} / {Questoes.Count}";
+        public bool PodeQuestaoAnterior => _indiceQuestao > 0;
+        public bool PodeQuestaoProxima => _indiceQuestao < Questoes.Count - 1;
+
+        public ICommand QuestaoAnteriorCommand { get; }
+        public ICommand QuestaoProximaCommand { get; }
+        public ICommand RemoverQuestaoAtualCommand { get; }
+
+        private void IrParaQuestao(int indice)
+        {
+            if (Questoes.Count == 0)
+                indice = 0;
+            else
+                indice = Math.Clamp(indice, 0, Questoes.Count - 1);
+
+            _indiceQuestao = indice;
+            OnPropertyChanged(nameof(QuestaoAtual));
+            OnPropertyChanged(nameof(IndicadorQuestao));
+            OnPropertyChanged(nameof(PodeQuestaoAnterior));
+            OnPropertyChanged(nameof(PodeQuestaoProxima));
         }
 
         public List<Curso> Cursos { get => _cursos; private set => SetProperty(ref _cursos, value); }
+        public bool SemCursos => Cursos.Count == 0;
         public List<MateriaOpcao> Materias { get => _materias; private set => SetProperty(ref _materias, value); }
         public List<SalaOpcao> Salas { get => _salaOpcoes; private set => SetProperty(ref _salaOpcoes, value); }
 
@@ -113,7 +236,36 @@ namespace European.ViewModels
         public string Peso { get => _peso; set => SetProperty(ref _peso, value); }
         public bool TemPrazo { get => _temPrazo; set => SetProperty(ref _temPrazo, value); }
         public DateTime PrazoData { get => _prazoData; set => SetProperty(ref _prazoData, value); }
-        public TimeSpan PrazoHora { get => _prazoHora; set => SetProperty(ref _prazoHora, value); }
+        public TimeSpan PrazoHora
+        {
+            get => _prazoHora;
+            set
+            {
+                // minutos de 5 em 5, como na lista de seleção
+                var ajustado = new TimeSpan(value.Hours, value.Minutes / 5 * 5, 0);
+                if (SetProperty(ref _prazoHora, ajustado))
+                {
+                    OnPropertyChanged(nameof(HoraPrazo));
+                    OnPropertyChanged(nameof(MinutoPrazo));
+                }
+            }
+        }
+
+        // Hora e minuto do prazo em duas listas simples (o TimePicker do Windows aparece cortado)
+        public List<string> Horas { get; } = Enumerable.Range(0, 24).Select(h => h.ToString("00")).ToList();
+        public List<string> Minutos { get; } = Enumerable.Range(0, 12).Select(m => (m * 5).ToString("00")).ToList();
+
+        public string HoraPrazo
+        {
+            get => PrazoHora.Hours.ToString("00");
+            set { if (int.TryParse(value, out var h)) PrazoHora = new TimeSpan(h, PrazoHora.Minutes, 0); }
+        }
+
+        public string MinutoPrazo
+        {
+            get => PrazoHora.Minutes.ToString("00");
+            set { if (int.TryParse(value, out var m)) PrazoHora = new TimeSpan(PrazoHora.Hours, m, 0); }
+        }
         public bool IsPublicada { get => _isPublicada; set => SetProperty(ref _isPublicada, value); }
 
         public ObservableCollection<QuestaoEdicao> Questoes { get; } = new();
@@ -143,14 +295,16 @@ namespace European.ViewModels
 
             await ExecutarAsync(async () =>
             {
-                _cursos = await CursoRepositorio.DoProfessorAsync(professor.Id);
+                // atribui pela propriedade (e não direto no campo) para o Picker receber a lista
+                var cursos = await CursoRepositorio.DoProfessorAsync(professor.Id);
                 _salas = await SalaRepositorio.DoProfessorAsync(professor.Id);
                 _entregas = prova == null ? 0 : (await ResultadoRepositorio.DaProvaAsync(prova.Id)).Count;
 
+                Cursos = cursos;
                 var cursoId = prova?.CursoId ?? materia?.Modulo?.Curso?.Id;
-                _cursoSelecionado = _cursos.FirstOrDefault(c => c.Id == cursoId) ?? _cursos.FirstOrDefault();
-                Cursos = _cursos;
+                _cursoSelecionado = cursos.FirstOrDefault(c => c.Id == cursoId) ?? cursos.FirstOrDefault();
                 OnPropertyChanged(nameof(CursoSelecionado));
+                OnPropertyChanged(nameof(SemCursos));
                 AtualizarOpcoesDoCurso(prova?.MateriaId ?? materia?.Id, prova?.SalaId);
 
                 Titulo = prova?.Titulo ?? (materia == null ? string.Empty : $"Avaliação — {materia.Nome}");
@@ -167,9 +321,19 @@ namespace European.ViewModels
                 Questoes.Clear();
                 foreach (var questao in prova?.Questoes ?? new List<Questao>())
                 {
-                    var edicao = new QuestaoEdicao { Enunciado = questao.Enunciado, Peso = Texto(questao.Peso) };
+                    var edicao = new QuestaoEdicao
+                    {
+                        Enunciado = questao.Enunciado,
+                        Peso = Texto(questao.Peso),
+                        Tipo = questao.Tipo,
+                        RespostaEsperada = questao.RespostaEsperada
+                    };
                     for (var i = 0; i < questao.Alternativas.Count; i++)
                         edicao.NovaAlternativa(questao.Alternativas[i], i == questao.IndiceCorreta);
+
+                    // dissertativa salva sem alternativas: deixa as 4 em branco caso o professor troque o tipo
+                    while (edicao.Alternativas.Count < 2)
+                        edicao.NovaAlternativa(correta: edicao.Alternativas.Count == 0);
                     Questoes.Add(edicao);
                 }
 
@@ -177,6 +341,8 @@ namespace European.ViewModels
                     AdicionarQuestao();
 
                 RenumerarQuestoes();
+                Secao = "dados";
+                IrParaQuestao(0);
                 OnPropertyChanged(nameof(IsEdicao));
                 OnPropertyChanged(nameof(TemEntregas));
                 OnPropertyChanged(nameof(EntregasTexto));
@@ -210,6 +376,7 @@ namespace European.ViewModels
             questao.NovaAlternativa();
             Questoes.Add(questao);
             RenumerarQuestoes();
+            IrParaQuestao(Questoes.Count - 1); // já abre a questão nova
         }
 
         private async Task RemoverQuestaoAsync(QuestaoEdicao? questao)
@@ -222,6 +389,7 @@ namespace European.ViewModels
 
             Questoes.Remove(questao);
             RenumerarQuestoes();
+            IrParaQuestao(_indiceQuestao);
         }
 
         private static void RemoverAlternativa(AlternativaEdicao? alternativa)
@@ -253,6 +421,7 @@ namespace European.ViewModels
             for (var i = 0; i < Questoes.Count; i++)
                 Questoes[i].Numero = i + 1;
             OnPropertyChanged(nameof(ResumoQuestoes));
+            OnPropertyChanged(nameof(QuestoesAbaTexto));
         }
 
         private async Task SalvarAsync()
@@ -279,22 +448,24 @@ namespace European.ViewModels
             prova.IsPublicada = IsPublicada;
             prova.Questoes = Questoes.Select(q => new Questao
             {
+                Tipo = q.Tipo,
                 Enunciado = q.Enunciado.Trim(),
                 Peso = Numero(q.Peso, 1),
-                Alternativas = q.Alternativas.Select(a => a.Texto.Trim()).ToList(),
-                IndiceCorreta = q.Alternativas.ToList().FindIndex(a => a.Correta)
+                Alternativas = q.IsDissertativa ? new List<string>() : q.Alternativas.Select(a => a.Texto.Trim()).ToList(),
+                IndiceCorreta = q.IsDissertativa ? -1 : q.Alternativas.ToList().FindIndex(a => a.Correta),
+                RespostaEsperada = q.IsDissertativa ? q.RespostaEsperada.Trim() : string.Empty
             }).ToList();
 
             if (await ExecutarAsync(() => ProvaRepositorio.SalvarAsync(prova)))
             {
                 await AvisarAsync("Prova", prova.IsPublicada
-                    ? "Prova salva e publicada para os alunos."
+                    ? "Prova salva e publicada para os alunos. As notas só aparecem para eles depois que você corrigir."
                     : "Prova salva como rascunho. Ative \"Publicar\" quando quiser liberar aos alunos.");
                 await VoltarAsync();
             }
         }
 
-        private string? Validar()
+        private string? ValidarDados()
         {
             if (CursoSelecionado == null)
                 return "Você ainda não está atribuído a nenhum curso. Peça à coordenação.";
@@ -302,23 +473,54 @@ namespace European.ViewModels
                 return "Selecione a matéria da prova.";
             if (string.IsNullOrWhiteSpace(Titulo))
                 return "Informe o título da prova.";
+            return null;
+        }
+
+        private string? ValidarRegras()
+        {
             if (Numero(NotaMaxima, 0) <= 0)
                 return "A nota máxima deve ser maior que zero.";
             if (Numero(NotaCorte, 0) > Numero(NotaMaxima, 10))
                 return "A nota de corte não pode ser maior que a nota máxima.";
-            if (Questoes.Count == 0)
-                return "Adicione pelo menos uma questão.";
+            return null;
+        }
 
-            foreach (var questao in Questoes)
+        /// <summary>Retorna o primeiro erro e já abre a etapa (e a questão) onde ele está.</summary>
+        private string? Validar()
+        {
+            string Em(string secao, string erro)
             {
+                Secao = secao;
+                return erro;
+            }
+
+            if (ValidarDados() is { } erroDados)
+                return Em("dados", erroDados);
+            if (ValidarRegras() is { } erroRegras)
+                return Em("regras", erroRegras);
+            if (Questoes.Count == 0)
+                return Em("questoes", "Adicione pelo menos uma questão.");
+
+            for (var i = 0; i < Questoes.Count; i++)
+            {
+                var questao = Questoes[i];
+                string? erro = null;
                 if (string.IsNullOrWhiteSpace(questao.Enunciado))
-                    return $"Escreva o enunciado da questão {questao.Numero}.";
-                if (questao.Alternativas.Count < 2 || questao.Alternativas.Any(a => string.IsNullOrWhiteSpace(a.Texto)))
-                    return $"Preencha todas as alternativas da questão {questao.Numero} (mínimo 2).";
-                if (questao.Alternativas.Count(a => a.Correta) != 1)
-                    return $"Marque a alternativa correta da questão {questao.Numero}.";
-                if (Numero(questao.Peso, 1) <= 0)
-                    return $"O peso da questão {questao.Numero} deve ser maior que zero.";
+                    erro = $"Escreva o enunciado da questão {questao.Numero}.";
+                else if (questao.IsDissertativa)
+                    erro = Numero(questao.Peso, 1) <= 0 ? $"O peso da questão {questao.Numero} deve ser maior que zero." : null;
+                else if (questao.Alternativas.Count < 2 || questao.Alternativas.Any(a => string.IsNullOrWhiteSpace(a.Texto)))
+                    erro = $"Preencha todas as alternativas da questão {questao.Numero} (mínimo 2).";
+                else if (questao.Alternativas.Count(a => a.Correta) != 1)
+                    erro = $"Marque a alternativa correta da questão {questao.Numero}.";
+                else if (Numero(questao.Peso, 1) <= 0)
+                    erro = $"O peso da questão {questao.Numero} deve ser maior que zero.";
+
+                if (erro != null)
+                {
+                    IrParaQuestao(i);
+                    return Em("questoes", erro);
+                }
             }
 
             return null;

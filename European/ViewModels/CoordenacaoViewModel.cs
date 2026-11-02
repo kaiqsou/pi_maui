@@ -24,11 +24,11 @@ namespace European.ViewModels
 
             NovoCursoCommand = new Command(async () => await Ir("cursoedit", "Novo", true));
             AbrirCursoCommand = new Command<CursoResumo>(async c => await Ir("curso", "Curso", c?.Curso));
-            ExcluirCursoCommand = new Command<CursoResumo>(async c => await ExcluirCursoAsync(c));
 
             LiberarPorEmailCommand = new Command(async () => await LiberarPorEmailAsync());
             CriarContaAlunoCommand = new Command(async () => await Ir("contanova", "Role", Roles.Aluno));
             AbrirAlunoCommand = new Command<PessoaItem>(async p => await Ir("alunoacesso", "Usuario", p?.Usuario));
+            AbrirSolicitacaoCommand = new Command<PessoaItem>(async p => await Ir("solicitacao", "Solicitacao", p?.Solicitacao));
 
             AdicionarProfessorCommand = new Command(async () => await AdicionarProfessorAsync());
             AbrirProfessorCommand = new Command<PessoaItem>(async p => await Ir("professoracesso", "Usuario", p?.Usuario));
@@ -108,10 +108,10 @@ namespace European.ViewModels
         public ICommand AbrirPerfilCommand { get; }
         public ICommand NovoCursoCommand { get; }
         public ICommand AbrirCursoCommand { get; }
-        public ICommand ExcluirCursoCommand { get; }
         public ICommand LiberarPorEmailCommand { get; }
         public ICommand CriarContaAlunoCommand { get; }
         public ICommand AbrirAlunoCommand { get; }
+        public ICommand AbrirSolicitacaoCommand { get; }
         public ICommand AdicionarProfessorCommand { get; }
         public ICommand AbrirProfessorCommand { get; }
 
@@ -139,7 +139,14 @@ namespace European.ViewModels
             var matriculas = (await MatriculaRepositorio.DosAlunosAsync(alunos.Select(a => a.Id))).ToLookup(m => m.AlunoId);
             _todosAlunos = alunos.Select(a => ItemAluno(a, matriculas[a.Id].ToList(), nomesCursos)).ToList();
             _todosAlunos.ForEach(a => a.Abrir = AbrirAlunoCommand);
-            TotalPendentes = alunos.Count(a => a.StatusAcesso == StatusAcesso.Pendente);
+
+            // solicitações de matrícula (candidatos que ainda não são usuários) aparecem primeiro
+            var solicitacoes = await SolicitacaoRepositorio.ListarAsync();
+            var itensSolicitacao = solicitacoes.Select(s => ItemSolicitacao(s, nomesCursos)).ToList();
+            itensSolicitacao.ForEach(s => s.Abrir = AbrirSolicitacaoCommand);
+            _todosAlunos.InsertRange(0, itensSolicitacao);
+
+            TotalPendentes = alunos.Count(a => a.StatusAcesso == StatusAcesso.Pendente) + solicitacoes.Count;
 
             if (TotalPendentes > 0 && FiltroAlunos == "todos" && Alunos.Count == 0)
                 _filtroAlunos = "pendentes";
@@ -190,6 +197,27 @@ namespace European.ViewModels
             };
         }
 
+        private static PessoaItem ItemSolicitacao(SolicitacaoMatricula solicitacao, IReadOnlyDictionary<string, string> nomesCursos)
+        {
+            var (status, destaque) = solicitacao switch
+            {
+                { TemPendencia: true } => ("Com pendência", false),
+                { Pago: false } => ("Aguardando pagamento", false),
+                _ => ("Solicitação", true)
+            };
+
+            return new PessoaItem
+            {
+                // não é usuário: o Usuario aqui só alimenta nome, e-mail e o filtro de pendentes
+                Usuario = new Usuario { Nome = solicitacao.Nome, Email = solicitacao.Email, StatusAcesso = StatusAcesso.Pendente },
+                Solicitacao = solicitacao,
+                Status = status,
+                Alerta = true,
+                Destaque = destaque,
+                Detalhe = $"{nomesCursos.GetValueOrDefault(solicitacao.CursoId) ?? "Curso removido"} · {solicitacao.CriadaEm:dd/MM/yyyy}"
+            };
+        }
+
         private void AplicarFiltroAlunos()
         {
             var termo = Busca.Trim();
@@ -209,18 +237,6 @@ namespace European.ViewModels
                 Alunos.Add(aluno);
         }
 
-        private async Task ExcluirCursoAsync(CursoResumo? resumo)
-        {
-            if (resumo == null)
-                return;
-
-            if (!await ConfirmarAsync($"Excluir \"{resumo.Nome}\"?\n\nMatrículas, progresso, provas, notas e materiais do curso serão apagados. Certificados já emitidos são mantidos."))
-                return;
-
-            await ExecutarAsync(() => CursoRepositorio.ExcluirAsync(resumo.Curso.Id));
-            await CarregarAsync();
-        }
-
         private async Task LiberarPorEmailAsync()
         {
             var email = await Shell.Current.DisplayPromptAsync("Liberar acesso", "E-mail com que o aluno se cadastrou", "Buscar", "Cancelar",
@@ -229,8 +245,21 @@ namespace European.ViewModels
                 return;
 
             Usuario? usuario = null;
-            if (!await ExecutarAsync(async () => usuario = await UsuarioRepositorio.PorEmailAsync(email)))
+            SolicitacaoMatricula? solicitacao = null;
+            if (!await ExecutarAsync(async () =>
+                {
+                    usuario = await UsuarioRepositorio.PorEmailAsync(email);
+                    if (usuario == null)
+                        solicitacao = await SolicitacaoRepositorio.PorEmailAsync(email);
+                }))
                 return;
+
+            // candidato que se cadastrou pelo app: abre a solicitação de matrícula
+            if (solicitacao != null)
+            {
+                await Ir("solicitacao", "Solicitacao", solicitacao);
+                return;
+            }
 
             if (usuario == null)
             {

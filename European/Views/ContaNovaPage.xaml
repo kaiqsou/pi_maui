@@ -8,10 +8,12 @@
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource Surface}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
+    <!-- Cabeçalho fixo; só o conteúdo abaixo dele rola -->
+    <Grid RowDefinitions="Auto,*">
+        <controls:Cabecalho Titulo="{Binding Title}" Margin="20,16,20,12" />
 
-            <controls:Cabecalho Titulo="{Binding Title}" />
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="20,4,20,28" Spacing="16">
             <Label Text="{Binding Descricao}" Style="{StaticResource Muted}" />
 
             <VerticalStackLayout Spacing="8">
@@ -30,11 +32,15 @@
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Senha provisória" Style="{StaticResource BodySm}" />
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                     <Border Style="{StaticResource Campo}">
                         <Entry Text="{Binding Senha}" TextColor="{StaticResource OnSurface}" />
                     </Border>
                     <Button Grid.Column="1" Text="Gerar" Style="{StaticResource SoftButton}" HeightRequest="44" Command="{Binding GerarSenhaCommand}" />
+                    <!-- copiar: o ícone vira um ✓ por um instante depois de copiar -->
+                    <Button Grid.Column="2" Text="{Binding CopiarIcone}" Style="{StaticResource SoftButton}" FontFamily="MaterialIcons" FontSize="18"
+                            WidthRequest="44" HeightRequest="44" Padding="0" ToolTipProperties.Text="Copiar senha"
+                            Command="{Binding CopiarSenhaCommand}" />
                 </Grid>
             </VerticalStackLayout>
 
@@ -51,5 +57,6 @@
 
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
 </ContentPage>

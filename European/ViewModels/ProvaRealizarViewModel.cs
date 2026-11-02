@@ -25,11 +25,33 @@ namespace European.ViewModels
     public class QuestaoResposta : BaseViewModel
     {
         private int _marcada = -1;
+        private string _texto = string.Empty;
 
         public int Numero { get; init; }
         public string Enunciado { get; init; } = string.Empty;
         public string PesoTexto { get; init; } = string.Empty;
+        public bool IsDissertativa { get; init; }
+        public bool IsAlternativas => !IsDissertativa;
         public List<AlternativaOpcao> Alternativas { get; } = new();
+
+        private bool _atual;
+
+        /// <summary>Resposta escrita (questão dissertativa).</summary>
+        public string Texto
+        {
+            get => _texto;
+            set
+            {
+                if (SetProperty(ref _texto, value))
+                    OnPropertyChanged(nameof(Respondida));
+            }
+        }
+
+        public bool EmBranco => IsDissertativa ? string.IsNullOrWhiteSpace(Texto) : Marcada < 0;
+        public bool Respondida => !EmBranco;
+
+        /// <summary>Questão aberta agora (destaca o número no mapa de questões).</summary>
+        public bool Atual { get => _atual; set => SetProperty(ref _atual, value); }
 
         public int Marcada
         {
@@ -40,6 +62,7 @@ namespace European.ViewModels
                 {
                     foreach (var alternativa in Alternativas)
                         alternativa.Selecionada = alternativa.Indice == value;
+                    OnPropertyChanged(nameof(Respondida));
                 }
             }
         }
@@ -59,9 +82,48 @@ namespace European.ViewModels
             SelecionarCommand = new Command<AlternativaOpcao>(a => { if (a != null && !_enviada) a.Questao.Marcada = a.Indice; });
             EnviarCommand = new Command(async () => await EnviarAsync(confirmar: true, tempoEsgotado: false));
             SairCommand = new Command(async () => await SairAsync());
+            AnteriorCommand = new Command(() => IrPara(_indice - 1));
+            ProximaCommand = new Command(async () =>
+            {
+                if (EhUltima)
+                    await EnviarAsync(confirmar: true, tempoEsgotado: false);
+                else
+                    IrPara(_indice + 1);
+            });
+            IrParaCommand = new Command<QuestaoResposta>(q => { if (q != null) IrPara(Questoes.IndexOf(q)); });
         }
 
         public ObservableCollection<QuestaoResposta> Questoes { get; } = new();
+
+        // ---- Uma questão por vez ----
+
+        private int _indice;
+
+        public QuestaoResposta? QuestaoAtual => _indice >= 0 && _indice < Questoes.Count ? Questoes[_indice] : null;
+        public string IndicadorQuestao => Questoes.Count == 0 ? string.Empty : $"Questão {_indice + 1} de {Questoes.Count}";
+        public bool PodeAnterior => _indice > 0;
+        public bool EhUltima => _indice >= Questoes.Count - 1;
+        public string BotaoProximaTexto => EhUltima ? "Enviar prova" : "Próxima";
+
+        public ICommand AnteriorCommand { get; }
+        public ICommand ProximaCommand { get; }
+        public ICommand IrParaCommand { get; }
+
+        private void IrPara(int indice)
+        {
+            if (Questoes.Count == 0)
+                return;
+
+            _indice = Math.Clamp(indice, 0, Questoes.Count - 1);
+            for (var i = 0; i < Questoes.Count; i++)
+                Questoes[i].Atual = i == _indice;
+
+            OnPropertyChanged(nameof(QuestaoAtual));
+            OnPropertyChanged(nameof(IndicadorQuestao));
+            OnPropertyChanged(nameof(PodeAnterior));
+            OnPropertyChanged(nameof(EhUltima));
+            OnPropertyChanged(nameof(BotaoProximaTexto));
+        }
 
         public string Instrucoes => _prova?.Instrucoes ?? string.Empty;
         public bool TemInstrucoes => !string.IsNullOrWhiteSpace(Instrucoes);
@@ -111,7 +173,8 @@ namespace European.ViewModels
                     {
                         Numero = i + 1,
                         Enunciado = questao.Enunciado,
-                        PesoTexto = questao.Peso == 1 ? string.Empty : $"Peso {questao.Peso:0.#}"
+                        PesoTexto = questao.Peso == 1 ? string.Empty : $"Peso {questao.Peso:0.#}",
+                        IsDissertativa = questao.IsDissertativa
                     };
 
                     for (var j = 0; j < questao.Alternativas.Count; j++)
@@ -124,6 +187,7 @@ namespace European.ViewModels
                 OnPropertyChanged(nameof(TemInstrucoes));
                 OnPropertyChanged(nameof(Subtitulo));
                 OnPropertyChanged(nameof(TemTempo));
+                IrPara(0);
 
                 IniciarTimer(prova.DuracaoMinutos);
             });
@@ -180,7 +244,7 @@ namespace European.ViewModels
 
             if (confirmar)
             {
-                var emBranco = Questoes.Count(q => q.Marcada < 0);
+                var emBranco = Questoes.Count(q => q.EmBranco);
                 var mensagem = emBranco > 0
                     ? $"Ainda há {emBranco} questão(ões) sem resposta. Deseja enviar mesmo assim?"
                     : "Deseja enviar a prova? Não será possível alterar as respostas.";
@@ -194,19 +258,15 @@ namespace European.ViewModels
 
             var ok = await ExecutarAsync(async () =>
             {
-                var resultado = ProvaService.Corrigir(_prova, aluno.Id, Questoes.Select(q => q.Marcada).ToList(), tempoEsgotado);
+                // a nota não é mostrada agora: a entrega vai para a correção do professor
+                var resultado = ProvaService.Entregar(_prova, aluno.Id,
+                    Questoes.Select(q => q.IsDissertativa ? -1 : q.Marcada).ToList(),
+                    Questoes.Select(q => q.IsDissertativa ? q.Texto.Trim() : string.Empty).ToList(),
+                    tempoEsgotado);
                 await ResultadoRepositorio.InserirAsync(resultado);
 
-                var matricula = (await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id)).FirstOrDefault(m => m.CursoId == _prova.CursoId);
-                if (matricula != null)
-                    await ProgressoService.AtualizarAsync(matricula);
-
-                var aprovado = resultado.NotaObtida >= _prova.NotaCorte;
                 var titulo = tempoEsgotado ? "Tempo esgotado" : "Prova enviada";
-                await AvisarAsync(titulo,
-                    $"Nota: {resultado.NotaObtida:0.0} de {_prova.NotaMaxima:0.#}\n" +
-                    $"{resultado.Acertos} de {resultado.TotalQuestoes} acertos\n" +
-                    (aprovado ? "Aprovado nesta avaliação." : $"Abaixo da nota de corte ({_prova.NotaCorte:0.#})."));
+                await AvisarAsync(titulo, "Suas respostas foram enviadas. A nota aparece em Provas › Realizadas depois que o professor corrigir.");
             });
 
             if (!ok)

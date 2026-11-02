@@ -24,6 +24,10 @@ namespace European.ViewModels
         public string Detalhe { get; init; } = string.Empty;
         public bool Publicada => Prova.IsPublicada;
         public string Status => Prova.IsPublicada ? (Prova.Expirada ? "Encerrada" : "Publicada") : "Rascunho";
+
+        /// <summary>Entregas aguardando a correção do professor.</summary>
+        public int ACorrigir { get; init; }
+        public string BotaoCorrecaoTexto => ACorrigir > 0 ? $"Corrigir ({ACorrigir})" : "Notas";
     }
 
     public class SalaResumo
@@ -108,14 +112,18 @@ namespace European.ViewModels
                 var curso = todosCursos.GetValueOrDefault(prova.CursoId);
                 var materia = curso?.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId);
                 var entregas = resultados[prova.Id].ToList();
+                var corrigidas = entregas.Where(r => r.Corrigida).ToList();
+                var aCorrigir = entregas.Count - corrigidas.Count;
                 var sala = salas.FirstOrDefault(s => s.Id == prova.SalaId);
 
                 Provas.Add(new ProvaResumo
                 {
                     Prova = prova,
                     Origem = $"{materia?.Nome ?? "Matéria removida"}{(sala == null ? string.Empty : $" · {sala.Nome}")}",
-                    Detalhe = $"{prova.Questoes.Count} questões · {prova.DuracaoTexto} · {entregas.Count} entrega(s)" +
-                              (entregas.Count == 0 ? string.Empty : $" · média {entregas.Average(r => r.NotaObtida):0.0}")
+                    Detalhe = $"{prova.Questoes.Count} questões · {entregas.Count} entrega(s)" +
+                              (aCorrigir > 0 ? $" · {aCorrigir} a corrigir" : string.Empty) +
+                              (corrigidas.Count == 0 ? string.Empty : $" · média {corrigidas.Average(r => r.NotaObtida):0.0}"),
+                    ACorrigir = aCorrigir
                 });
             }
 
