@@ -6,7 +6,6 @@ namespace European.Models
     {
         public string Id { get; set; } = string.Empty;
         public string AlunoId { get; set; } = string.Empty;
-        public Usuario? Aluno { get; set; }
         public string CursoId { get; set; } = string.Empty;
         public Curso? Curso { get; set; }
         public StatusMatricula Status { get; set; } = StatusMatricula.Ativa;

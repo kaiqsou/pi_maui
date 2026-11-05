@@ -13,7 +13,6 @@ namespace European.Models
         public bool SenhaProvisoria { get; set; }
         public Roles Roles { get; set; }
         public StatusAcesso StatusAcesso { get; set; } = StatusAcesso.Pendente;
-        public string? AvatarUrl { get; set; }
         public DateTime? DataNascimento { get; set; }
 
         /// <summary>Pagamento (simulado) feito na solicitação de matrícula, copiado ao liberar o acesso.</summary>

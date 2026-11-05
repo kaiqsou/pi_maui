@@ -105,10 +105,8 @@ namespace European.Data
             BsonClassMap.RegisterClassMap<Modulo>(cm => { cm.AutoMap(); cm.UnmapMember(m => m.Curso); cm.UnmapMember(m => m.CursoId); });
             BsonClassMap.RegisterClassMap<Materia>(cm => { cm.AutoMap(); cm.UnmapMember(m => m.Modulo); cm.UnmapMember(m => m.ModuloId); });
             BsonClassMap.RegisterClassMap<Aula>(cm => { cm.AutoMap(); cm.UnmapMember(a => a.Materia); cm.UnmapMember(a => a.MateriaId); });
-            BsonClassMap.RegisterClassMap<Matricula>(cm => { cm.AutoMap(); cm.UnmapMember(m => m.Aluno); cm.UnmapMember(m => m.Curso); });
+            BsonClassMap.RegisterClassMap<Matricula>(cm => { cm.AutoMap(); cm.UnmapMember(m => m.Curso); });
             BsonClassMap.RegisterClassMap<Prova>(cm => { cm.AutoMap(); cm.UnmapMember(p => p.Materia); });
-            BsonClassMap.RegisterClassMap<ResultadoProva>(cm => { cm.AutoMap(); cm.UnmapMember(r => r.Prova); cm.UnmapMember(r => r.Aluno); });
-            BsonClassMap.RegisterClassMap<MaterialComplementar>(cm => { cm.AutoMap(); cm.UnmapMember(m => m.Aula); });
         }
     }
 }

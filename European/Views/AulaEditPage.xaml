@@ -60,6 +60,9 @@
                     </VerticalStackLayout>
 
                     <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Materiais}">
+                        <BindableLayout.EmptyView>
+                            <Label Text="Nenhum material anexado." Style="{StaticResource Muted}" />
+                        </BindableLayout.EmptyView>
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="models:MaterialComplementar">
                                 <Border Style="{StaticResource Painel}" Padding="10">
@@ -77,9 +80,6 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
-
-                    <Label Text="Nenhum material anexado." Style="{StaticResource Muted}"
-                           IsVisible="{Binding Materiais.Count, Converter={StaticResource CountToBool}, ConverterParameter=invert}" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                         <Button Text="Enviar arquivo" Style="{StaticResource SoftButton}" Command="{Binding AdicionarArquivoCommand}" />

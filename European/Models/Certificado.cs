@@ -13,7 +13,6 @@ namespace European.Models
         public double MediaFinal { get; set; }
         public string CodigoVerificacao { get; set; } = string.Empty;
         public DateTime EmitidoEm { get; set; } = DateTime.Now;
-        public string? UrlPdf { get; set; }
 
         public string TipoTexto => "Certificado de conclusão do mestrado";
     }

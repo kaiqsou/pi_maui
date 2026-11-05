@@ -13,12 +13,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <conv:InverseBoolConverter x:Key="InverseBool" />
-            <conv:NullToBoolConverter x:Key="NullToBool" />
-            <conv:CountToBoolConverter x:Key="CountToBool" />
             <conv:PercentageTextConverter x:Key="PercentageText" />
             <conv:PercentToProgressConverter x:Key="PercentToProgress" />
-            <conv:StatusMatriculaToColorConverter x:Key="StatusMatriculaToColor" />
-            <conv:RoleToVisibilityConverter x:Key="RoleToVisibility" />
             <conv:TodosVerdadeirosConverter x:Key="TodosVerdadeiros" />
         </ResourceDictionary>
     </Application.Resources>

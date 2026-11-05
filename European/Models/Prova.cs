@@ -31,7 +31,6 @@ namespace European.Models
         public bool Expirada => Prazo.HasValue && Prazo.Value < DateTime.Now;
         public string DuracaoTexto => DuracaoMinutos > 0 ? $"{DuracaoMinutos} min" : "Sem limite";
         public string PrazoTexto => Prazo?.ToString("dd/MM/yyyy HH:mm") ?? "Sem prazo";
-        public bool TemDissertativas => Questoes.Any(q => q.IsDissertativa);
     }
 
     public class Questao
