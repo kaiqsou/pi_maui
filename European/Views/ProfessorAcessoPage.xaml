@@ -46,7 +46,7 @@
                                 <DataTemplate x:DataType="vm:CursoAtribuicao">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Padding="0,6">
                                         <Label Text="{Binding Nome}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                                        <Switch Grid.Column="1" IsToggled="{Binding Atribuido}" OnColor="{DynamicResource BrandPrimary}" VerticalOptions="Center" />
+                                        <Switch Grid.Column="1" IsToggled="{Binding Atribuido}" VerticalOptions="Center" />
                                     </Grid>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>

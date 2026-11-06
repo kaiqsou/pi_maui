@@ -52,6 +52,14 @@ namespace European
             Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("SelecaoDaMarca",
                 (handler, _) => handler.PlatformView.SelectionHighlightColor = selecaoDourada);
 
+            // O ToggleSwitch do Windows reserva ~154 px de largura (espaço do texto "On/Off"), espremendo o texto ao lado.
+            Microsoft.Maui.Handlers.SwitchHandler.Mapper.AppendToMapping("SwitchCompacto", (handler, _) =>
+            {
+                handler.PlatformView.MinWidth = 0;
+                handler.PlatformView.OnContent = null;
+                handler.PlatformView.OffContent = null;
+            });
+
             Microsoft.Maui.Handlers.WebViewHandler.Mapper.AppendToMapping("YouTubePlayer", (handler, _) =>
             {
                 var webView = handler.PlatformView;

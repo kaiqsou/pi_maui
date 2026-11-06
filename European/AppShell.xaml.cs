@@ -5,10 +5,9 @@ namespace European
 {
     public partial class AppShell : Shell
     {
-        public AppShell()
+        // As rotas são globais: registradas uma vez só, pois o Shell é recriado na troca de tema (TemaService).
+        static AppShell()
         {
-            InitializeComponent();
-
             // Acesso
             Routing.RegisterRoute(Navegacao.Cadastro, typeof(CadastroPage));
             Routing.RegisterRoute(Navegacao.CursoInfo, typeof(CursoInfoPage));
@@ -42,6 +41,11 @@ namespace European
 
             // Todos os perfis
             Routing.RegisterRoute(Navegacao.Notificacoes, typeof(NotificacoesPage));
+        }
+
+        public AppShell()
+        {
+            InitializeComponent();
 
             // Cada tela só abre para o perfil que pode usá-la (AcessoService.PodeAbrir)
             Navigating += (_, e) =>

@@ -113,9 +113,10 @@
         <Setter Property="MinimumWidthRequest" Value="44" />
     </Style>
 
+    <!-- Ligado: trilho na cor da marca com a bolinha clara (no escuro, escura), para a bolinha não sumir no trilho -->
     <Style TargetType="Switch">
-        <Setter Property="OnColor" Value="{DynamicResource BrandContainerSoft}" />
-        <Setter Property="ThumbColor" Value="{DynamicResource BrandPrimary}" />
+        <Setter Property="OnColor" Value="{DynamicResource BrandPrimary}" />
+        <Setter Property="ThumbColor" Value="{DynamicResource BrandOnPrimaryContainer}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -128,8 +129,7 @@
                     </VisualState>
                     <VisualState x:Name="On">
                         <VisualState.Setters>
-                            <Setter Property="OnColor" Value="{DynamicResource BrandContainerSoft}" />
-                            <Setter Property="ThumbColor" Value="{DynamicResource BrandPrimary}" />
+                            <Setter Property="ThumbColor" Value="{DynamicResource BrandOnPrimaryContainer}" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Off">

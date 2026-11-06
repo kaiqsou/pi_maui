@@ -46,12 +46,12 @@
             </Grid>
 
             <Border Style="{StaticResource Card}" Padding="14,10">
-                <Grid ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="2">
                         <Label Text="Curso ativo" Style="{StaticResource BodyMd}" />
                         <Label Text="Cursos inativos não aparecem para liberação de novos alunos." Style="{StaticResource BodySm}" />
                     </VerticalStackLayout>
-                    <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" OnColor="{DynamicResource BrandPrimary}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" VerticalOptions="Center" />
                 </Grid>
             </Border>
 

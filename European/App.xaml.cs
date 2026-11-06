@@ -26,6 +26,7 @@ namespace European
             var janela = new Window(new AppShell());
             janela.Height = 700;
             janela.Width = 400;
+            janela.Activated += (_, _) => TemaService.AplicarNaJanela();
 
             return janela;
         }
