@@ -51,8 +51,6 @@ namespace European.ViewModels
             return Task.CompletedTask;
         }
 
-        [RelayCommand]
-        private Task Voltar() => VoltarAsync();
 
         /// <summary>Volta ao cadastro já com este curso marcado.</summary>
         [RelayCommand]

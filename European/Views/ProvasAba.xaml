@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.ProvasAba"
              x:DataType="vm:ProvasViewModel"
@@ -15,22 +16,8 @@
         </VerticalStackLayout>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="20,0">
-            <Button Grid.Column="0" Text="Disponíveis" Command="{Binding SelecionarAbaCommand}" CommandParameter="disponiveis" Style="{StaticResource GhostButton}" HeightRequest="42">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding MostrarDisponiveis}" Value="True">
-                        <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                        <Setter Property="TextColor" Value="White" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
-            <Button Grid.Column="1" Text="Realizadas" Command="{Binding SelecionarAbaCommand}" CommandParameter="realizadas" Style="{StaticResource GhostButton}" HeightRequest="42">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding MostrarRealizadas}" Value="True">
-                        <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                        <Setter Property="TextColor" Value="White" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
+            <controls:BotaoSegmento Grid.Column="0" Text="Disponíveis" Command="{Binding SelecionarAbaCommand}" CommandParameter="disponiveis" Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarDisponiveis}" />
+            <controls:BotaoSegmento Grid.Column="1" Text="Realizadas" Command="{Binding SelecionarAbaCommand}" CommandParameter="realizadas" Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarRealizadas}" />
         </Grid>
 
         <CollectionView Grid.Row="2" ItemsSource="{Binding Disponiveis}" SelectionMode="None" IsVisible="{Binding MostrarDisponiveis}">

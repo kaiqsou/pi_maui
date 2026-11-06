@@ -28,18 +28,18 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Nova senha" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding NovaSenha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding NovaSenha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Confirmar nova senha" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Confirmacao}" IsPassword="True" ReturnCommand="{Binding SalvarCommand}" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Confirmacao}" IsPassword="True" ReturnCommand="{Binding SalvarCommand}" />
                 </Border>
             </VerticalStackLayout>
 
-            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
             <Button Text="Salvar e continuar" Style="{StaticResource PrimaryButton}" Command="{Binding SalvarCommand}"
                     IsEnabled="{Binding IsNotBusy}" />

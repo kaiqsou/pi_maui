@@ -23,33 +23,32 @@
             <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
                 <Label Text="Nome completo" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Nome}" Placeholder="Nome do coordenador" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Nome}" Placeholder="Nome do coordenador" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="E-mail" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Email}" Placeholder="coordenacao@instituicao.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Email}" Placeholder="coordenacao@instituicao.com" Keyboard="Email" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Senha" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Senha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Senha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Confirmar senha" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding ConfirmacaoSenha}" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding ConfirmacaoSenha}" IsPassword="True" />
                 </Border>
             </VerticalStackLayout>
 
-            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}"
-                   TextColor="{StaticResource Danger}" FontSize="13" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
             <Button Text="Criar conta da coordenação" Style="{StaticResource PrimaryButton}"
                     Command="{Binding ConfigurarCoordenacaoCommand}" Margin="0,8,0,0"

@@ -66,13 +66,12 @@
                                     <Grid ColumnDefinitions="Auto,80" ColumnSpacing="10">
                                         <Label Text="Nota (0 a 10)" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
                                         <Border Grid.Column="1" Style="{StaticResource Campo}" Padding="8,0">
-                                            <Entry Text="{Binding Nota}" Keyboard="Numeric" HorizontalTextAlignment="Center" Placeholder="—"
-                                                   TextColor="{StaticResource OnSurface}" />
+                                            <Entry Text="{Binding Nota}" Keyboard="Numeric" HorizontalTextAlignment="Center" Placeholder="—" />
                                         </Border>
                                     </Grid>
                                     <Border Style="{StaticResource CampoTexto}">
                                         <Editor Text="{Binding Comentario}" Placeholder="Comentário para o aluno (opcional)" AutoSize="TextChanges"
-                                                MinimumHeightRequest="50" TextColor="{StaticResource OnSurface}" />
+                                                MinimumHeightRequest="50" />
                                     </Border>
                                 </VerticalStackLayout>
                             </VerticalStackLayout>

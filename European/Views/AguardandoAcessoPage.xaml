@@ -45,7 +45,7 @@
             <Border Style="{StaticResource Card}">
                 <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
                     <Border Style="{StaticResource IconTile}" BackgroundColor="{StaticResource BrandPrimary}">
-                        <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="16" TextColor="White"
+                        <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="16" TextColor="{StaticResource BrandOnPrimaryContainer}"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                     </Border>
                     <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
@@ -73,7 +73,7 @@
                    IsVisible="{Binding TemPedido, Converter={StaticResource InverseBool}}" />
 
             <Button Text="Verificar novamente" Style="{StaticResource PrimaryButton}" Command="{Binding VerificarCommand}" />
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
             <Button Text="Sair" Style="{StaticResource GhostButton}" Command="{Binding SairCommand}" />
 
         </VerticalStackLayout>

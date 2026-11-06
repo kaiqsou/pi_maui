@@ -20,21 +20,21 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Título" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Titulo}" Placeholder="Título da aula" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Titulo}" Placeholder="Título da aula" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Descrição" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource CampoTexto}">
-                    <Editor Text="{Binding Descricao}" Placeholder="O que será abordado" HeightRequest="80" TextColor="{StaticResource OnSurface}" />
+                    <Editor Text="{Binding Descricao}" Placeholder="O que será abordado" HeightRequest="80" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Link do vídeo no YouTube" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding VideoUrl}" Placeholder="https://www.youtube.com/watch?v=..." Keyboard="Url" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding VideoUrl}" Placeholder="https://www.youtube.com/watch?v=..." Keyboard="Url" />
                 </Border>
                 <Label Text="Link do YouTube não reconhecido." Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}"
                        IsVisible="{Binding VideoInvalido}" />
@@ -44,7 +44,7 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Duração aproximada (min) — opcional, o player detecta a duração real" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}" WidthRequest="140" HorizontalOptions="Start">
-                    <Entry Text="{Binding DuracaoMinutos}" Keyboard="Numeric" Placeholder="0" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding DuracaoMinutos}" Keyboard="Numeric" Placeholder="0" />
                 </Border>
             </VerticalStackLayout>
 

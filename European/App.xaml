@@ -13,7 +13,6 @@
             </ResourceDictionary.MergedDictionaries>
 
             <conv:InverseBoolConverter x:Key="InverseBool" />
-            <conv:PercentageTextConverter x:Key="PercentageText" />
             <conv:PercentToProgressConverter x:Key="PercentToProgress" />
             <conv:TodosVerdadeirosConverter x:Key="TodosVerdadeiros" />
         </ResourceDictionary>

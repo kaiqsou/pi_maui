@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.CertificadoDetalhePage"
@@ -11,17 +12,7 @@
     <ScrollView>
         <VerticalStackLayout Padding="20,16,20,28" Spacing="16">
 
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
-                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding VoltarCommand}" />
-                    </Border.GestureRecognizers>
-                    <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <Label Grid.Column="1" Text="Certificado" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
-            </Grid>
+            <controls:Cabecalho Titulo="Certificado" />
 
             <Border Style="{StaticResource Card}" Padding="24">
                 <VerticalStackLayout Spacing="14">

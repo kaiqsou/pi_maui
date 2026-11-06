@@ -42,7 +42,7 @@
                                         </Border>
                                     </Grid>
                                     <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
-                                    <Label Text="{Binding Progresso, Converter={StaticResource PercentageText}, StringFormat='Progresso: {0}'}" Style="{StaticResource BodySm}" />
+                                    <Label Text="{Binding Progresso, StringFormat='Progresso: {0:0}%'}" Style="{StaticResource BodySm}" />
                                     <!-- aprovação pela média da matéria (mesma regra do certificado) -->
                                     <Label Text="{Binding SituacaoTexto}" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold">
                                         <Label.Triggers>

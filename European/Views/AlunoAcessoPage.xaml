@@ -19,7 +19,7 @@
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
                         <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
-                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="White"
+                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{StaticResource BrandOnPrimaryContainer}"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
@@ -48,7 +48,7 @@
                     <VerticalStackLayout Spacing="12" IsVisible="{Binding TemCursosDisponiveis}">
                         <Border Style="{StaticResource Campo}">
                             <Picker ItemsSource="{Binding CursosDisponiveis}" SelectedItem="{Binding CursoSelecionado}"
-                                    ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" TextColor="{StaticResource OnSurface}" />
+                                    ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" />
                         </Border>
                         <Button Text="Liberar acesso" Style="{StaticResource PrimaryButton}" Command="{Binding LiberarCommand}"
                                 IsEnabled="{Binding IsNotBusy}" />

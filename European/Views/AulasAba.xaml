@@ -86,11 +86,7 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Spacing="8" Padding="0,48,0,0" HorizontalOptions="Center" IsVisible="{Binding SemAulas}">
-                    <Label Text="&#xe1c4;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                    <Label Text="{Binding MensagemSemAulas}" Style="{StaticResource TitleSm}" HorizontalTextAlignment="Center" />
-                    <Label Text="As aulas aparecerão aqui assim que forem publicadas." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
+                <controls:EstadoVazio Icone="&#xe1c4;" Titulo="{Binding MensagemSemAulas}" Texto="As aulas aparecerão aqui assim que forem publicadas." IsVisible="{Binding SemAulas}" />
 
             </VerticalStackLayout>
         </ScrollView>

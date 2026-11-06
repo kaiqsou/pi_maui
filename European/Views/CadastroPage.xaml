@@ -36,25 +36,25 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Nome completo" Style="{StaticResource BodySm}" />
                     <Border Style="{StaticResource Campo}">
-                        <Entry Text="{Binding Nome}" Placeholder="Seu nome" TextColor="{StaticResource OnSurface}" />
+                        <Entry Text="{Binding Nome}" Placeholder="Seu nome" />
                     </Border>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="8">
                     <Label Text="E-mail" Style="{StaticResource BodySm}" />
                     <Border Style="{StaticResource Campo}">
-                        <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                        <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" />
                     </Border>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Senha" Style="{StaticResource BodySm}" />
                     <Border Style="{StaticResource Campo}">
-                        <Entry Text="{Binding Senha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" TextColor="{StaticResource OnSurface}" />
+                        <Entry Text="{Binding Senha}" Placeholder="Letras e números, mínimo 6" IsPassword="True" />
                     </Border>
                 </VerticalStackLayout>
 
-                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
                 <Button Text="Continuar" Style="{StaticResource PrimaryButton}" Command="{Binding AvancarEtapaCommand}" Margin="0,8,0,0"
                         IsEnabled="{Binding IsNotBusy}" />
@@ -117,7 +117,7 @@
 
                 <controls:BarraPaginacao BindingContext="{Binding Paginas}" />
 
-                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
+                <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
                 <Button Text="Continuar para o pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding CadastroCommand}"
                         IsEnabled="{Binding IsNotBusy}" />

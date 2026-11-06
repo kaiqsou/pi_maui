@@ -15,17 +15,7 @@
     <Grid RowDefinitions="Auto,*" Padding="0,16,0,0" RowSpacing="16">
         <VerticalStackLayout Grid.Row="0" Spacing="16" Padding="20,0">
 
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
-                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding VoltarCommand}" />
-                    </Border.GestureRecognizers>
-                    <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
-            </Grid>
+            <controls:Cabecalho Titulo="{Binding Title}" />
 
             <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="220">
                 <controls:PlayerYouTube x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220"
@@ -54,24 +44,10 @@
                     Command="{Binding ConcluirCommand}" IsEnabled="{Binding PodeConcluir}" />
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
-                <Button Grid.Column="0" Text="Aulas" Command="{Binding SelecionarAbaCommand}" CommandParameter="aulas"
-                        Style="{StaticResource GhostButton}" HeightRequest="42">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding MostrarAulas}" Value="True">
-                            <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                            <Setter Property="TextColor" Value="White" />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
-                <Button Grid.Column="1" Text="Materiais" Command="{Binding SelecionarAbaCommand}" CommandParameter="materiais"
-                        Style="{StaticResource GhostButton}" HeightRequest="42">
-                    <Button.Triggers>
-                        <DataTrigger TargetType="Button" Binding="{Binding MostrarMateriais}" Value="True">
-                            <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                            <Setter Property="TextColor" Value="White" />
-                        </DataTrigger>
-                    </Button.Triggers>
-                </Button>
+                <controls:BotaoSegmento Grid.Column="0" Text="Aulas" Command="{Binding SelecionarAbaCommand}" CommandParameter="aulas"
+                        Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarAulas}" />
+                <controls:BotaoSegmento Grid.Column="1" Text="Materiais" Command="{Binding SelecionarAbaCommand}" CommandParameter="materiais"
+                        Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarMateriais}" />
             </Grid>
 
             <!-- Lista compacta: só título e duração; o ícone à direita indica concluída ou bloqueada. -->

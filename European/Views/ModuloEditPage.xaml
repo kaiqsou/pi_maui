@@ -19,14 +19,14 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Título" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Titulo}" Placeholder="Ex.: Módulo 1 — Parte Geral" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Titulo}" Placeholder="Ex.: Módulo 1 — Parte Geral" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Descrição (opcional)" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource CampoTexto}">
-                    <Editor Text="{Binding Descricao}" Placeholder="Resumo do módulo" HeightRequest="90" TextColor="{StaticResource OnSurface}" />
+                    <Editor Text="{Binding Descricao}" Placeholder="Resumo do módulo" HeightRequest="90" />
                 </Border>
             </VerticalStackLayout>
 

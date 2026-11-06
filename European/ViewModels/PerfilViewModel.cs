@@ -138,8 +138,6 @@ namespace European.ViewModels
         [RelayCommand]
         private Task Logout() => AcessoService.SairAsync();
 
-        [RelayCommand]
-        private Task Voltar() => VoltarAsync();
 
         [RelayCommand]
         private void AlternarSenha() => AlterandoSenha = !AlterandoSenha;

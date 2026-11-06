@@ -19,18 +19,9 @@
 
         <!-- Curso -->
         <VerticalStackLayout Grid.Row="0" Padding="20,16,20,12" Spacing="10">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                <Border Style="{StaticResource BackTile}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding VoltarCommand}" />
-                    </Border.GestureRecognizers>
-                    <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
-                </Border>
-                <Label Grid.Column="1" Text="{Binding Curso.Nome}" Style="{StaticResource TitleMd}" MaxLines="1"
-                       LineBreakMode="TailTruncation" VerticalOptions="Center" />
-                <Button Grid.Column="2" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do curso"
-                        Command="{Binding OpcoesCursoCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
-            </Grid>
+            <controls:Cabecalho Titulo="{Binding Curso.Nome}">
+                <Button Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do curso" Command="{Binding OpcoesCursoCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
+            </controls:Cabecalho>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                 <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
                 <Label Grid.Column="1" Text="{Binding ProfessoresTexto}" Style="{StaticResource BodySm}" MaxLines="1"
@@ -53,7 +44,7 @@
         <ScrollView Grid.Row="2" VerticalScrollBarVisibility="Default">
             <VerticalStackLayout Padding="20,0,20,16" Spacing="10">
 
-                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
                 <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ModuloAtual.Materias}">
                     <BindableLayout.ItemTemplate>

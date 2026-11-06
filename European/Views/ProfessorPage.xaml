@@ -29,11 +29,7 @@
             <Label Text="Meus cursos" Style="{StaticResource TitleSm}" Margin="20,0" />
             <CollectionView Grid.Row="1" ItemsSource="{Binding Cursos}" SelectionMode="None">
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
-                        <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhum curso atribuído" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                        <Label Text="A coordenação precisa vincular você a um curso." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe80c;" Titulo="Nenhum curso atribuído" Texto="A coordenação precisa vincular você a um curso." />
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:CursoResumo">
@@ -67,11 +63,7 @@
             </Grid>
             <CollectionView Grid.Row="1" ItemsSource="{Binding Provas}" SelectionMode="None">
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
-                        <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhuma prova criada" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                        <Label Text="Use Nova prova para montar a primeira avaliação." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe862;" Titulo="Nenhuma prova criada" Texto="Use Nova prova para montar a primeira avaliação." />
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:ProvaResumo">
@@ -119,11 +111,7 @@
             </Grid>
             <CollectionView Grid.Row="1" ItemsSource="{Binding Salas}" SelectionMode="None">
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
-                        <Label Text="&#xe7ef;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhuma sala criada" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                        <Label Text="Crie uma sala e adicione alunos dos seus cursos." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe7ef;" Titulo="Nenhuma sala criada" Texto="Crie uma sala e adicione alunos dos seus cursos." />
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:SalaResumo">
@@ -148,21 +136,18 @@
             </CollectionView>
         </Grid>
 
-        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}"
-                           VerticalOptions="Start" HeightRequest="24" />
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Start" />
 
         <!-- Abas -->
-        <Grid Grid.Row="2" RowDefinitions="Auto,Auto">
-            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
-            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Padding="4,10,4,12">
-                <controls:AbaBotao Icone="&#xe80c;" Texto="Cursos" Ativa="{Binding MostrarCursos}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="cursos" />
-                <controls:AbaBotao Grid.Column="1" Icone="&#xe862;" Texto="Provas" Ativa="{Binding MostrarProvas}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="provas" />
-                <controls:AbaBotao Grid.Column="2" Icone="&#xe7ef;" Texto="Salas" Ativa="{Binding MostrarSalas}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="salas" />
-            </Grid>
-        </Grid>
+        <controls:BarraAbas Grid.Row="2">
+            <controls:AbaBotao Icone="&#xe80c;" Texto="Cursos" Ativa="{Binding MostrarCursos}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="cursos" />
+            <controls:AbaBotao Icone="&#xe862;" Texto="Provas" Ativa="{Binding MostrarProvas}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="provas" />
+            <controls:AbaBotao Icone="&#xe7ef;" Texto="Salas" Ativa="{Binding MostrarSalas}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="salas" />
+        </controls:BarraAbas>
 
     </Grid>
 

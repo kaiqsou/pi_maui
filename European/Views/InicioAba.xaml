@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.InicioAba"
              x:DataType="vm:InicioViewModel"
@@ -81,7 +82,7 @@
                     <VerticalStackLayout Spacing="10">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                             <Label Grid.Column="0" Text="{Binding AulasTexto}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                            <Label Grid.Column="1" Text="{Binding ProgressoCurso, Converter={StaticResource PercentageText}}"
+                            <Label Grid.Column="1" Text="{Binding ProgressoCurso, StringFormat='{0:0}%'}"
                                    Style="{StaticResource TitleMd}" TextColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
                         </Grid>
                         <ProgressBar Progress="{Binding ProgressoCurso, Converter={StaticResource PercentToProgress}}" />
@@ -148,11 +149,7 @@
             </Border>
 
             <!-- Sem curso liberado -->
-            <VerticalStackLayout Spacing="8" Padding="0,40,0,0" HorizontalOptions="Center" IsVisible="{Binding SemCurso}">
-                <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                <Label Text="Nenhum curso disponível" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                <Label Text="Assim que a coordenação liberar seu curso, ele aparecerá aqui." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
+            <controls:EstadoVazio Icone="&#xe80c;" Titulo="Nenhum curso disponível" Texto="Assim que a coordenação liberar seu curso, ele aparecerá aqui." IsVisible="{Binding SemCurso}" />
 
         </VerticalStackLayout>
     </ScrollView>

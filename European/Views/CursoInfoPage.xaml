@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.CursoInfoPage"
@@ -13,17 +14,7 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20,16,20,20" Spacing="18">
 
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                    <Border Grid.Column="0" WidthRequest="40" HeightRequest="40"
-                            BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 12">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding VoltarCommand}" />
-                        </Border.GestureRecognizers>
-                        <Label Text="&#xe5c4;" Style="{StaticResource Icon}" HorizontalOptions="Center" VerticalOptions="Center" />
-                    </Border>
-                    <Label Grid.Column="1" Text="Detalhes do curso" Style="{StaticResource TitleMd}" VerticalOptions="Center" />
-                </Grid>
+                <controls:Cabecalho Titulo="Detalhes do curso" />
 
                 <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="160" IsVisible="{Binding TemCapa}">
                     <Image Source="{Binding Curso.CapaUrl}" Aspect="AspectFill" />

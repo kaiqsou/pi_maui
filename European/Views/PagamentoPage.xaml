@@ -119,29 +119,26 @@
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Número do cartão" Style="{StaticResource BodySm}" />
                         <Border Style="{StaticResource Campo}">
-                            <Entry Text="{Binding NumeroCartao}" Placeholder="0000 0000 0000 0000" Keyboard="Numeric" MaxLength="23"
-                                   TextColor="{StaticResource OnSurface}" />
+                            <Entry Text="{Binding NumeroCartao}" Placeholder="0000 0000 0000 0000" Keyboard="Numeric" MaxLength="23" />
                         </Border>
                     </VerticalStackLayout>
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Nome impresso no cartão" Style="{StaticResource BodySm}" />
                         <Border Style="{StaticResource Campo}">
-                            <Entry Text="{Binding NomeCartao}" Placeholder="Como está no cartão" TextTransform="Uppercase"
-                                   TextColor="{StaticResource OnSurface}" />
+                            <Entry Text="{Binding NomeCartao}" Placeholder="Como está no cartão" TextTransform="Uppercase" />
                         </Border>
                     </VerticalStackLayout>
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                         <VerticalStackLayout Grid.Column="0" Spacing="4">
                             <Label Text="Validade" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Entry Text="{Binding Validade}" Placeholder="MM/AA" MaxLength="5" TextColor="{StaticResource OnSurface}" />
+                                <Entry Text="{Binding Validade}" Placeholder="MM/AA" MaxLength="5" />
                             </Border>
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="4">
                             <Label Text="CVV" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Entry Text="{Binding Cvv}" Placeholder="123" Keyboard="Numeric" MaxLength="4" IsPassword="True"
-                                       TextColor="{StaticResource OnSurface}" />
+                                <Entry Text="{Binding Cvv}" Placeholder="123" Keyboard="Numeric" MaxLength="4" IsPassword="True" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
@@ -149,17 +146,17 @@
                         <Label Text="Parcelas" Style="{StaticResource BodySm}" />
                         <Border Style="{StaticResource Campo}">
                             <Picker ItemsSource="{Binding Parcelas}" SelectedItem="{Binding ParcelaSelecionada}"
-                                    ItemDisplayBinding="{Binding Texto, x:DataType=vm:ParcelaOpcao}" TextColor="{StaticResource OnSurface}" />
+                                    ItemDisplayBinding="{Binding Texto, x:DataType=vm:ParcelaOpcao}" />
                         </Border>
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
 
-            <Label Text="{Binding Mensagem}" Style="{StaticResource BodySm}" TextColor="{StaticResource Danger}" IsVisible="{Binding TemMensagem}" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
             <Button Text="{Binding BotaoTexto}" Style="{StaticResource PrimaryButton}" Command="{Binding PagarCommand}"
                     IsEnabled="{Binding IsNotBusy}" />
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}" HeightRequest="24" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" HorizontalOptions="Center">
                 <Label Text="&#xe897;" Style="{StaticResource Icon}" FontSize="14" TextColor="{StaticResource OnSurfaceVariant}" />

@@ -18,7 +18,7 @@
                 <Border Style="{StaticResource Card}">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
                         <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
-                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="White"
+                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{StaticResource BrandOnPrimaryContainer}"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">

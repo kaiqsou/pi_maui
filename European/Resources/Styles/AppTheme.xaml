@@ -44,6 +44,12 @@
         <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
     </Style>
 
+    <!-- Mensagem de erro de formulário (abaixo dos campos) -->
+    <Style TargetType="Label" x:Key="MensagemErro">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextColor" Value="{StaticResource Danger}" />
+    </Style>
+
     <!-- Icon label using Material Icons font -->
     <Style TargetType="Label" x:Key="Icon">
         <Setter Property="FontFamily" Value="MaterialIcons" />

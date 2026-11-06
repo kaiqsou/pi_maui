@@ -23,8 +23,6 @@ namespace European.ViewModels
             return Task.CompletedTask;
         }
 
-        [RelayCommand]
-        private Task Voltar() => VoltarAsync();
 
         [RelayCommand]
         private async Task BaixarAsync()

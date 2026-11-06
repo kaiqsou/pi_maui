@@ -20,14 +20,14 @@
                         <VerticalStackLayout Spacing="8">
                             <Label Text="Nome da sala" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Entry Text="{Binding Nome}" Placeholder="Ex.: Turma A — 2026" TextColor="{StaticResource OnSurface}" />
+                                <Entry Text="{Binding Nome}" Placeholder="Ex.: Turma A — 2026" />
                             </Border>
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="8">
                             <Label Text="Descrição (opcional)" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Entry Text="{Binding Descricao}" Placeholder="Ex.: Alunos do período noturno" TextColor="{StaticResource OnSurface}" />
+                                <Entry Text="{Binding Descricao}" Placeholder="Ex.: Alunos do período noturno" />
                             </Border>
                         </VerticalStackLayout>
 
@@ -35,7 +35,7 @@
                             <Label Text="Curso" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
                                 <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}"
-                                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" TextColor="{StaticResource OnSurface}" />
+                                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" />
                             </Border>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
@@ -53,7 +53,7 @@
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                                 <Label Text="&#xe8b6;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource OnSurfaceVariant}" />
                                 <Entry Grid.Column="1" Text="{Binding Busca}" Placeholder="Buscar aluno por nome ou e-mail" Keyboard="Email"
-                                       ReturnCommand="{Binding AdicionarAlunoCommand}" TextColor="{StaticResource OnSurface}" />
+                                       ReturnCommand="{Binding AdicionarAlunoCommand}" />
                             </Grid>
                         </Border>
 

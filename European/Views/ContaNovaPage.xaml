@@ -19,14 +19,14 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Nome completo" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Nome}" Placeholder="Nome" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Nome}" Placeholder="Nome" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="E-mail" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Email}" Placeholder="email@exemplo.com" Keyboard="Email" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Email}" Placeholder="email@exemplo.com" Keyboard="Email" />
                 </Border>
             </VerticalStackLayout>
 
@@ -34,7 +34,7 @@
                 <Label Text="Senha provisória" Style="{StaticResource BodySm}" />
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                     <Border Style="{StaticResource Campo}">
-                        <Entry Text="{Binding Senha}" TextColor="{StaticResource OnSurface}" />
+                        <Entry Text="{Binding Senha}" />
                     </Border>
                     <Button Grid.Column="1" Text="Gerar" Style="{StaticResource SoftButton}" HeightRequest="44" Command="{Binding GerarSenhaCommand}" />
                     <!-- copiar: o ícone vira um ✓ por um instante depois de copiar -->
@@ -48,7 +48,7 @@
                 <Label Text="Curso" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
                     <Picker ItemsSource="{Binding Cursos}" SelectedItem="{Binding CursoSelecionado}"
-                            ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" TextColor="{StaticResource OnSurface}" />
+                            ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" />
                 </Border>
             </VerticalStackLayout>
 

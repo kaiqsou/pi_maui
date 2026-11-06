@@ -19,14 +19,14 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Nome" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Nome}" Placeholder="Ex.: Mestrado em Direito Penal Econômico" TextColor="{StaticResource OnSurface}" />
+                    <Entry Text="{Binding Nome}" Placeholder="Ex.: Mestrado em Direito Penal Econômico" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Descrição" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource CampoTexto}">
-                    <Editor Text="{Binding Descricao}" Placeholder="Uma ou duas frases sobre o curso" HeightRequest="80" TextColor="{StaticResource OnSurface}" />
+                    <Editor Text="{Binding Descricao}" Placeholder="Uma ou duas frases sobre o curso" HeightRequest="80" />
                 </Border>
             </VerticalStackLayout>
 
@@ -34,13 +34,13 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="Categoria" Style="{StaticResource BodySm}" />
                     <Border Style="{StaticResource Campo}">
-                        <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" TextColor="{StaticResource OnSurface}" />
+                        <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" />
                     </Border>
                 </VerticalStackLayout>
                 <VerticalStackLayout Grid.Column="1" Spacing="8">
                     <Label Text="Carga horária (h)" Style="{StaticResource BodySm}" />
                     <Border Style="{StaticResource Campo}">
-                        <Entry Text="{Binding CargaHoraria}" Keyboard="Numeric" TextColor="{StaticResource OnSurface}" />
+                        <Entry Text="{Binding CargaHoraria}" Keyboard="Numeric" />
                     </Border>
                 </VerticalStackLayout>
             </Grid>

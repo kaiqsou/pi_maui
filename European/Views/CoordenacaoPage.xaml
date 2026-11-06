@@ -97,10 +97,7 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
-                        <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhum curso criado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe80c;" Titulo="Nenhum curso criado" />
                 </CollectionView.EmptyView>
             </CollectionView>
         </Grid>
@@ -118,43 +115,19 @@
                 <Border Style="{StaticResource Campo}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
                         <Label Text="&#xe8b6;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource OnSurfaceVariant}" />
-                        <Entry Grid.Column="1" Text="{Binding Busca}" Placeholder="Buscar por nome ou e-mail" TextColor="{StaticResource OnSurface}" />
+                        <Entry Grid.Column="1" Text="{Binding Busca}" Placeholder="Buscar por nome ou e-mail" />
                     </Grid>
                 </Border>
                 <HorizontalStackLayout Spacing="8">
-                    <Button Text="{Binding PendentesTexto}" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="pendentes">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding FiltroPendentes}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                                <Setter Property="TextColor" Value="White" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                    <Button Text="Ativos" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="ativos">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding FiltroAtivos}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                                <Setter Property="TextColor" Value="White" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                    <Button Text="Todos" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="todos">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding FiltroTodos}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                                <Setter Property="TextColor" Value="White" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
+                    <controls:BotaoSegmento Text="{Binding PendentesTexto}" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="pendentes" Ativo="{Binding FiltroPendentes}" />
+                    <controls:BotaoSegmento Text="Ativos" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="ativos" Ativo="{Binding FiltroAtivos}" />
+                    <controls:BotaoSegmento Text="Todos" Style="{StaticResource Filtro}" Command="{Binding FiltrarAlunosCommand}" CommandParameter="todos" Ativo="{Binding FiltroTodos}" />
                 </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <CollectionView Grid.Row="2" ItemsSource="{Binding Alunos}" SelectionMode="None" ItemTemplate="{StaticResource PessoaTemplate}">
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="0,30" HorizontalOptions="Center">
-                        <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhum aluno encontrado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe7fb;" Titulo="Nenhum aluno encontrado" />
                 </CollectionView.EmptyView>
             </CollectionView>
         </Grid>
@@ -167,29 +140,22 @@
             </Grid>
             <CollectionView Grid.Row="1" ItemsSource="{Binding Professores}" SelectionMode="None" ItemTemplate="{StaticResource PessoaTemplate}">
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout Spacing="8" Padding="20,40" HorizontalOptions="Center">
-                        <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                        <Label Text="Nenhum professor cadastrado" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-                        <Label Text="Use Adicionar para criar ou liberar a conta de um professor." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <controls:EstadoVazio Icone="&#xe7fb;" Titulo="Nenhum professor cadastrado" Texto="Use Adicionar para criar ou liberar a conta de um professor." />
                 </CollectionView.EmptyView>
             </CollectionView>
         </Grid>
 
-        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource BrandPrimary}"
-                           VerticalOptions="Start" HeightRequest="24" />
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           VerticalOptions="Start" />
 
-        <Grid Grid.Row="2" RowDefinitions="Auto,Auto">
-            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
-            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Padding="4,10,4,12">
-                <controls:AbaBotao Icone="&#xe80c;" Texto="Cursos" Ativa="{Binding MostrarCursos}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="cursos" />
-                <controls:AbaBotao Grid.Column="1" Icone="&#xe7fb;" Texto="Alunos" Ativa="{Binding MostrarAlunos}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="alunos" />
-                <controls:AbaBotao Grid.Column="2" Icone="&#xe7ef;" Texto="Professores" Ativa="{Binding MostrarProfessores}"
-                                   Command="{Binding SelecionarAbaCommand}" CommandParameter="professores" />
-            </Grid>
-        </Grid>
+        <controls:BarraAbas Grid.Row="2">
+            <controls:AbaBotao Icone="&#xe80c;" Texto="Cursos" Ativa="{Binding MostrarCursos}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="cursos" />
+            <controls:AbaBotao Icone="&#xe7fb;" Texto="Alunos" Ativa="{Binding MostrarAlunos}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="alunos" />
+            <controls:AbaBotao Icone="&#xe7ef;" Texto="Professores" Ativa="{Binding MostrarProfessores}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="professores" />
+        </controls:BarraAbas>
 
     </Grid>
 

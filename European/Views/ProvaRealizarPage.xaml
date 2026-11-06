@@ -98,7 +98,7 @@
                         <!-- dissertativa: resposta escrita -->
                         <Border Style="{StaticResource CampoTexto}" IsVisible="{Binding IsDissertativa}">
                             <Editor Text="{Binding Texto}" Placeholder="Escreva sua resposta" AutoSize="TextChanges"
-                                    MinimumHeightRequest="160" TextColor="{StaticResource OnSurface}" />
+                                    MinimumHeightRequest="160" />
                         </Border>
 
                         <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alternativas}" IsVisible="{Binding IsAlternativas}">
@@ -129,7 +129,7 @@
                                                        HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
                                                     <Label.Triggers>
                                                         <DataTrigger TargetType="Label" Binding="{Binding Selecionada}" Value="True">
-                                                            <Setter Property="TextColor" Value="White" />
+                                                            <Setter Property="TextColor" Value="{StaticResource BrandOnPrimaryContainer}" />
                                                         </DataTrigger>
                                                     </Label.Triggers>
                                                 </Label>

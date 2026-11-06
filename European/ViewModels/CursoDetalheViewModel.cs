@@ -124,8 +124,6 @@ namespace European.ViewModels
 
         // ---- Comandos da tela ----
 
-        [RelayCommand]
-        private Task Voltar() => VoltarAsync();
 
         [RelayCommand]
         private Task NovoModulo()
