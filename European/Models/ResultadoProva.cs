@@ -2,7 +2,7 @@ using European.Enums;
 
 namespace European.Models
 {
-    public class ResultadoProva
+    public class ResultadoProva : IEntidade
     {
         public string Id { get; set; } = string.Empty;
         public string ProvaId { get; set; } = string.Empty;

@@ -307,17 +307,7 @@ namespace European.ViewModels
             if (!await ConfirmarAsync($"Excluir o módulo \"{modulo.Titulo}\" com todas as matérias, aulas e provas?"))
                 return;
 
-            await ExecutarAsync(async () =>
-            {
-                foreach (var materia in modulo.Materias)
-                    await ExcluirConteudoDaMateriaAsync(materia);
-
-                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
-                {
-                    c.Modulos.RemoveAll(m => m.Id == modulo.Id);
-                    Reordenar(c.Modulos, (m, i) => m.Ordem = i);
-                });
-            });
+            await ExecutarAsync(() => CursoRepositorio.ExcluirModuloAsync(Curso.Id, modulo));
             await CarregarAsync(Curso.Id);
         }
 
@@ -329,17 +319,7 @@ namespace European.ViewModels
             if (!await ConfirmarAsync($"Excluir a matéria \"{materia.Nome}\" com suas aulas e provas?"))
                 return;
 
-            await ExecutarAsync(async () =>
-            {
-                await ExcluirConteudoDaMateriaAsync(materia);
-                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
-                {
-                    var modulo = c.Modulos.FirstOrDefault(m => m.Id == materia.Modulo?.Id);
-                    modulo?.Materias.RemoveAll(m => m.Id == materia.Id);
-                    if (modulo != null)
-                        Reordenar(modulo.Materias, (m, i) => m.Ordem = i);
-                });
-            });
+            await ExecutarAsync(() => CursoRepositorio.ExcluirMateriaAsync(Curso.Id, materia));
             await CarregarAsync(Curso.Id);
         }
 
@@ -351,30 +331,9 @@ namespace European.ViewModels
             if (!await ConfirmarAsync($"Excluir a aula \"{aula.Titulo}\" e seus materiais?"))
                 return;
 
-            await ExecutarAsync(async () =>
-            {
-                await MaterialRepositorio.ExcluirDasAulasAsync(new[] { aula.Id });
-                await CursoRepositorio.AlterarAsync(Curso.Id, c =>
-                {
-                    var materia = c.TodasMaterias.FirstOrDefault(m => m.Id == aula.Materia?.Id);
-                    materia?.Aulas.RemoveAll(a => a.Id == aula.Id);
-                    if (materia != null)
-                        Reordenar(materia.Aulas, (a, i) => a.Ordem = i);
-                });
-            });
+            await ExecutarAsync(() => CursoRepositorio.ExcluirAulaAsync(Curso.Id, aula));
             await CarregarAsync(Curso.Id);
         }
 
-        private static async Task ExcluirConteudoDaMateriaAsync(Materia materia)
-        {
-            await MaterialRepositorio.ExcluirDasAulasAsync(materia.Aulas.Select(a => a.Id));
-            await ProvaRepositorio.ExcluirDaMateriaAsync(materia.Id);
-        }
-
-        private static void Reordenar<T>(List<T> itens, Action<T, int> definirOrdem)
-        {
-            for (var i = 0; i < itens.Count; i++)
-                definirOrdem(itens[i], i + 1);
-        }
     }
 }

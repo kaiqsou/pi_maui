@@ -6,7 +6,7 @@ namespace European.Models
     /// Pedido de matrícula feito pelo app. Enquanto a coordenação não libera, o candidato NÃO é um
     /// usuário: os dados ficam só aqui. Ao liberar, vira Usuario + Matricula e a solicitação é apagada.
     /// </summary>
-    public class SolicitacaoMatricula
+    public class SolicitacaoMatricula : IEntidade
     {
         public string Id { get; set; } = string.Empty;
         public string Nome { get; set; } = string.Empty;

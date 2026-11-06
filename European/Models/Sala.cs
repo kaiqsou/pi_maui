@@ -1,6 +1,6 @@
 namespace European.Models
 {
-    public class Sala
+    public class Sala : IAuditavel
     {
         public string Id { get; set; } = string.Empty;
         public string Nome { get; set; } = string.Empty;

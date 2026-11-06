@@ -1,6 +1,6 @@
 namespace European.Models
 {
-    public class Certificado
+    public class Certificado : IEntidade
     {
         public string Id { get; set; } = string.Empty;
         public string MatriculaId { get; set; } = string.Empty;

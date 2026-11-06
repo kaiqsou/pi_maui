@@ -2,7 +2,7 @@
 
 namespace European.Models
 {
-    public class Matricula
+    public class Matricula : IAuditavel
     {
         public string Id { get; set; } = string.Empty;
         public string AlunoId { get; set; } = string.Empty;

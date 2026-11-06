@@ -1,6 +1,6 @@
 namespace European.Models
 {
-    public class Modulo
+    public class Modulo : IOrdenavel
     {
         public string Id { get; set; } = string.Empty;
         public string CursoId { get; set; } = string.Empty;

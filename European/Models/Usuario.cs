@@ -2,7 +2,7 @@
 
 namespace European.Models
 {
-    public class Usuario
+    public class Usuario : IAuditavel
     {
         public string Id { get; set; } = string.Empty;
         public string Nome { get; set; } = string.Empty;

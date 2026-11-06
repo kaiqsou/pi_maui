@@ -1,6 +1,5 @@
 using European.Enums;
 using European.Models;
-using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace European.Data
@@ -31,14 +30,11 @@ namespace European.Data
                 .OrderBy(m => m.Status == StatusMatricula.Ativa ? 0 : 1)
                 .ToList();
 
-        public static async Task<List<Matricula>> DosAlunosAsync(IEnumerable<string> alunoIds)
-        {
-            var ids = alunoIds.Distinct().ToList();
-            return await Colecao.Find(Builders<Matricula>.Filter.In(m => m.AlunoId, ids)).ToListAsync();
-        }
+        public static Task<List<Matricula>> DosAlunosAsync(IEnumerable<string> alunoIds)
+            => Colecao.OndeEmAsync(m => m.AlunoId, alunoIds);
 
-        public static async Task<List<Matricula>> DoCursoAsync(string cursoId)
-            => await Colecao.Find(m => m.CursoId == cursoId).ToListAsync();
+        public static Task<List<Matricula>> DoCursoAsync(string cursoId)
+            => Colecao.Find(m => m.CursoId == cursoId).ToListAsync();
 
         public static async Task<Dictionary<string, int>> AtivasPorCursoAsync()
         {
@@ -49,67 +45,8 @@ namespace European.Data
         public static async Task<Matricula?> PorAlunoECursoAsync(string alunoId, string cursoId)
             => await Colecao.Find(m => m.AlunoId == alunoId && m.CursoId == cursoId).FirstOrDefaultAsync();
 
-        public static async Task InserirAsync(Matricula matricula)
-        {
-            matricula.Id = string.IsNullOrEmpty(matricula.Id) ? MongoContext.NovoId() : matricula.Id;
-            matricula.CreatedAt = DateTime.Now;
-            matricula.UpdatedAt = DateTime.Now;
-            await Colecao.InsertOneAsync(matricula);
-        }
+        public static Task InserirAsync(Matricula matricula) => Colecao.InserirAsync(matricula);
 
-        public static async Task AtualizarAsync(Matricula matricula)
-        {
-            matricula.UpdatedAt = DateTime.Now;
-            await Colecao.ReplaceOneAsync(m => m.Id == matricula.Id, matricula);
-        }
-    }
-
-    public static class ProgressoRepositorio
-    {
-        private static IMongoCollection<ProgressoAula> Colecao => MongoContext.Progressos;
-
-        public static async Task<List<ProgressoAula>> DaMatriculaAsync(string matriculaId)
-            => await Colecao.Find(p => p.MatriculaId == matriculaId).ToListAsync();
-
-        public static async Task<ProgressoAula?> ObterAsync(string matriculaId, string aulaId)
-            => await Colecao.Find(p => p.MatriculaId == matriculaId && p.AulaId == aulaId).FirstOrDefaultAsync();
-
-        public static async Task<ProgressoAula> ObterOuCriarAsync(string matriculaId, string aulaId)
-            => await ObterAsync(matriculaId, aulaId) ?? new ProgressoAula
-            {
-                Id = MongoContext.NovoId(),
-                MatriculaId = matriculaId,
-                AulaId = aulaId
-            };
-
-        public static async Task SalvarAsync(ProgressoAula progresso)
-        {
-            progresso.AtualizadoEm = DateTime.Now;
-            await Colecao.ReplaceOneAsync(p => p.Id == progresso.Id, progresso, new ReplaceOptions { IsUpsert = true });
-        }
-    }
-
-    public static class CertificadoRepositorio
-    {
-        private static IMongoCollection<Certificado> Colecao => MongoContext.Certificados;
-
-        // Versões antigas emitiam certificados por matéria (campo MateriaId); só o certificado final do curso vale.
-        private static readonly FilterDefinition<Certificado> SomenteFinal =
-            Builders<Certificado>.Filter.Eq("MateriaId", BsonNull.Value);
-
-        public static async Task<List<Certificado>> DoAlunoAsync(string alunoId)
-            => await Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.AlunoId, alunoId) & SomenteFinal)
-                .SortByDescending(c => c.EmitidoEm).ToListAsync();
-
-        public static async Task<bool> ExisteParaMatriculaAsync(string matriculaId)
-            => await Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.MatriculaId, matriculaId) & SomenteFinal).AnyAsync();
-
-        public static async Task InserirAsync(Certificado certificado)
-        {
-            certificado.Id = MongoContext.NovoId();
-            var total = await Colecao.CountDocumentsAsync(FilterDefinition<Certificado>.Empty);
-            certificado.CodigoVerificacao = $"EURO-{DateTime.Now:yyyy}-{total + 1:0000}-{certificado.Id[^4..].ToUpperInvariant()}";
-            await Colecao.InsertOneAsync(certificado);
-        }
+        public static Task AtualizarAsync(Matricula matricula) => Colecao.AtualizarAsync(matricula);
     }
 }

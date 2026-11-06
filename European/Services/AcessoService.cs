@@ -7,13 +7,6 @@ namespace European.Services
     /// <summary>Decide para qual área do app cada usuário vai, conforme o papel e o acesso liberado pela coordenação.</summary>
     public static class AcessoService
     {
-        public const string RotaCoordenacao = "//coordenacao";
-        public const string RotaProfessor = "//professor";
-        public const string RotaAluno = "//main";
-        public const string RotaSomenteCertificados = "//certificados";
-        public const string RotaAguardando = "//aguardando";
-        public const string RotaPagamento = "//pagamento";
-        public const string RotaNovaSenha = "//novasenha";
 
         public sealed record Resultado(string? Rota, string? Mensagem = null);
 
@@ -22,14 +15,14 @@ namespace European.Services
             if (usuario.IsCoordenacao)
             {
                 return usuario.AcessoLiberado
-                    ? new Resultado(RotaCoordenacao)
+                    ? new Resultado(Navegacao.Coordenacao)
                     : new Resultado(null, "Seu acesso à coordenação está desativado.");
             }
 
             if (usuario.Roles == Roles.Professor)
             {
                 return usuario.AcessoLiberado
-                    ? new Resultado(RotaProfessor)
+                    ? new Resultado(Navegacao.Professor)
                     : new Resultado(null, "Seu acesso de professor foi removido pela coordenação.");
             }
 
@@ -37,32 +30,32 @@ namespace European.Services
 
             // Após concluir o curso, o aluno ainda reassiste as aulas até o fim da validade do acesso.
             if (usuario.AcessoLiberado && matriculas.Any(m => m.AcessoAulasVigente))
-                return new Resultado(RotaAluno);
+                return new Resultado(Navegacao.Aluno);
 
             // Quem já foi aluno (matrícula encerrada, ou concluída com a validade esgotada) só consulta o próprio certificado.
             if (matriculas.Count > 0 || (await CertificadoRepositorio.DoAlunoAsync(usuario.Id)).Count > 0)
-                return new Resultado(RotaSomenteCertificados);
+                return new Resultado(Navegacao.SomenteCertificados);
 
-            return new Resultado(RotaAguardando);
+            return new Resultado(Navegacao.Aguardando);
         }
 
         /// <summary>Candidato (solicitação ainda não liberada): paga primeiro, depois aguarda a coordenação.</summary>
         public static string RotaCandidato(SolicitacaoMatricula solicitacao)
-            => solicitacao.Pago ? RotaAguardando : RotaPagamento;
+            => solicitacao.Pago ? Navegacao.Aguardando : Navegacao.Pagamento;
 
         public static async Task EntrarAsync(Usuario usuario)
         {
             var resultado = await RotaInicialAsync(usuario);
             if (resultado.Rota == null)
             {
-                await Shell.Current.DisplayAlert("Acesso", resultado.Mensagem, "OK");
+                await Shell.Current.DisplayAlertAsync("Acesso", resultado.Mensagem, "OK");
                 return;
             }
 
             SessionService.Entrar(usuario);
 
             // conta criada (ou senha redefinida) pela coordenação: primeiro troca a senha provisória
-            await Shell.Current.GoToAsync(usuario.SenhaProvisoria ? RotaNovaSenha : resultado.Rota);
+            await Shell.Current.GoToAsync(usuario.SenhaProvisoria ? Navegacao.NovaSenha : resultado.Rota);
         }
 
         public static async Task EntrarCandidatoAsync(SolicitacaoMatricula solicitacao)
@@ -74,7 +67,7 @@ namespace European.Services
         public static async Task SairAsync()
         {
             SessionService.Sair();
-            await Shell.Current.GoToAsync("//login");
+            await Shell.Current.GoToAsync(Navegacao.Login);
         }
     }
 }

@@ -10,18 +10,22 @@ namespace European.Services
         public static async Task<List<Prova>> VisiveisParaAlunoAsync(string alunoId, IEnumerable<Matricula> matriculasAtivas)
         {
             var cursos = matriculasAtivas.Where(m => m.Status == StatusMatricula.Ativa).ToDictionary(m => m.CursoId, m => m.Curso);
-            var salas = (await SalaRepositorio.DoAlunoAsync(alunoId)).Select(s => s.Id).ToHashSet();
-            var provas = await ProvaRepositorio.DosCursosAsync(cursos.Keys);
-
-            var visiveis = provas
-                .Where(p => p.IsPublicada && p.Questoes.Count > 0)
-                .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
-                .ToList();
+            var visiveis = await ExigidasDoAlunoAsync(alunoId, cursos.Keys);
 
             foreach (var prova in visiveis)
                 prova.Materia = cursos.GetValueOrDefault(prova.CursoId)?.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId);
 
             return visiveis.OrderBy(p => p.Prazo ?? DateTime.MaxValue).ToList();
+        }
+
+        /// <summary>Provas que contam para o aluno nos cursos informados: publicadas, com questões, do curso inteiro ou da sala dele.</summary>
+        public static async Task<List<Prova>> ExigidasDoAlunoAsync(string alunoId, IEnumerable<string> cursoIds)
+        {
+            var salas = (await SalaRepositorio.DoAlunoAsync(alunoId)).Select(s => s.Id).ToHashSet();
+            return (await ProvaRepositorio.DosCursosAsync(cursoIds))
+                .Where(p => p.IsPublicada && p.Questoes.Count > 0)
+                .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
+                .ToList();
         }
 
         /// <summary>

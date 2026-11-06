@@ -10,8 +10,8 @@ namespace European.Data
     {
         private static IMongoCollection<MaterialComplementar> Colecao => MongoContext.Materiais;
 
-        public static async Task<List<MaterialComplementar>> DaAulaAsync(string aulaId)
-            => await Colecao.Find(m => m.AulaId == aulaId).SortBy(m => m.Ordem).ToListAsync();
+        public static Task<List<MaterialComplementar>> DaAulaAsync(string aulaId)
+            => Colecao.Find(m => m.AulaId == aulaId).SortBy(m => m.Ordem).ToListAsync();
 
         public static async Task InserirAsync(MaterialComplementar material, Stream? arquivo = null)
         {
@@ -33,13 +33,12 @@ namespace European.Data
         public static async Task ExcluirAsync(MaterialComplementar material)
         {
             await ExcluirArquivoAsync(material.ArquivoId);
-            await Colecao.DeleteOneAsync(m => m.Id == material.Id);
+            await Colecao.ExcluirAsync(material.Id);
         }
 
         public static async Task ExcluirDasAulasAsync(IEnumerable<string> aulaIds)
         {
-            var ids = aulaIds.ToList();
-            var materiais = await Colecao.Find(Builders<MaterialComplementar>.Filter.In(m => m.AulaId, ids)).ToListAsync();
+            var materiais = await Colecao.OndeEmAsync(m => m.AulaId, aulaIds);
             foreach (var material in materiais)
                 await ExcluirAsync(material);
         }

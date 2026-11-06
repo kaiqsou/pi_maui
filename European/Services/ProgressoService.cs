@@ -47,6 +47,16 @@ namespace European.Services
             return lista.Sum(n => n.Resultado.NotaNormalizada * Math.Max(0, n.Prova.Peso)) / pesos;
         }
 
+        /// <summary>Junta cada resultado à sua prova, descartando resultados de provas que não estão na lista.</summary>
+        public static List<(ResultadoProva Resultado, Prova Prova)> ComProva(IEnumerable<ResultadoProva> resultados, IEnumerable<Prova> provas)
+        {
+            var porId = provas.ToDictionary(p => p.Id);
+            return resultados
+                .Where(r => porId.ContainsKey(r.ProvaId))
+                .Select(r => (r, porId[r.ProvaId]))
+                .ToList();
+        }
+
         /// <summary>Situação do aluno numa matéria: média ponderada das provas corrigidas e aprovação pela média.</summary>
         public sealed record AvaliacaoMateria(double Media, double NotaCorte, bool Completa, bool Aprovada);
 
@@ -57,18 +67,13 @@ namespace European.Services
         /// </summary>
         public static AvaliacaoMateria AvaliarMateria(IReadOnlyCollection<Prova> provasExigidas, IEnumerable<ResultadoProva> corrigidos)
         {
-            var notas = corrigidos
-                .Where(r => r.Corrigida)
-                .Select(r => (Resultado: r, Prova: provasExigidas.FirstOrDefault(p => p.Id == r.ProvaId)))
-                .Where(n => n.Prova != null)
-                .Select(n => (n.Resultado, n.Prova!))
-                .ToList();
+            var notas = ComProva(corrigidos.Where(r => r.Corrigida), provasExigidas);
 
             var media = Math.Round(Media(notas), 1);
             var corte = provasExigidas.Count == 0
                 ? NotaCortePadrao
                 : provasExigidas.Max(p => p.NotaCorte / Math.Max(1, p.NotaMaxima) * 10);
-            var completa = provasExigidas.All(p => notas.Any(n => n.Item2.Id == p.Id));
+            var completa = provasExigidas.All(p => notas.Any(n => n.Prova.Id == p.Id));
 
             return new AvaliacaoMateria(media, Math.Round(corte, 1), completa, completa && provasExigidas.Count > 0 && media >= corte);
         }
@@ -94,20 +99,12 @@ namespace European.Services
             var modulosConcluidos = modulos.Count(m => m.Materias.SelectMany(x => x.Aulas).All(a => concluidas.Contains(a.Id)));
 
             // provas exigidas: as publicadas que o aluno enxerga (do curso inteiro ou da sala dele)
-            var salas = (await SalaRepositorio.DoAlunoAsync(matricula.AlunoId)).Select(s => s.Id).ToHashSet();
-            var provas = (await ProvaRepositorio.DosCursosAsync(new[] { curso.Id }))
-                .Where(p => p.IsPublicada && p.Questoes.Count > 0)
-                .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
-                .ToList();
+            var provas = await ProvaService.ExigidasDoAlunoAsync(matricula.AlunoId, new[] { curso.Id });
             // só contam as provas já corrigidas pelo professor
             var resultados = (await ResultadoRepositorio.DoAlunoAsync(matricula.AlunoId))
                 .Where(r => r.CursoId == curso.Id && r.Corrigida).ToList();
 
-            var notas = resultados
-                .Select(r => (Resultado: r, Prova: provas.FirstOrDefault(p => p.Id == r.ProvaId)))
-                .Where(n => n.Prova != null)
-                .Select(n => (n.Resultado, n.Prova!))
-                .ToList();
+            var notas = ComProva(resultados, provas);
 
             // aprovação pela média de cada matéria que tem prova (uma prova baixa pode ser compensada pelas outras)
             var materias = provas.GroupBy(p => p.MateriaId).ToList();

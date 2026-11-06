@@ -102,12 +102,7 @@ namespace European.ViewModels
             if (aluno != null)
             {
                 var matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
-                var salas = (await SalaRepositorio.DoAlunoAsync(aluno.Id)).Select(s => s.Id).ToHashSet();
-                // provas que contam para o aluno: publicadas, do curso inteiro ou da sala dele
-                var provas = (await ProvaRepositorio.DosCursosAsync(matriculas.Select(m => m.CursoId)))
-                    .Where(p => p.IsPublicada && p.Questoes.Count > 0)
-                    .Where(p => string.IsNullOrEmpty(p.SalaId) || salas.Contains(p.SalaId))
-                    .ToList();
+                var provas = await ProvaService.ExigidasDoAlunoAsync(aluno.Id, matriculas.Select(m => m.CursoId));
                 // só entram na média as provas que o professor já corrigiu
                 var doAluno = (await ResultadoRepositorio.DoAlunoAsync(aluno.Id)).Where(r => r.Corrigida).ToList();
 
@@ -122,12 +117,7 @@ namespace European.ViewModels
                             foreach (var prova in provas.Where(p => p.MateriaId == materia.Id))
                                 prova.Materia = materia;
 
-                            var notas = doAluno
-                                .Where(r => r.MateriaId == materia.Id)
-                                .Select(r => (Resultado: r, Prova: provas.FirstOrDefault(p => p.Id == r.ProvaId)))
-                                .Where(n => n.Prova != null)
-                                .Select(n => (n.Resultado, n.Prova!))
-                                .ToList();
+                            var notas = ProgressoService.ComProva(doAluno.Where(r => r.MateriaId == materia.Id), provas);
                             notasGerais.AddRange(notas);
 
                             var total = materia.Aulas.Count;

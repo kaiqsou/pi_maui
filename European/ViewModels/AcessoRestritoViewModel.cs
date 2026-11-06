@@ -17,7 +17,7 @@ namespace European.ViewModels
         {
             VerificarCommand = new Command(async () => await VerificarAsync());
             SairCommand = new Command(async () => await AcessoService.SairAsync());
-            RefazerPagamentoCommand = new Command(async () => await Shell.Current.GoToAsync(AcessoService.RotaPagamento));
+            RefazerPagamentoCommand = new Command(async () => await Shell.Current.GoToAsync(Navegacao.Pagamento));
         }
 
         public string Nome => SessionService.NomeAtual;
@@ -144,7 +144,7 @@ namespace European.ViewModels
                 var resultado = await AcessoService.RotaInicialAsync(usuario);
                 SessionService.Entrar(usuario);
 
-                if (resultado.Rota == AcessoService.RotaAguardando)
+                if (resultado.Rota == Navegacao.Aguardando)
                 {
                     await AvisarAsync("Acesso", "Seu acesso ainda não foi liberado pela coordenação.");
                     return;

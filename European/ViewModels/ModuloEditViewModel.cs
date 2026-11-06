@@ -41,15 +41,8 @@ namespace European.ViewModels
                 return;
             }
 
-            var salvo = await ExecutarAsync(() => CursoRepositorio.AlterarAsync(_curso.Id, curso =>
+            var salvo = await ExecutarAsync(() => CursoRepositorio.SalvarModuloAsync(_curso.Id, _modulo?.Id, modulo =>
             {
-                var modulo = _modulo == null ? null : curso.Modulos.FirstOrDefault(m => m.Id == _modulo.Id);
-                if (modulo == null)
-                {
-                    modulo = new Modulo { Id = MongoContext.NovoId(), Ordem = curso.Modulos.Count + 1 };
-                    curso.Modulos.Add(modulo);
-                }
-
                 modulo.Titulo = Titulo.Trim();
                 modulo.Descricao = Descricao.Trim();
             }));

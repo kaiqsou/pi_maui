@@ -105,25 +105,13 @@ namespace European.ViewModels
             var segundos = int.TryParse(DuracaoMinutos, out var minutos) ? Math.Max(0, minutos) * 60 : 0;
             Aula? salva = null;
 
-            var ok = await ExecutarAsync(() => CursoRepositorio.AlterarAsync(cursoId, curso =>
+            var ok = await ExecutarAsync(async () => salva = await CursoRepositorio.SalvarAulaAsync(cursoId, _materia.Id, _aula?.Id, aula =>
             {
-                var materia = curso.TodasMaterias.FirstOrDefault(m => m.Id == _materia.Id)
-                    ?? throw new InvalidOperationException("A matéria foi removida.");
-
-                var aula = _aula == null ? null : materia.Aulas.FirstOrDefault(a => a.Id == _aula.Id);
-                if (aula == null)
-                {
-                    aula = new Aula { Id = MongoContext.NovoId(), Ordem = materia.Aulas.Count + 1 };
-                    materia.Aulas.Add(aula);
-                }
-
                 aula.Titulo = Titulo.Trim();
                 aula.Descricao = Descricao.Trim();
                 aula.VideoId = VideoUrl.Trim();
                 if (segundos > 0 || aula.DuracaoSegundos == 0)
                     aula.DuracaoSegundos = segundos;
-
-                salva = aula;
             }));
 
             if (!ok)

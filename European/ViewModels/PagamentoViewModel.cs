@@ -192,7 +192,7 @@ namespace European.ViewModels
 
             LimparCartao();
             await AvisarAsync("Pagamento confirmado", "Agora é só aguardar a coordenação liberar o seu acesso ao curso.");
-            await Shell.Current.GoToAsync(AcessoService.RotaAguardando);
+            await Shell.Current.GoToAsync(Navegacao.Aguardando);
         }
 
         private bool CartaoValido(out string erro)

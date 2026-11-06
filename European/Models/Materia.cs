@@ -1,6 +1,6 @@
 ﻿namespace European.Models
 {
-    public class Materia
+    public class Materia : IOrdenavel
     {
         public string Id { get; set; } = string.Empty;
         public string ModuloId { get; set; } = string.Empty;

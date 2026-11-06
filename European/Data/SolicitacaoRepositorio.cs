@@ -9,11 +9,10 @@ namespace European.Data
     {
         private static IMongoCollection<SolicitacaoMatricula> Colecao => MongoContext.Solicitacoes;
 
-        public static async Task<List<SolicitacaoMatricula>> ListarAsync()
-            => await Colecao.Find(FilterDefinition<SolicitacaoMatricula>.Empty).SortBy(s => s.CriadaEm).ToListAsync();
+        public static Task<List<SolicitacaoMatricula>> ListarAsync()
+            => Colecao.Find(FilterDefinition<SolicitacaoMatricula>.Empty).SortBy(s => s.CriadaEm).ToListAsync();
 
-        public static async Task<SolicitacaoMatricula?> PorIdAsync(string id)
-            => await Colecao.Find(s => s.Id == id).FirstOrDefaultAsync();
+        public static Task<SolicitacaoMatricula?> PorIdAsync(string id) => Colecao.PorIdAsync(id);
 
         public static async Task<SolicitacaoMatricula?> PorEmailAsync(string email)
         {
@@ -32,15 +31,7 @@ namespace European.Data
             if (await UsuarioRepositorio.PorEmailAsync(solicitacao.Email) != null)
                 return false;
 
-            try
-            {
-                await Colecao.InsertOneAsync(solicitacao);
-                return true;
-            }
-            catch (MongoWriteException ex) when (ex.WriteError?.Category == ServerErrorCategory.DuplicateKey)
-            {
-                return false;
-            }
+            return await Colecao.TentarInserirAsync(solicitacao);
         }
 
         /// <summary>Um novo pagamento responde à pendência anterior: o pedido volta para a fila da coordenação.</summary>
@@ -62,7 +53,6 @@ namespace European.Data
             await Colecao.UpdateOneAsync(s => s.Id == id, update);
         }
 
-        public static async Task ExcluirAsync(string id)
-            => await Colecao.DeleteOneAsync(s => s.Id == id);
+        public static Task ExcluirAsync(string id) => Colecao.ExcluirAsync(id);
     }
 }

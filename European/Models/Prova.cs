@@ -2,7 +2,7 @@
 
 namespace European.Models
 {
-    public class Prova
+    public class Prova : IAuditavel
     {
         public string Id { get; set; } = string.Empty;
         public string CursoId { get; set; } = string.Empty;
