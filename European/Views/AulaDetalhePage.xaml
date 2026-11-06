@@ -28,7 +28,7 @@
         <VerticalStackLayout Padding="20,0,20,28" Spacing="16">
 
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                <Label Grid.Column="0" Text="&#xea19;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                <Label Grid.Column="0" Text="&#xea19;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
                 <Label Grid.Column="1" Text="{Binding MateriaNome}" Style="{StaticResource Muted}" VerticalOptions="Center" />
                 <Label Grid.Column="2" Text="{Binding DuracaoFormatada}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
             </Grid>
@@ -56,11 +56,11 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:AulaItem">
                         <Border Style="{StaticResource Card}" Padding="12,8" MinimumHeightRequest="48"
-                                StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource SurfaceCard}">
+                                StrokeShape="RoundRectangle 12" BackgroundColor="{DynamicResource SurfaceCard}">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding IsSelecionada}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
-                                    <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
+                                    <Setter Property="Stroke" Value="{DynamicResource BrandPrimary}" />
                                     <Setter Property="StrokeThickness" Value="1.5" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
@@ -74,15 +74,15 @@
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="24,*,Auto,20" ColumnSpacing="10">
                                 <Label Grid.Column="0" Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="18" VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="{Binding Aula.Titulo}" FontFamily="OpenSansSemibold" FontSize="14"
-                                       TextColor="{StaticResource OnSurface}" MaxLines="2" LineBreakMode="TailTruncation"
+                                <Label Grid.Column="1" Text="{Binding Aula.Titulo}" FontFamily="TextoNegrito" FontSize="14"
+                                       TextColor="{DynamicResource OnSurface}" MaxLines="2" LineBreakMode="TailTruncation"
                                        VerticalOptions="Center" />
                                 <Label Grid.Column="2" Text="{Binding Duracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                                 <Label Grid.Column="3" Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18"
-                                       TextColor="{StaticResource Success}" VerticalOptions="Center"
+                                       TextColor="{DynamicResource Success}" VerticalOptions="Center"
                                        IsVisible="{Binding Concluida}" />
                                 <Label Grid.Column="3" Text="&#xe897;" Style="{StaticResource Icon}" FontSize="18"
-                                       TextColor="{StaticResource Danger}" VerticalOptions="Center"
+                                       TextColor="{DynamicResource Danger}" VerticalOptions="Center"
                                        IsVisible="{Binding Bloqueada}" />
                             </Grid>
                         </Border>
@@ -106,7 +106,7 @@
                                     <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
                                     <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" LineBreakMode="TailTruncation" />
                                 </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="&#xf090;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="&#xf090;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
                             </Grid>
                         </Border>
                     </DataTemplate>

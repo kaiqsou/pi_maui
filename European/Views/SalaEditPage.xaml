@@ -51,8 +51,8 @@
                         <!-- busca: só alunos matriculados nos cursos que o professor leciona -->
                         <Border Style="{StaticResource Campo}">
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
-                                <Label Text="&#xe8b6;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource OnSurfaceVariant}" />
-                                <Entry Grid.Column="1" Text="{Binding Busca}" Placeholder="Buscar aluno por nome ou e-mail" Keyboard="Email"
+                                <Label Text="&#xe8b6;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource OnSurfaceVariant}" />
+                                <Entry Grid.Column="1" Text="{Binding Busca}" Placeholder="Buscar aluno por nome ou e-mail" Keyboard="Email" IsSpellCheckEnabled="False"
                                        ReturnCommand="{Binding AdicionarAlunoCommand}" />
                             </Grid>
                         </Border>
@@ -68,7 +68,7 @@
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="10">
                                             <Border Style="{StaticResource IconTile}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
-                                                <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}"
+                                                <Label Text="{Binding Iniciais}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}"
                                                        HorizontalOptions="Center" VerticalOptions="Center" />
                                             </Border>
                                             <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
@@ -84,7 +84,7 @@
 
                         <Label Text="Nenhum aluno dos seus cursos encontrado." Style="{StaticResource BodySm}" IsVisible="{Binding SemResultado}" />
 
-                        <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+                        <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
 
                         <!-- alunos já na sala -->
                         <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Alunos}">
@@ -95,7 +95,7 @@
                                 <DataTemplate x:DataType="vm:PessoaItem">
                                     <Grid ColumnDefinitions="36,*,Auto,Auto" ColumnSpacing="10">
                                         <Border Style="{StaticResource IconTile}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center">
-                                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}"
+                                            <Label Text="{Binding Iniciais}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}"
                                                    HorizontalOptions="Center" VerticalOptions="Center" />
                                         </Border>
                                         <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
@@ -103,10 +103,10 @@
                                             <Label Text="{Binding Email}" Style="{StaticResource BodySm}" />
                                         </VerticalStackLayout>
                                         <Label Grid.Column="2" Text="{Binding Status}" Style="{StaticResource BodySm}" VerticalOptions="Center"
-                                               TextColor="{StaticResource Success}">
+                                               TextColor="{DynamicResource Success}">
                                             <Label.Triggers>
                                                 <DataTrigger TargetType="Label" Binding="{Binding Alerta}" Value="True">
-                                                    <Setter Property="TextColor" Value="{StaticResource Warning}" />
+                                                    <Setter Property="TextColor" Value="{DynamicResource Warning}" />
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
@@ -120,14 +120,14 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Button Text="Excluir sala" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                <Button Text="Excluir sala" Style="{StaticResource GhostButton}" TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
                         Command="{Binding ExcluirCommand}" IsVisible="{Binding IsEdicao}" />
 
             </VerticalStackLayout>
         </ScrollView>
 
         <Grid Grid.Row="2" RowDefinitions="Auto,Auto">
-            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+            <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
             <Button Grid.Row="1" Text="Salvar sala" Style="{StaticResource PrimaryButton}" Margin="20,12,20,16"
                     Command="{Binding SalvarCommand}" IsEnabled="{Binding IsNotBusy}" />
         </Grid>

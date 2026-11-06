@@ -151,6 +151,8 @@ namespace European.Services
         public static async Task AlterarMatriculaAsync(Usuario aluno, Matricula matricula, StatusMatricula status)
         {
             matricula.Status = status;
+            if (status == StatusMatricula.Ativa)
+                matricula.TrancadaEm = null;
             await MatriculaRepositorio.AtualizarAsync(matricula);
 
             if (status == StatusMatricula.Ativa)

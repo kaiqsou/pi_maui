@@ -4,7 +4,7 @@
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.DesempenhoAba"
              x:DataType="vm:DesempenhoViewModel"
-             BackgroundColor="{StaticResource Surface}">
+             BackgroundColor="{DynamicResource Surface}">
 
     <!-- Título e média geral ficam fixos; só a lista de matérias rola. -->
     <!-- A margem lateral fica dentro de cada parte para a barra de rolagem ficar na borda, sem cobrir os cards. -->
@@ -38,19 +38,19 @@
                                             <Label Text="{Binding ModuloTitulo}" Style="{StaticResource BodySm}" />
                                         </VerticalStackLayout>
                                         <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
-                                            <Label Text="{Binding Media, StringFormat='{0:0.0}'}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
+                                            <Label Text="{Binding Media, StringFormat='{0:0.0}'}" FontFamily="TextoNegrito" FontSize="14" TextColor="{DynamicResource BrandPrimary}" />
                                         </Border>
                                     </Grid>
                                     <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
                                     <Label Text="{Binding Progresso, StringFormat='Progresso: {0:0}%'}" Style="{StaticResource BodySm}" />
                                     <!-- aprovação pela média da matéria (mesma regra do certificado) -->
-                                    <Label Text="{Binding SituacaoTexto}" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold">
+                                    <Label Text="{Binding SituacaoTexto}" Style="{StaticResource BodySm}" FontFamily="TextoNegrito">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding Aprovado}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                                <Setter Property="TextColor" Value="{DynamicResource Success}" />
                                             </DataTrigger>
                                             <DataTrigger TargetType="Label" Binding="{Binding Reprovado}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Danger}" />
+                                                <Setter Property="TextColor" Value="{DynamicResource Danger}" />
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
@@ -67,7 +67,7 @@
                             <Label Text="As matérias do curso aparecerão aqui" Style="{StaticResource BodySm}" />
                         </VerticalStackLayout>
                         <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
-                            <Label Text="{Binding MediaTexto}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" />
+                            <Label Text="{Binding MediaTexto}" FontFamily="TextoNegrito" FontSize="14" TextColor="{DynamicResource BrandPrimary}" />
                         </Border>
                     </Grid>
                 </Border>

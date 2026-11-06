@@ -25,7 +25,7 @@ namespace European.ViewModels
         public bool TemCapa => !string.IsNullOrWhiteSpace(Curso?.CapaUrl);
         public string CategoriaTexto => Curso == null ? string.Empty : Formatos.Categoria(Curso.Categoria);
         public string PrecoTexto => Formatos.Preco(Curso?.Preco ?? 0);
-        public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras}h" : "—";
+        public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras.ToString("N0", Formatos.PtBr)}h" : "—";
         public string ModulosTexto => (Curso?.Modulos.Count ?? 0).ToString();
         public string AulasTexto => (Curso?.TotalAulas ?? 0).ToString();
 

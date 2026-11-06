@@ -26,7 +26,7 @@ namespace European.Controls
 
         public EstadoVazio()
         {
-            _icone = new Label { Style = Recursos.Estilo("Icon"), FontSize = 48, TextColor = Recursos.Cor("Outline"), HorizontalOptions = LayoutOptions.Center };
+            _icone = Recursos.ComCor(new Label { Style = Recursos.Estilo("Icon"), FontSize = 48, HorizontalOptions = LayoutOptions.Center }, Label.TextColorProperty, "Outline");
             _titulo = new Label { Style = Recursos.Estilo("TitleSm"), HorizontalOptions = LayoutOptions.Center, HorizontalTextAlignment = TextAlignment.Center };
             _texto = new Label { Style = Recursos.Estilo("Muted"), HorizontalTextAlignment = TextAlignment.Center, IsVisible = false };
 

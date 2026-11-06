@@ -14,7 +14,7 @@ namespace European.ViewModels
         public string Descricao => Curso.Descricao;
         public bool TemDescricao => !string.IsNullOrWhiteSpace(Curso.Descricao);
         public string PrecoTexto => Formatos.Preco(Curso.Preco);
-        public string CargaTexto => Curso.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras} horas" : string.Empty;
+        public string CargaTexto => Curso.CargaHorariaHoras > 0 ? Formatos.Horas(Curso.CargaHorariaHoras) : string.Empty;
 
         [ObservableProperty]
         public partial bool Selecionado { get; set; }

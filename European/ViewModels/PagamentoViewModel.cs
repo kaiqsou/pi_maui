@@ -32,7 +32,7 @@ namespace European.ViewModels
         public partial Curso? Curso { get; private set; }
 
         public string CursoNome => Curso?.Nome ?? string.Empty;
-        public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras} horas · Certificado de conclusão" : "Certificado de conclusão";
+        public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Formatos.Horas(Curso.CargaHorariaHoras)} · Certificado de conclusão" : "Certificado de conclusão";
         public decimal Valor => Curso?.Preco ?? 0;
         public string PrecoTexto => Formatos.Moeda(Valor);
 

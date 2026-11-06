@@ -8,6 +8,9 @@ namespace European
         {
             InitializeComponent();
 
+            // tema claro por padrão; o escuro fica salvo se o usuário escolher (botão de sol/lua)
+            TemaService.Iniciar();
+
             AppDomain.CurrentDomain.UnhandledException += (_, e) =>
                 CrashLogger.Registrar("AppDomain.UnhandledException", e.ExceptionObject as Exception);
 

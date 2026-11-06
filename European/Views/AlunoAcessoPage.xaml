@@ -18,8 +18,8 @@
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
-                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
-                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{StaticResource BrandOnPrimaryContainer}"
+                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{DynamicResource BrandPrimary}">
+                            <Label Text="{Binding Iniciais}" FontFamily="TextoNegrito" FontSize="18" TextColor="{DynamicResource BrandOnPrimaryContainer}"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
@@ -35,7 +35,7 @@
                     </Border>
                     <!-- Pagamento feito na solicitação de matrícula -->
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" IsVisible="{Binding Pago}">
-                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource Success}" />
+                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Success}" />
                         <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                     </Grid>
                 </VerticalStackLayout>
@@ -71,16 +71,16 @@
                                 <VerticalStackLayout Spacing="2">
                                     <Label Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" FontSize="15" />
                                     <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
-                                    <Label Text="{Binding Status}" Style="{StaticResource BodySm}" FontFamily="OpenSansSemibold" TextColor="{StaticResource OnSurfaceVariant}">
+                                    <Label Text="{Binding Status}" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" TextColor="{DynamicResource OnSurfaceVariant}">
                                         <Label.Triggers>
                                             <DataTrigger TargetType="Label" Binding="{Binding Ativa}" Value="True">
-                                                <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                                <Setter Property="TextColor" Value="{DynamicResource Success}" />
                                             </DataTrigger>
                                         </Label.Triggers>
                                     </Label>
                                 </VerticalStackLayout>
                                 <Button Grid.Column="1" Text="Encerrar" Style="{StaticResource SoftButton}" VerticalOptions="Center"
-                                        BackgroundColor="{StaticResource DangerSoft}" TextColor="{StaticResource Danger}" IsVisible="{Binding Ativa}"
+                                        BackgroundColor="{DynamicResource DangerSoft}" TextColor="{DynamicResource Danger}" IsVisible="{Binding Ativa}"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AlunoAcessoViewModel}}, Path=EncerrarCommand, x:DataType=vm:AlunoAcessoViewModel}"
                                         CommandParameter="{Binding .}" />
                                 <Button Grid.Column="1" Text="Reativar" Style="{StaticResource SoftButton}" VerticalOptions="Center"
@@ -94,7 +94,7 @@
             </VerticalStackLayout>
 
             <Button Text="Redefinir senha" Style="{StaticResource GhostButton}" Command="{Binding RedefinirSenhaCommand}" />
-            <Button Text="Remover acesso ao aplicativo" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+            <Button Text="Remover acesso ao aplicativo" Style="{StaticResource GhostButton}" TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
                     Command="{Binding RemoverAcessoCommand}" IsVisible="{Binding PodeRemover}" />
 
         </VerticalStackLayout>

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<!--
+    Tema claro (padrão): a mesma identidade dourada do site sobre fundo claro.
+    O dourado do site (#E7B643) não tem contraste suficiente sobre branco, então textos, ícones e botões
+    usam o dourado escuro da marca. As MESMAS chaves existem em CoresEscuras.xaml.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="European.Resources.Styles.CoresClaras">
+
+    <!-- Marca: dourado (botões, ícones e destaques) e o texto que vai sobre ele -->
+    <Color x:Key="BrandPrimary">#9A6B17</Color>
+    <Color x:Key="BrandPrimaryLight">#E7B643</Color>
+    <Color x:Key="BrandOnPrimaryContainer">#FFFFFF</Color>
+    <Color x:Key="BrandContainerSoft">#F6EDD6</Color>
+
+    <!-- Superfícies e texto -->
+    <Color x:Key="Surface">#F7F6F3</Color>
+    <Color x:Key="SurfaceCard">#FFFFFF</Color>
+    <Color x:Key="OnSurface">#16171A</Color>
+    <Color x:Key="OnSurfaceVariant">#5F6470</Color>
+    <Color x:Key="Outline">#E4E1D8</Color>
+
+    <!-- Estados -->
+    <Color x:Key="Success">#2E9D6A</Color>
+    <Color x:Key="SuccessSoft">#E2F3EA</Color>
+    <Color x:Key="Warning">#B97A12</Color>
+    <Color x:Key="WarningSoft">#FBF0DC</Color>
+    <Color x:Key="Danger">#CF4553</Color>
+    <Color x:Key="DangerSoft">#FBE7E9</Color>
+
+    <!-- Campos: texto de exemplo e controles desabilitados -->
+    <Color x:Key="Placeholder">#A3A7AF</Color>
+    <Color x:Key="Desabilitado">#BFC2C8</Color>
+
+    <!-- sombra suave: no tema claro a mesma opacidade do cartão ficaria pesada -->
+    <SolidColorBrush x:Key="ShadowBrush" Color="#33000000" />
+
+    <!-- Linha dourada curta abaixo dos títulos, como no site -->
+    <LinearGradientBrush x:Key="GradienteDourado" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#996D1C" Offset="0" />
+        <GradientStop Color="#E7B643" Offset="0.5" />
+        <GradientStop Color="#996D1C" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

@@ -24,16 +24,15 @@ namespace European.Controls
             var contador = new Label
             {
                 FontSize = 10,
-                FontFamily = "OpenSansSemibold",
-                TextColor = Recursos.Cor("BrandOnPrimaryContainer"),
+                FontFamily = "TextoNegrito",
                 HorizontalOptions = LayoutOptions.Center,
                 VerticalOptions = LayoutOptions.Center
             };
             contador.SetBinding(Label.TextProperty, nameof(Sino.Contador));
+            contador.SetDynamicResource(Label.TextColorProperty, "BrandOnPrimaryContainer");
 
             var marcador = new Border
             {
-                BackgroundColor = Recursos.Cor("Danger"),
                 StrokeThickness = 0,
                 StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 9 },
                 MinimumWidthRequest = 18,
@@ -45,6 +44,7 @@ namespace European.Controls
                 Content = contador
             };
             marcador.SetBinding(IsVisibleProperty, nameof(Sino.TemNaoLidas));
+            marcador.SetDynamicResource(BackgroundColorProperty, "Danger");
 
             var grade = new Grid { Children = { botao, marcador } };
             grade.GestureRecognizers.Add(CriarToque());

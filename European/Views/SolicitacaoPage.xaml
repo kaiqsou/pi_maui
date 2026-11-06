@@ -19,8 +19,8 @@
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
-                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{StaticResource BrandPrimary}">
-                            <Label Text="{Binding Iniciais}" FontFamily="OpenSansSemibold" FontSize="18" TextColor="{StaticResource BrandOnPrimaryContainer}"
+                        <Border Style="{StaticResource IconTile}" WidthRequest="52" HeightRequest="52" BackgroundColor="{DynamicResource BrandPrimary}">
+                            <Label Text="{Binding Iniciais}" FontFamily="TextoNegrito" FontSize="18" TextColor="{DynamicResource BrandOnPrimaryContainer}"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
@@ -46,18 +46,18 @@
                         <Label Grid.Column="1" Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="20" TextColor="{StaticResource Warning}">
+                        <Label Text="&#xe870;" Style="{StaticResource Icon}" FontSize="20" TextColor="{DynamicResource Warning}">
                             <Label.Triggers>
                                 <DataTrigger TargetType="Label" Binding="{Binding Pago}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource Success}" />
+                                    <Setter Property="TextColor" Value="{DynamicResource Success}" />
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
                         <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                     </Grid>
-                    <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource DangerSoft}" Stroke="Transparent" Padding="12,10"
+                    <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource DangerSoft}" Stroke="Transparent" Padding="12,10"
                             IsVisible="{Binding TemPendencia}">
-                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" />
+                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
@@ -67,7 +67,7 @@
             <Label Text="Só é possível liberar depois que o pagamento for feito." Style="{StaticResource BodySm}" HorizontalOptions="Center"
                    IsVisible="{Binding Pago, Converter={StaticResource InverseBool}}" />
             <Button Text="Não liberar" Style="{StaticResource GhostButton}" Command="{Binding NaoLiberarCommand}"
-                    TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                    TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
                     IsEnabled="{Binding IsNotBusy}" />
 
         </VerticalStackLayout>

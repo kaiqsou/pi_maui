@@ -22,7 +22,7 @@
 
                 <VerticalStackLayout Spacing="8">
                     <Border Style="{StaticResource Pill}" HorizontalOptions="Start">
-                        <Label Text="{Binding CategoriaTexto}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                        <Label Text="{Binding CategoriaTexto}" FontFamily="TextoNegrito" FontSize="12" TextColor="{DynamicResource BrandPrimary}" />
                     </Border>
                     <Label Text="{Binding Nome}" Style="{StaticResource TitleLg}" />
                 </VerticalStackLayout>
@@ -61,12 +61,12 @@
                             <DataTemplate x:DataType="vm:ModuloResumo">
                                 <Grid ColumnDefinitions="32,*" ColumnSpacing="12">
                                     <Border Grid.Column="0" WidthRequest="32" HeightRequest="32" VerticalOptions="Center"
-                                            BackgroundColor="{StaticResource BrandContainerSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 10">
-                                        <Label Text="{Binding Numero}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}"
+                                            BackgroundColor="{DynamicResource BrandContainerSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 10">
+                                        <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}"
                                                HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
-                                        <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                                        <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
                                         <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
                                     </VerticalStackLayout>
                                 </Grid>
@@ -86,11 +86,11 @@
 
         <!-- rodapé fixo: preço e escolha -->
         <Grid Grid.Row="1" RowDefinitions="Auto,Auto">
-            <BoxView Grid.Row="0" HeightRequest="1" Color="{StaticResource Outline}" />
-            <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="16" Padding="20,12,20,16" BackgroundColor="{StaticResource SurfaceCard}">
+            <BoxView Grid.Row="0" HeightRequest="1" Color="{DynamicResource Outline}" />
+            <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="16" Padding="20,12,20,16" BackgroundColor="{DynamicResource SurfaceCard}">
                 <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
                     <Label Text="Valor" Style="{StaticResource BodySm}" />
-                    <Label Text="{Binding PrecoTexto}" Style="{StaticResource TitleMd}" TextColor="{StaticResource BrandPrimary}" />
+                    <Label Text="{Binding PrecoTexto}" Style="{StaticResource TitleMd}" TextColor="{DynamicResource BrandPrimary}" />
                 </VerticalStackLayout>
                 <Button Grid.Column="1" Text="Escolher este curso" Style="{StaticResource PrimaryButton}" Command="{Binding EscolherCommand}" />
             </Grid>

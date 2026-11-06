@@ -34,23 +34,25 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:CursoResumo">
-                        <Border Style="{StaticResource Card}" Margin="20,0,20,10">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirCursoCommand, x:DataType=vm:ProfessorViewModel}"
-                                                      CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
-                                <Border Style="{StaticResource IconTile}">
-                                    <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Border>
-                                <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                    <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
-                                    <Label Text="{Binding Estrutura}" Style="{StaticResource BodySm}" />
-                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
-                                </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
+                        <ContentView Padding="20,0,20,12">
+                            <Border Style="{StaticResource Card}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirCursoCommand, x:DataType=vm:ProfessorViewModel}"
+                                                          CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                                    <Border Style="{StaticResource IconTile}">
+                                        <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                        <Label Text="{Binding Estrutura}" Style="{StaticResource BodySm}" />
+                                        <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </ContentView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
@@ -68,38 +70,41 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:ProvaResumo">
-                        <Border Style="{StaticResource Card}" Margin="20,0,20,10">
+                    <ContentView Padding="20,0,20,12">
+                        <Border Style="{StaticResource Card}" Padding="14,12">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirProvaCommand, x:DataType=vm:ProfessorViewModel}"
                                                       CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <VerticalStackLayout Spacing="10">
-                                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
-                                    <Border Style="{StaticResource IconTile}" BackgroundColor="{StaticResource WarningSoft}">
-                                        <Label Text="&#xe862;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}" HorizontalOptions="Center" VerticalOptions="Center" />
-                                    </Border>
-                                    <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                        <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
-                                        <Label Text="{Binding Origem}" Style="{StaticResource BodySm}" />
-                                    </VerticalStackLayout>
-                                    <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Start" BackgroundColor="{StaticResource Outline}">
+                            <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="12">
+                                <Border Style="{StaticResource IconTile}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center"
+                                        BackgroundColor="{DynamicResource WarningSoft}">
+                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Warning}"
+                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" FontSize="15" MaxLines="1" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Origem}" Style="{StaticResource BodySm}" MaxLines="1" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="2" Spacing="6" VerticalOptions="Center" HorizontalOptions="End">
+                                    <Border Style="{StaticResource Pill}" HorizontalOptions="End" BackgroundColor="{DynamicResource Outline}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding Publicada}" Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource SuccessSoft}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource SuccessSoft}" />
                                             </DataTrigger>
                                         </Border.Triggers>
-                                        <Label Text="{Binding Status}" FontFamily="OpenSansSemibold" FontSize="11" TextColor="{StaticResource OnSurface}" />
+                                        <Label Text="{Binding Status}" FontFamily="TextoNegrito" FontSize="11" TextColor="{DynamicResource OnSurface}" />
                                     </Border>
-                                </Grid>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                                    <Button Grid.Column="1" Text="{Binding BotaoCorrecaoTexto}" Style="{StaticResource SoftButton}"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=ResultadosProvaCommand, x:DataType=vm:ProfessorViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                </Grid>
-                            </VerticalStackLayout>
+                                    <Border Style="{StaticResource Pill}" HorizontalOptions="End" BackgroundColor="{DynamicResource WarningSoft}"
+                                            IsVisible="{Binding TemACorrigir}">
+                                        <Label Text="{Binding ACorrigirTexto}" FontFamily="TextoNegrito" FontSize="11" TextColor="{DynamicResource Warning}" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Grid>
                         </Border>
-                    </DataTemplate>
+                    </ContentView>
+                </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
         </Grid>
@@ -116,22 +121,24 @@
                 </CollectionView.EmptyView>
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:SalaResumo">
-                        <Border Style="{StaticResource Card}" Margin="20,0,20,10">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirSalaCommand, x:DataType=vm:ProfessorViewModel}"
-                                                      CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
-                                <Border Style="{StaticResource IconTile}">
-                                    <Label Text="&#xe7ef;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Border>
-                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
-                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
-                                </VerticalStackLayout>
-                                <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
+                        <ContentView Padding="20,0,20,12">
+                            <Border Style="{StaticResource Card}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirSalaCommand, x:DataType=vm:ProfessorViewModel}"
+                                                          CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
+                                    <Border Style="{StaticResource IconTile}">
+                                        <Label Text="&#xe7ef;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                                        <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
+                                    </VerticalStackLayout>
+                                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </ContentView>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

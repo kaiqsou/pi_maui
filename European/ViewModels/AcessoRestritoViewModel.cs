@@ -13,6 +13,9 @@ namespace European.ViewModels
     /// </summary>
     public partial class AcessoRestritoViewModel : BaseViewModel
     {
+        /// <summary>Notificações (ex.-aluno ou matrícula trancada: avisos da coordenação continuam chegando).</summary>
+        public Sino Sino { get; } = new();
+
         public string Nome => SessionService.NomeAtual;
         public string Email => SessionService.EmailAtual;
         public string Iniciais => SessionService.IniciaisAtuais;
@@ -51,6 +54,7 @@ namespace European.ViewModels
         public override async Task AoAparecerAsync()
         {
             NotificarDadosDaSessao();
+            await Sino.AtualizarAsync();
             try
             {
                 if (Solicitacao != null && await RecarregarSolicitacaoAsync() is { } rota)

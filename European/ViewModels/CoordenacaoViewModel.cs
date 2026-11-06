@@ -12,6 +12,7 @@ namespace European.ViewModels
     public partial class CoordenacaoViewModel : BaseViewModel
     {
         private List<PessoaItem> _todosAlunos = new();
+        private List<PessoaItem> _todosProfessores = new();
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(MostrarCursos), nameof(MostrarAlunos), nameof(MostrarProfessores))]
@@ -28,6 +29,23 @@ namespace European.ViewModels
         public bool FiltroPendentes => FiltroAlunos == "pendentes";
         public bool FiltroAtivos => FiltroAlunos == "ativos";
         public bool FiltroTodos => FiltroAlunos == "todos";
+
+        // ---- Busca e filtros da aba Professores ----
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FiltroProfAtivos), nameof(FiltroProfSemCurso), nameof(FiltroProfSemAcesso), nameof(FiltroProfTodos))]
+        public partial string FiltroProfessores { get; set; } = "todos";
+
+        public bool FiltroProfAtivos => FiltroProfessores == "ativos";
+        public bool FiltroProfSemCurso => FiltroProfessores == "semcurso";
+        public bool FiltroProfSemAcesso => FiltroProfessores == "semacesso";
+        public bool FiltroProfTodos => FiltroProfessores == "todos";
+
+        [ObservableProperty]
+        public partial string BuscaProfessores { get; set; } = string.Empty;
+
+        partial void OnFiltroProfessoresChanged(string value) => AplicarFiltroProfessores();
+        partial void OnBuscaProfessoresChanged(string value) => AplicarFiltroProfessores();
 
         [ObservableProperty]
         public partial string Busca { get; set; } = string.Empty;
@@ -88,20 +106,41 @@ namespace European.ViewModels
                 AplicarFiltroAlunos();
 
             var professores = await UsuarioRepositorio.ListarAsync(Roles.Professor);
-            Professores.Clear();
-            foreach (var professor in professores)
+            _todosProfessores = professores.Select(professor =>
             {
                 var doProfessor = cursos.Where(c => c.ProfessorIds.Contains(professor.Id)).Select(c => c.Nome).ToList();
-                Professores.Add(new PessoaItem
+                return new PessoaItem
                 {
                     Usuario = professor,
                     Status = professor.AcessoLiberado ? "Ativo" : "Sem acesso",
                     Alerta = !professor.AcessoLiberado,
+                    SemCurso = doProfessor.Count == 0,
                     Detalhe = doProfessor.Count == 0 ? "Nenhum curso atribuído" : string.Join(", ", doProfessor),
                     Abrir = AbrirProfessorCommand
-                });
-            }
+                };
+            }).ToList();
+            AplicarFiltroProfessores();
         });
+
+        private void AplicarFiltroProfessores()
+        {
+            var termo = BuscaProfessores.Trim();
+            var filtrados = _todosProfessores
+                .Where(p => FiltroProfessores switch
+                {
+                    "ativos" => p.Usuario.AcessoLiberado,
+                    "semcurso" => p.SemCurso,
+                    "semacesso" => !p.Usuario.AcessoLiberado,
+                    _ => true
+                })
+                .Where(p => termo.Length == 0
+                            || p.Nome.Contains(termo, StringComparison.OrdinalIgnoreCase)
+                            || p.Email.Contains(termo, StringComparison.OrdinalIgnoreCase));
+
+            Professores.Clear();
+            foreach (var professor in filtrados)
+                Professores.Add(professor);
+        }
 
         private PessoaItem ItemAluno(Usuario aluno, List<Matricula> matriculas, IReadOnlyDictionary<string, string> nomesCursos)
         {
@@ -171,6 +210,9 @@ namespace European.ViewModels
 
         [RelayCommand]
         private void FiltrarAlunos(string filtro) => FiltroAlunos = filtro;
+
+        [RelayCommand]
+        private void FiltrarProfessores(string filtro) => FiltroProfessores = filtro;
 
         [RelayCommand]
         private Task AbrirPerfil() => Navegacao.IrAsync(Navegacao.Perfil);

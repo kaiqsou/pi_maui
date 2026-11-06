@@ -15,7 +15,7 @@ namespace European.Controls
             {
                 Children =
                 {
-                    new BoxView { HeightRequest = 1, Color = Recursos.Cor("Outline") },
+                    Recursos.ComCor(new BoxView { HeightRequest = 1 }, BoxView.ColorProperty, "Outline"),
                     _grade
                 }
             };

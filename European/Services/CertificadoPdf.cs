@@ -47,27 +47,27 @@ namespace European.Services
         public static byte[] Gerar(Certificado c)
         {
             var conteudo = new StringBuilder();
-            var azul = (0.208, 0.145, 0.804);
+            var dourado = (0.600, 0.427, 0.110); // #996D1C, o dourado escuro da marca
             var cinza = (0.39, 0.39, 0.48);
-            var escuro = (0.10, 0.10, 0.18);
+            var escuro = (0.071, 0.075, 0.082); // #121315
 
             // molduras
-            Cor(conteudo, azul, preenchimento: false);
+            Cor(conteudo, dourado, preenchimento: false);
             conteudo.Append("3 w 24 24 794 547 re S\n");
             conteudo.Append("0.8 w 34 34 774 527 re S\n");
 
-            Texto(conteudo, "EUROPEAN", Fonte.Negrito, 14, 512, azul);
+            Texto(conteudo, "EUROPEAN", Fonte.Negrito, 14, 512, dourado);
             Texto(conteudo, "CERTIFICADO", Fonte.Negrito, 32, 462, escuro);
 
-            Cor(conteudo, azul, preenchimento: false);
+            Cor(conteudo, dourado, preenchimento: false);
             conteudo.Append("1 w 371 444 m 471 444 l S\n");
 
             Texto(conteudo, "Certificamos que", Fonte.Normal, 14, 404, cinza);
             Texto(conteudo, c.AlunoNome, Fonte.Negrito, 26, 366, escuro);
             Texto(conteudo, "concluiu o curso de", Fonte.Normal, 14, 330, cinza);
-            Texto(conteudo, c.CursoNome, Fonte.Negrito, 20, 298, azul);
+            Texto(conteudo, c.CursoNome, Fonte.Negrito, 20, 298, dourado);
 
-            var carga = c.CargaHorariaHoras > 0 ? $"com carga horária total de {c.CargaHorariaHoras} horas" : string.Empty;
+            var carga = c.CargaHorariaHoras > 0 ? $"com carga horária total de {Formatos.Horas(c.CargaHorariaHoras)}" : string.Empty;
             var periodo = string.IsNullOrEmpty(c.PeriodoTexto) ? string.Empty : $"no período {c.PeriodoTexto}";
             var detalhes = string.Join(", ", new[] { carga, periodo }.Where(t => t.Length > 0));
             Texto(conteudo, detalhes.Length > 0 ? detalhes + "." : string.Empty, Fonte.Normal, 13, 266, cinza);

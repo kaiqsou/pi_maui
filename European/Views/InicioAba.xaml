@@ -5,7 +5,7 @@
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.InicioAba"
              x:DataType="vm:InicioViewModel"
-             BackgroundColor="{StaticResource Surface}">
+             BackgroundColor="{DynamicResource Surface}">
 
     <ScrollView>
         <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
@@ -17,7 +17,7 @@
                 </VerticalStackLayout>
                 <controls:SinoNotificacoes Grid.Column="1" BindingContext="{Binding Sino}" VerticalOptions="Center" />
                 <Border Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center"
-                        BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
+                        BackgroundColor="{DynamicResource SurfaceCard}" Stroke="{DynamicResource Outline}"
                         StrokeThickness="1" StrokeShape="RoundRectangle 14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding AbrirPerfilCommand}" />
@@ -33,7 +33,7 @@
                     <VerticalStackLayout Spacing="12">
                         <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
                             <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
-                                    BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent"
+                                    BackgroundColor="{DynamicResource BrandContainerSoft}" Stroke="Transparent"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 12">
                                 <Label Text="&#xe037;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
@@ -46,7 +46,7 @@
                             <ProgressBar Progress="{Binding UltimaPercentual, Converter={StaticResource PercentToProgress}}"
                                          IsVisible="{Binding UltimaIniciada}" />
                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                <Label Grid.Column="0" Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                                <Label Grid.Column="0" Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
                                 <Label Grid.Column="1" Text="{Binding UltimaDuracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                             </Grid>
                         </VerticalStackLayout>
@@ -62,9 +62,9 @@
                     <VerticalStackLayout Spacing="12">
                         <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
                             <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
-                                    BackgroundColor="{StaticResource SuccessSoft}" Stroke="Transparent"
+                                    BackgroundColor="{DynamicResource SuccessSoft}" Stroke="Transparent"
                                     StrokeThickness="0" StrokeShape="RoundRectangle 12">
-                                <Label Text="&#xe876;" Style="{StaticResource Icon}" TextColor="{StaticResource Success}" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <Label Text="&#xe876;" Style="{StaticResource Icon}" TextColor="{DynamicResource Success}" HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                                 <Label Text="Você assistiu todas as aulas" Style="{StaticResource TitleSm}" />
@@ -84,7 +84,7 @@
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                             <Label Grid.Column="0" Text="{Binding AulasTexto}" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
                             <Label Grid.Column="1" Text="{Binding ProgressoCurso, StringFormat='{0:0}%'}"
-                                   Style="{StaticResource TitleMd}" TextColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                                   Style="{StaticResource TitleMd}" TextColor="{DynamicResource BrandPrimary}" VerticalOptions="Center" />
                         </Grid>
                         <ProgressBar Progress="{Binding ProgressoCurso, Converter={StaticResource PercentToProgress}}" />
                         <Label Text="{Binding ModuloTexto}" Style="{StaticResource BodySm}" IsVisible="{Binding TemModuloTexto}" />
@@ -96,8 +96,8 @@
             <VerticalStackLayout Spacing="10" IsVisible="{Binding TemProvasPendentes}">
                 <Grid ColumnDefinitions="*,Auto">
                     <Label Grid.Column="0" Text="{Binding ProvasPendentesTexto}" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
-                    <Label Grid.Column="1" Text="Ver todas" Style="{StaticResource BodySm}" TextColor="{StaticResource BrandPrimary}"
-                           FontFamily="OpenSansSemibold" VerticalOptions="Center">
+                    <Label Grid.Column="1" Text="Ver todas" Style="{StaticResource BodySm}" TextColor="{DynamicResource BrandPrimary}"
+                           FontFamily="TextoNegrito" VerticalOptions="Center">
                         <Label.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding AbrirProvasCommand}" />
                         </Label.GestureRecognizers>
@@ -113,14 +113,14 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12">
                                     <Border Grid.Column="0" WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
-                                            BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+                                            BackgroundColor="{DynamicResource WarningSoft}" Stroke="Transparent"
                                             StrokeThickness="0" StrokeShape="RoundRectangle 12">
-                                        <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="20" TextColor="{StaticResource Warning}"
+                                        <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="20" TextColor="{DynamicResource Warning}"
                                                HorizontalOptions="Center" VerticalOptions="Center" />
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                        <Label Text="{Binding Titulo}" FontFamily="OpenSansSemibold" FontSize="15"
-                                               TextColor="{StaticResource OnSurface}" MaxLines="1" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Titulo}" FontFamily="TextoNegrito" FontSize="15"
+                                               TextColor="{DynamicResource OnSurface}" MaxLines="1" LineBreakMode="TailTruncation" />
                                         <Label Text="{Binding MateriaNome}" Style="{StaticResource BodySm}" MaxLines="1" LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
                                     <Label Grid.Column="2" Text="{Binding Prazo}" Style="{StaticResource BodySm}"
@@ -133,19 +133,19 @@
             </VerticalStackLayout>
 
             <!-- Certificado (só depois de emitido) -->
-            <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+            <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource WarningSoft}" Stroke="Transparent"
                     IsVisible="{Binding TemCertificado}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding AbrirCertificadoCommand}" />
                 </Border.GestureRecognizers>
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                     <Label Grid.Column="0" Text="&#xea3f;" Style="{StaticResource Icon}" FontSize="28"
-                           TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                           TextColor="{DynamicResource Warning}" VerticalOptions="Center" />
                     <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
                         <Label Text="Seu certificado está disponível" Style="{StaticResource TitleSm}" />
                         <Label Text="{Binding ValidadeTexto}" Style="{StaticResource BodySm}" />
                     </VerticalStackLayout>
-                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{StaticResource OnSurfaceVariant}" VerticalOptions="Center" />
+                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
                 </Grid>
             </Border>
 

@@ -26,15 +26,15 @@
             <Border Grid.Column="2" Style="{StaticResource Pill}" VerticalOptions="Center" IsVisible="{Binding TemTempo}">
                 <Border.Triggers>
                     <DataTrigger TargetType="Border" Binding="{Binding TempoAcabando}" Value="True">
-                        <Setter Property="BackgroundColor" Value="{StaticResource DangerSoft}" />
+                        <Setter Property="BackgroundColor" Value="{DynamicResource DangerSoft}" />
                     </DataTrigger>
                 </Border.Triggers>
                 <HorizontalStackLayout Spacing="4">
                     <Label Text="&#xe425;" Style="{StaticResource IconPrimary}" FontSize="16" />
-                    <Label Text="{Binding TempoRestante}" FontFamily="OpenSansSemibold" FontSize="14" TextColor="{StaticResource BrandPrimary}" VerticalOptions="Center">
+                    <Label Text="{Binding TempoRestante}" FontFamily="TextoNegrito" FontSize="14" TextColor="{DynamicResource BrandPrimary}" VerticalOptions="Center">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding TempoAcabando}" Value="True">
-                                <Setter Property="TextColor" Value="{StaticResource Danger}" />
+                                <Setter Property="TextColor" Value="{DynamicResource Danger}" />
                             </DataTrigger>
                         </Label.Triggers>
                     </Label>
@@ -48,13 +48,13 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:QuestaoResposta">
                         <Border WidthRequest="36" HeightRequest="36" StrokeShape="RoundRectangle 18" StrokeThickness="1.5"
-                                Stroke="{StaticResource Outline}" BackgroundColor="{StaticResource SurfaceCard}">
+                                Stroke="{DynamicResource Outline}" BackgroundColor="{DynamicResource SurfaceCard}">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding Respondida}" Value="True">
-                                    <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Border" Binding="{Binding Atual}" Value="True">
-                                    <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                    <Setter Property="Stroke" Value="{DynamicResource BrandPrimary}" />
                                 </DataTrigger>
                             </Border.Triggers>
                             <Border.GestureRecognizers>
@@ -62,11 +62,11 @@
                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaRealizarViewModel}}, Path=IrParaCommand, x:DataType=vm:ProvaRealizarViewModel}"
                                     CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <Label Text="{Binding Numero}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource OnSurfaceVariant}"
+                            <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource OnSurfaceVariant}"
                                    HorizontalOptions="Center" VerticalOptions="Center">
                                 <Label.Triggers>
                                     <DataTrigger TargetType="Label" Binding="{Binding Respondida}" Value="True">
-                                        <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+                                        <Setter Property="TextColor" Value="{DynamicResource BrandPrimary}" />
                                     </DataTrigger>
                                 </Label.Triggers>
                             </Label>
@@ -81,17 +81,17 @@
             <VerticalStackLayout Padding="20,0,20,20" Spacing="14">
 
                 <Border Style="{StaticResource Card}" IsVisible="{Binding TemInstrucoes}"
-                        BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent">
-                    <Label Text="{Binding Instrucoes}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" />
+                        BackgroundColor="{DynamicResource BrandContainerSoft}" Stroke="Transparent">
+                    <Label Text="{Binding Instrucoes}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
                 </Border>
 
                 <Border Style="{StaticResource Card}" BindingContext="{Binding QuestaoAtual}" x:DataType="vm:QuestaoResposta">
                     <VerticalStackLayout Spacing="12">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                             <Border Style="{StaticResource Pill}" VerticalOptions="Start">
-                                <Label Text="{Binding Numero}" FontFamily="OpenSansSemibold" FontSize="13" TextColor="{StaticResource BrandPrimary}" />
+                                <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
                             </Border>
-                            <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="OpenSansSemibold" />
+                            <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
                             <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
                         </Grid>
 
@@ -107,8 +107,8 @@
                                     <Border Style="{StaticResource Painel}" Padding="12,10">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding Selecionada}" Value="True">
-                                                <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
-                                                <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
+                                                <Setter Property="Stroke" Value="{DynamicResource BrandPrimary}" />
                                             </DataTrigger>
                                         </Border.Triggers>
                                         <Border.GestureRecognizers>
@@ -118,18 +118,18 @@
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="28,*" ColumnSpacing="10">
                                             <Border WidthRequest="26" HeightRequest="26" StrokeShape="RoundRectangle 13"
-                                                    Stroke="{StaticResource Outline}" StrokeThickness="1" BackgroundColor="{StaticResource SurfaceCard}">
+                                                    Stroke="{DynamicResource Outline}" StrokeThickness="1" BackgroundColor="{DynamicResource SurfaceCard}">
                                                 <Border.Triggers>
                                                     <DataTrigger TargetType="Border" Binding="{Binding Selecionada}" Value="True">
-                                                        <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-                                                        <Setter Property="Stroke" Value="{StaticResource BrandPrimary}" />
+                                                        <Setter Property="BackgroundColor" Value="{DynamicResource BrandPrimary}" />
+                                                        <Setter Property="Stroke" Value="{DynamicResource BrandPrimary}" />
                                                     </DataTrigger>
                                                 </Border.Triggers>
-                                                <Label Text="{Binding Letra}" FontSize="12" FontFamily="OpenSansSemibold"
-                                                       HorizontalOptions="Center" VerticalOptions="Center" TextColor="{StaticResource OnSurfaceVariant}">
+                                                <Label Text="{Binding Letra}" FontSize="12" FontFamily="TextoNegrito"
+                                                       HorizontalOptions="Center" VerticalOptions="Center" TextColor="{DynamicResource OnSurfaceVariant}">
                                                     <Label.Triggers>
                                                         <DataTrigger TargetType="Label" Binding="{Binding Selecionada}" Value="True">
-                                                            <Setter Property="TextColor" Value="{StaticResource BrandOnPrimaryContainer}" />
+                                                            <Setter Property="TextColor" Value="{DynamicResource BrandOnPrimaryContainer}" />
                                                         </DataTrigger>
                                                     </Label.Triggers>
                                                 </Label>
@@ -148,7 +148,7 @@
 
         <!-- Anterior / Próxima (na última questão, Enviar prova) -->
         <Grid Grid.Row="3" RowDefinitions="Auto,Auto">
-            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+            <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
             <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="20,12,20,16">
                 <Button Grid.Column="0" Text="Anterior" Style="{StaticResource GhostButton}" Command="{Binding AnteriorCommand}"
                         IsEnabled="{Binding PodeAnterior}" />

@@ -152,7 +152,7 @@ namespace European.ViewModels
 
         [RelayCommand]
         private Task AbrirProva(ProvaNode? node)
-            => node?.PodeEditar == true ? Navegacao.IrAsync(Navegacao.ProvaEdit, ("Prova", node.Prova)) : Task.CompletedTask;
+            => node?.PodeEditar == true ? Navegacao.IrAsync(Navegacao.ProvaResultados, ("Prova", node.Prova)) : Task.CompletedTask;
 
         [RelayCommand]
         private async Task OpcoesCursoAsync()

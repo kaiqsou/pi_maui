@@ -27,7 +27,8 @@ namespace European.ViewModels
 
         /// <summary>Entregas aguardando a correção do professor.</summary>
         public int ACorrigir { get; init; }
-        public string BotaoCorrecaoTexto => ACorrigir > 0 ? $"Corrigir ({ACorrigir})" : "Notas";
+        public bool TemACorrigir => ACorrigir > 0;
+        public string ACorrigirTexto => $"{ACorrigir} a corrigir";
     }
 
     public class SalaResumo
@@ -91,9 +92,7 @@ namespace European.ViewModels
                 {
                     Prova = prova,
                     Origem = $"{materia?.Nome ?? "Matéria removida"}{(sala == null ? string.Empty : $" · {sala.Nome}")}",
-                    Detalhe = $"{prova.Questoes.Count} questões · {entregas.Count} entrega(s)" +
-                              (aCorrigir > 0 ? $" · {aCorrigir} a corrigir" : string.Empty) +
-                              (corrigidas.Count == 0 ? string.Empty : $" · média {corrigidas.Average(r => r.NotaObtida):0.0}"),
+                    Detalhe = $"{prova.Questoes.Count} questão(ões) · {entregas.Count} entrega(s)",
                     ACorrigir = aCorrigir
                 });
             }
@@ -125,10 +124,6 @@ namespace European.ViewModels
 
         [RelayCommand]
         private Task AbrirProva(ProvaResumo? item)
-            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaEdit, ("Prova", item.Prova));
-
-        [RelayCommand]
-        private Task ResultadosProva(ProvaResumo? item)
             => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaResultados, ("Prova", item.Prova));
 
         [RelayCommand]

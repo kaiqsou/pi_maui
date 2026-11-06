@@ -7,94 +7,103 @@
     <!-- Page background -->
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0" />
-        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Surface}" />
     </Style>
 
-    <!-- Typography -->
+    <!-- Tipografia: títulos em serifa (Playfair Display) e texto em Lato, como no site -->
     <Style TargetType="Label" x:Key="TitleLg">
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="26" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="FontFamily" Value="Titulo" />
+        <Setter Property="FontSize" Value="28" />
+        <Setter Property="TextColor" Value="{DynamicResource BrandPrimary}" />
     </Style>
 
     <Style TargetType="Label" x:Key="TitleMd">
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="FontFamily" Value="Titulo" />
+        <Setter Property="FontSize" Value="21" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
+    </Style>
+
+    <!-- Linha dourada curta abaixo de um título (use num BoxView) -->
+    <Style TargetType="BoxView" x:Key="LinhaDourada">
+        <Setter Property="WidthRequest" Value="64" />
+        <Setter Property="HeightRequest" Value="3" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Background" Value="{DynamicResource GradienteDourado}" />
+        <Setter Property="HorizontalOptions" Value="Start" />
     </Style>
 
     <Style TargetType="Label" x:Key="TitleSm">
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="TextoNegrito" />
         <Setter Property="FontSize" Value="16" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
     </Style>
 
     <Style TargetType="Label" x:Key="BodyMd">
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
     </Style>
 
     <Style TargetType="Label" x:Key="BodySm">
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
     </Style>
 
     <Style TargetType="Label" x:Key="Muted">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
     </Style>
 
     <!-- Mensagem de erro de formulário (abaixo dos campos) -->
     <Style TargetType="Label" x:Key="MensagemErro">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="TextColor" Value="{StaticResource Danger}" />
+        <Setter Property="TextColor" Value="{DynamicResource Danger}" />
     </Style>
 
     <!-- Icon label using Material Icons font -->
     <Style TargetType="Label" x:Key="Icon">
         <Setter Property="FontFamily" Value="MaterialIcons" />
         <Setter Property="FontSize" Value="22" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
     </Style>
 
     <Style TargetType="Label" x:Key="IconPrimary">
         <Setter Property="FontFamily" Value="MaterialIcons" />
         <Setter Property="FontSize" Value="22" />
-        <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource BrandPrimary}" />
         <Setter Property="VerticalTextAlignment" Value="Center" />
     </Style>
 
 
     <!-- Card -->
     <Style TargetType="Border" x:Key="Card">
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
-        <Setter Property="Stroke" Value="{StaticResource Outline}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceCard}" />
+        <Setter Property="Stroke" Value="{DynamicResource Outline}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="Padding" Value="16" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 16" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 24" />
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Opacity="0.06" Radius="12" Offset="0,4" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Opacity="0.3" Radius="16" Offset="0,6" />
             </Setter.Value>
         </Setter>
     </Style>
 
     <Style TargetType="Border" x:Key="Pill">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="Padding" Value="10,4" />
-        <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 14" />
     </Style>
 
-    <!-- Buttons -->
+    <!-- Botões em formato de pílula, como no site -->
     <Style TargetType="Button" x:Key="PrimaryButton">
-        <Setter Property="BackgroundColor" Value="{StaticResource BrandPrimary}" />
-        <Setter Property="TextColor" Value="{StaticResource BrandOnPrimaryContainer}" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource BrandPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource BrandOnPrimaryContainer}" />
+        <Setter Property="FontFamily" Value="TextoNegrito" />
         <Setter Property="FontSize" Value="15" />
-        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="CornerRadius" Value="25" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="MinimumHeightRequest" Value="50" />
         <Setter Property="VisualStateManager.VisualStateGroups">
@@ -103,8 +112,8 @@
                     <VisualState x:Name="Normal" />
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{StaticResource Outline}" />
-                            <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource Outline}" />
+                            <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
@@ -114,12 +123,12 @@
 
     <Style TargetType="Button" x:Key="GhostButton">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
-        <Setter Property="BorderColor" Value="{StaticResource BrandPrimary}" />
+        <Setter Property="TextColor" Value="{DynamicResource BrandPrimary}" />
+        <Setter Property="BorderColor" Value="{DynamicResource BrandPrimary}" />
         <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="TextoNegrito" />
         <Setter Property="FontSize" Value="15" />
-        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="CornerRadius" Value="25" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="MinimumHeightRequest" Value="50" />
     </Style>
@@ -127,8 +136,8 @@
 
     <!-- Form fields: Label "BodySm" + Border "Campo" envolvendo Entry/Picker/Editor -->
     <Style TargetType="Border" x:Key="Campo">
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
-        <Setter Property="Stroke" Value="{StaticResource Outline}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceCard}" />
+        <Setter Property="Stroke" Value="{DynamicResource Outline}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="Padding" Value="14,2" />
@@ -140,8 +149,8 @@
 
     <!-- Inner panel inside a card (matéria, questão...) -->
     <Style TargetType="Border" x:Key="Painel">
-        <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-        <Setter Property="Stroke" Value="{StaticResource Outline}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Surface}" />
+        <Setter Property="Stroke" Value="{DynamicResource Outline}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="Padding" Value="12" />
@@ -151,7 +160,7 @@
     <Style TargetType="Border" x:Key="IconTile">
         <Setter Property="WidthRequest" Value="44" />
         <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="VerticalOptions" Value="Start" />
@@ -161,8 +170,8 @@
     <Style TargetType="Border" x:Key="BackTile">
         <Setter Property="WidthRequest" Value="40" />
         <Setter Property="HeightRequest" Value="40" />
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
-        <Setter Property="Stroke" Value="{StaticResource Outline}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceCard}" />
+        <Setter Property="Stroke" Value="{DynamicResource Outline}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
     </Style>
@@ -178,19 +187,19 @@
         <Setter Property="MinimumHeightRequest" Value="36" />
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurfaceVariant}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurfaceVariant}" />
     </Style>
 
     <!-- Small soft action button ("Nova prova", "Adicionar") -->
     <Style TargetType="Button" x:Key="SoftButton">
-        <Setter Property="FontFamily" Value="OpenSansSemibold" />
+        <Setter Property="FontFamily" Value="TextoNegrito" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="HeightRequest" Value="36" />
         <Setter Property="MinimumHeightRequest" Value="36" />
         <Setter Property="Padding" Value="12,0" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="BackgroundColor" Value="{StaticResource BrandContainerSoft}" />
-        <Setter Property="TextColor" Value="{StaticResource BrandPrimary}" />
+        <Setter Property="CornerRadius" Value="18" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
+        <Setter Property="TextColor" Value="{DynamicResource BrandPrimary}" />
     </Style>
 
 
@@ -202,8 +211,8 @@
         <Setter Property="HeightRequest" Value="40" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="20" />
-        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceCard}" />
-        <Setter Property="TextColor" Value="{StaticResource OnSurface}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceCard}" />
+        <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -220,8 +229,8 @@
 
     <!-- Progress -->
     <Style TargetType="ProgressBar">
-        <Setter Property="ProgressColor" Value="{StaticResource BrandPrimary}" />
-        <Setter Property="BackgroundColor" Value="{StaticResource Outline}" />
+        <Setter Property="ProgressColor" Value="{DynamicResource BrandPrimary}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource Outline}" />
         <Setter Property="HeightRequest" Value="6" />
     </Style>
 

@@ -20,20 +20,22 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:NotificacaoItem">
-                    <Border Style="{StaticResource Card}" Margin="20,0,20,10">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                            <!-- ponto azul nas notificações que ainda não tinham sido vistas -->
-                            <Ellipse WidthRequest="8" HeightRequest="8" Fill="{StaticResource BrandPrimary}" VerticalOptions="Start"
-                                     Margin="0,6,0,0" IsVisible="{Binding Nova}" />
-                            <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
-                                    <Label Grid.Column="1" Text="{Binding QuandoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                                </Grid>
-                                <Label Text="{Binding Mensagem}" Style="{StaticResource BodyMd}" />
-                            </VerticalStackLayout>
-                        </Grid>
-                    </Border>
+                    <ContentView Padding="20,0,20,12">
+                        <Border Style="{StaticResource Card}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <!-- ponto azul nas notificações que ainda não tinham sido vistas -->
+                                <Ellipse WidthRequest="8" HeightRequest="8" Fill="{DynamicResource BrandPrimary}" VerticalOptions="Start"
+                                         Margin="0,6,0,0" IsVisible="{Binding Nova}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
+                                        <Label Grid.Column="1" Text="{Binding QuandoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                    </Grid>
+                                    <Label Text="{Binding Mensagem}" Style="{StaticResource BodyMd}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </ContentView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

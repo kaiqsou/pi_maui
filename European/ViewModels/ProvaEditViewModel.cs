@@ -388,9 +388,5 @@ namespace European.ViewModels
                 ? Task.CompletedTask
                 : ExcluirEVoltarAsync($"Excluir a prova \"{_prova.Titulo}\"? As notas dos alunos nesta prova também serão removidas.",
                     () => ProvaRepositorio.ExcluirAsync(_prova.Id));
-
-        [RelayCommand]
-        private Task Resultados()
-            => _prova == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaResultados, ("Prova", _prova));
     }
 }

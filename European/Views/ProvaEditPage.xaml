@@ -19,20 +19,20 @@
 
         <!-- indicador de etapas -->
         <VerticalStackLayout Grid.Row="1" Spacing="6" Padding="20,0,20,12">
-            <Label Text="{Binding EtapaTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource BrandPrimary}" FontFamily="OpenSansSemibold" />
+            <Label Text="{Binding EtapaTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource BrandPrimary}" FontFamily="TextoNegrito" />
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
-                <BoxView Grid.Column="0" HeightRequest="4" CornerRadius="2" Color="{StaticResource BrandPrimary}" />
-                <BoxView Grid.Column="1" HeightRequest="4" CornerRadius="2" Color="{StaticResource Outline}">
+                <BoxView Grid.Column="0" HeightRequest="4" CornerRadius="2" Color="{DynamicResource BrandPrimary}" />
+                <BoxView Grid.Column="1" HeightRequest="4" CornerRadius="2" Color="{DynamicResource Outline}">
                     <BoxView.Triggers>
                         <DataTrigger TargetType="BoxView" Binding="{Binding EtapaRegrasAtingida}" Value="True">
-                            <Setter Property="Color" Value="{StaticResource BrandPrimary}" />
+                            <Setter Property="Color" Value="{DynamicResource BrandPrimary}" />
                         </DataTrigger>
                     </BoxView.Triggers>
                 </BoxView>
-                <BoxView Grid.Column="2" HeightRequest="4" CornerRadius="2" Color="{StaticResource Outline}">
+                <BoxView Grid.Column="2" HeightRequest="4" CornerRadius="2" Color="{DynamicResource Outline}">
                     <BoxView.Triggers>
                         <DataTrigger TargetType="BoxView" Binding="{Binding EtapaQuestoesAtingida}" Value="True">
-                            <Setter Property="Color" Value="{StaticResource BrandPrimary}" />
+                            <Setter Property="Color" Value="{DynamicResource BrandPrimary}" />
                         </DataTrigger>
                     </BoxView.Triggers>
                 </BoxView>
@@ -42,12 +42,11 @@
         <ScrollView Grid.Row="2">
             <VerticalStackLayout Padding="20,0,20,20" Spacing="16">
 
-                <Border Style="{StaticResource Card}" BackgroundColor="{StaticResource WarningSoft}" Stroke="Transparent"
+                <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource WarningSoft}" Stroke="Transparent"
                         IsVisible="{Binding TemEntregas}">
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                        <Label Text="&#xe002;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}" VerticalOptions="Center" />
-                        <Label Grid.Column="1" Text="{Binding EntregasTexto}" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" />
-                        <Button Grid.Column="2" Text="Notas" Style="{StaticResource SoftButton}" Command="{Binding ResultadosCommand}" VerticalOptions="Center" />
+                        <Label Text="&#xe002;" Style="{StaticResource Icon}" TextColor="{DynamicResource Warning}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{Binding EntregasTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
                     </Grid>
                 </Border>
 
@@ -61,7 +60,7 @@
                                         ItemDisplayBinding="{Binding Nome, x:DataType=models:Curso}" />
                             </Border>
                             <Label Text="Você ainda não leciona nenhum curso. Peça à coordenação para vincular você." Style="{StaticResource BodySm}"
-                                   TextColor="{StaticResource Danger}" IsVisible="{Binding SemCursos}" />
+                                   TextColor="{DynamicResource Danger}" IsVisible="{Binding SemCursos}" />
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Spacing="8">
@@ -127,14 +126,14 @@
                             </VerticalStackLayout>
                         </Grid>
 
-                        <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+                        <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
 
                         <Grid ColumnDefinitions="*,Auto">
                             <VerticalStackLayout Spacing="2">
                                 <Label Text="Prazo de entrega" Style="{StaticResource BodyMd}" />
                                 <Label Text="Depois do prazo, a prova fica indisponível." Style="{StaticResource BodySm}" />
                             </VerticalStackLayout>
-                            <Switch Grid.Column="1" IsToggled="{Binding TemPrazo}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding TemPrazo}" OnColor="{DynamicResource BrandPrimary}" VerticalOptions="Center" />
                         </Grid>
 
                         <!-- data numa linha; hora : minuto na linha de baixo, com espaço para os seletores -->
@@ -166,7 +165,7 @@
                                 <Label Text="Publicar para os alunos" Style="{StaticResource BodyMd}" />
                                 <Label Text="Desligado, a prova fica salva como rascunho." Style="{StaticResource BodySm}" />
                             </VerticalStackLayout>
-                            <Switch Grid.Column="1" IsToggled="{Binding IsPublicada}" OnColor="{StaticResource Success}" VerticalOptions="Center" />
+                            <Switch Grid.Column="1" IsToggled="{Binding IsPublicada}" OnColor="{DynamicResource Success}" VerticalOptions="Center" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -182,13 +181,13 @@
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="Auto,*,Auto,64,Auto" ColumnSpacing="8">
                                 <Border Style="{StaticResource Pill}" VerticalOptions="Center">
-                                    <Label Text="{Binding Numero, StringFormat='Questão {0}'}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource BrandPrimary}" />
+                                    <Label Text="{Binding Numero, StringFormat='Questão {0}'}" FontFamily="TextoNegrito" FontSize="12" TextColor="{DynamicResource BrandPrimary}" />
                                 </Border>
                                 <Label Grid.Column="2" Text="Peso" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                                 <Border Grid.Column="3" Style="{StaticResource Campo}" Padding="8,0">
                                     <Entry Text="{Binding Peso}" Keyboard="Numeric" HorizontalTextAlignment="Center" />
                                 </Border>
-                                <Button Grid.Column="4" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{StaticResource Danger}"
+                                <Button Grid.Column="4" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{DynamicResource Danger}"
                                         ToolTipProperties.Text="Remover questão"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=RemoverQuestaoAtualCommand, x:DataType=vm:ProvaEditViewModel}" />
                             </Grid>
@@ -226,11 +225,11 @@
                                     <DataTemplate x:DataType="vm:AlternativaEdicao">
                                         <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="8">
                                             <Border WidthRequest="30" HeightRequest="30" StrokeShape="RoundRectangle 15" VerticalOptions="Center"
-                                                    Stroke="{StaticResource Outline}" StrokeThickness="1.5" BackgroundColor="{StaticResource SurfaceCard}">
+                                                    Stroke="{DynamicResource Outline}" StrokeThickness="1.5" BackgroundColor="{DynamicResource SurfaceCard}">
                                                 <Border.Triggers>
                                                     <DataTrigger TargetType="Border" Binding="{Binding Correta}" Value="True">
-                                                        <Setter Property="BackgroundColor" Value="{StaticResource Success}" />
-                                                        <Setter Property="Stroke" Value="{StaticResource Success}" />
+                                                        <Setter Property="BackgroundColor" Value="{DynamicResource Success}" />
+                                                        <Setter Property="Stroke" Value="{DynamicResource Success}" />
                                                     </DataTrigger>
                                                 </Border.Triggers>
                                                 <Border.GestureRecognizers>
@@ -238,11 +237,11 @@
                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvaEditViewModel}}, Path=MarcarCorretaCommand, x:DataType=vm:ProvaEditViewModel}"
                                                         CommandParameter="{Binding .}" />
                                                 </Border.GestureRecognizers>
-                                                <Label Text="{Binding Letra}" FontFamily="OpenSansSemibold" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}"
+                                                <Label Text="{Binding Letra}" FontFamily="TextoNegrito" FontSize="12" TextColor="{DynamicResource OnSurfaceVariant}"
                                                        HorizontalOptions="Center" VerticalOptions="Center">
                                                     <Label.Triggers>
                                                         <DataTrigger TargetType="Label" Binding="{Binding Correta}" Value="True">
-                                                            <Setter Property="TextColor" Value="{StaticResource BrandOnPrimaryContainer}" />
+                                                            <Setter Property="TextColor" Value="{DynamicResource BrandOnPrimaryContainer}" />
                                                         </DataTrigger>
                                                     </Label.Triggers>
                                                 </Label>
@@ -268,18 +267,18 @@
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                         <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
                                 WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                                BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                                BackgroundColor="{DynamicResource SurfaceCard}" TextColor="{DynamicResource OnSurface}"
                                 IsEnabled="{Binding PodeQuestaoAnterior}" Command="{Binding QuestaoAnteriorCommand}" />
                         <Label Grid.Column="1" Text="{Binding IndicadorQuestao}" Style="{StaticResource BodySm}"
                                HorizontalOptions="Center" VerticalOptions="Center" />
                         <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
                                 WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                                BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
+                                BackgroundColor="{DynamicResource SurfaceCard}" TextColor="{DynamicResource OnSurface}"
                                 IsEnabled="{Binding PodeQuestaoProxima}" Command="{Binding QuestaoProximaCommand}" />
                     </Grid>
                 </VerticalStackLayout>
 
-                <Button Text="Excluir prova" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}" BorderColor="{StaticResource Danger}"
+                <Button Text="Excluir prova" Style="{StaticResource GhostButton}" TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
                         Command="{Binding ExcluirCommand}">
                     <Button.IsVisible>
                         <MultiBinding Converter="{StaticResource TodosVerdadeiros}">
@@ -294,7 +293,7 @@
 
         <!-- rodapé: Voltar / Continuar (na última etapa, "Salvar prova") -->
         <Grid Grid.Row="3" RowDefinitions="Auto,Auto">
-            <BoxView HeightRequest="1" Color="{StaticResource Outline}" />
+            <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
             <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="20,12,20,16">
                 <Button Grid.Column="0" Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}"
                         IsVisible="{Binding PodeVoltarEtapa}" />

@@ -19,8 +19,9 @@ namespace European.ViewModels
     }
 
     /// <summary>
-    /// Entregas de uma prova. Enquanto houver entregas a corrigir, a lista é às cegas ("Resposta #3"),
-    /// sem nome nem horário; os nomes só aparecem quando todas estiverem corrigidas.
+    /// Visualização de uma prova: dados essenciais e as entregas dos alunos (tocar abre a prova respondida).
+    /// Enquanto houver entregas a corrigir, a lista é às cegas ("Resposta #3"), sem nome nem horário;
+    /// os nomes só aparecem quando todas estiverem corrigidas. O professor dono da prova pode editá-la.
     /// </summary>
     public partial class ProvaResultadosViewModel : BaseViewModel
     {
@@ -33,6 +34,30 @@ namespace European.ViewModels
 
         [ObservableProperty]
         public partial bool ModoCego { get; private set; }
+
+        // ---- Dados essenciais da prova ----
+
+        [ObservableProperty]
+        public partial string MateriaTexto { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string TurmaTexto { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string RegrasTexto { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string PrazoTexto { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string StatusTexto { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial bool Publicada { get; private set; }
+
+        /// <summary>Só o professor que criou a prova vê o botão Editar.</summary>
+        [ObservableProperty]
+        public partial bool PodeEditar { get; private set; }
 
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
@@ -47,6 +72,7 @@ namespace European.ViewModels
             // relê a prova: as questões podem ter mudado desde que a lista foi aberta
             _prova = await ProvaRepositorio.PorIdAsync(_prova.Id) ?? _prova;
             Title = _prova.Titulo;
+            await CarregarDadosDaProvaAsync(_prova);
 
             var resultados = await ResultadoRepositorio.DaProvaAsync(_prova.Id);
             var pendentes = resultados.Count(r => !r.Corrigida);
@@ -93,6 +119,24 @@ namespace European.ViewModels
                 : $"Todas corrigidas · {resultados.Count} entrega(s) · média {resultados.Average(r => r.NotaObtida):0.0} · " +
                   $"{Resultados.Count(r => r.Aprovado)} aprovado(s)";
         });
+
+        private async Task CarregarDadosDaProvaAsync(Prova prova)
+        {
+            var curso = await CursoRepositorio.PorIdAsync(prova.CursoId);
+            var materia = curso?.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId);
+            var sala = prova.SalaId == null ? null : await SalaRepositorio.PorIdAsync(prova.SalaId);
+
+            MateriaTexto = $"{materia?.Nome ?? "Matéria removida"} · {curso?.Nome ?? "Curso removido"}";
+            TurmaTexto = sala == null ? "Todos os alunos do curso" : $"Turma {sala.Nome}";
+            RegrasTexto = $"{prova.Questoes.Count} questão(ões) · {prova.DuracaoTexto} · nota máxima {prova.NotaMaxima:0.#} · corte {prova.NotaCorte:0.#}";
+            PrazoTexto = prova.Prazo == null ? "Sem prazo" : $"Prazo: {prova.PrazoTexto}";
+            Publicada = prova.IsPublicada;
+            StatusTexto = !prova.IsPublicada ? "Rascunho" : prova.Expirada ? "Encerrada" : "Publicada";
+            PodeEditar = prova.ProfessorId == SessionService.UsuarioAtual?.Id;
+        }
+
+        [RelayCommand]
+        private Task Editar() => _prova == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaEdit, ("Prova", _prova));
 
         private static string DetalheACorrigir(Prova prova, ResultadoProva resultado)
         {

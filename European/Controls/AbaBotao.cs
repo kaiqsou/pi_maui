@@ -45,12 +45,13 @@ namespace European.Controls
 
         private void Atualizar()
         {
-            var cor = Recursos.Cor(Ativa ? "BrandPrimary" : "OnSurfaceVariant");
+            // cor do tema (DynamicResource): acompanha a troca entre claro e escuro
+            var cor = Ativa ? "BrandPrimary" : "OnSurfaceVariant";
             _icone.Text = Icone;
-            _icone.TextColor = cor;
+            _icone.SetDynamicResource(Label.TextColorProperty, cor);
             _texto.Text = Texto;
-            _texto.TextColor = cor;
-            _texto.FontFamily = Ativa ? "OpenSansSemibold" : "OpenSansRegular";
+            _texto.SetDynamicResource(Label.TextColorProperty, cor);
+            _texto.FontFamily = Ativa ? "TextoNegrito" : "Texto";
         }
     }
 }

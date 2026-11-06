@@ -27,7 +27,7 @@
                 </HorizontalStackLayout>
             </controls:Cabecalho>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
+                <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
                 <Label Grid.Column="1" Text="{Binding ProfessoresTexto}" Style="{StaticResource BodySm}" MaxLines="1"
                        LineBreakMode="TailTruncation" VerticalOptions="Center" />
             </Grid>
@@ -96,7 +96,7 @@
                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=AbrirProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                             CommandParameter="{Binding .}" />
                                                     </Grid.GestureRecognizers>
-                                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="18" TextColor="{StaticResource Warning}" VerticalOptions="Center" />
+                                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Warning}" VerticalOptions="Center" />
                                                     <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
                                                         <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" />
                                                         <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
@@ -116,13 +116,13 @@
 
                 <!-- estados vazios -->
                 <VerticalStackLayout Spacing="6" Padding="0,40,0,0" HorizontalOptions="Center" IsVisible="{Binding ModuloSemMaterias}">
-                    <Label Text="&#xea19;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
+                    <Label Text="&#xea19;" Style="{StaticResource Icon}" FontSize="44" TextColor="{DynamicResource Outline}" HorizontalOptions="Center" />
                     <Label Text="Nenhuma matéria neste módulo" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
                     <Label Text="Use o menu ⋮ do módulo para adicionar." Style="{StaticResource Muted}" HorizontalOptions="Center"
                            IsVisible="{Binding PodeEditarEstrutura}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Spacing="6" Padding="0,40,0,0" HorizontalOptions="Center" IsVisible="{Binding SemModulos}">
-                    <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="44" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
+                    <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="44" TextColor="{DynamicResource Outline}" HorizontalOptions="Center" />
                     <Label Text="Nenhum módulo ainda" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
 

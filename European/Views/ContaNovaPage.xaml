@@ -26,7 +26,7 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="E-mail" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <Entry Text="{Binding Email}" Placeholder="email@exemplo.com" Keyboard="Email" />
+                    <Entry Text="{Binding Email}" Placeholder="email@exemplo.com" Keyboard="Email" IsSpellCheckEnabled="False" />
                 </Border>
             </VerticalStackLayout>
 

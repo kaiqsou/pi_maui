@@ -51,7 +51,7 @@
                         <Label Text="Curso ativo" Style="{StaticResource BodyMd}" />
                         <Label Text="Cursos inativos não aparecem para liberação de novos alunos." Style="{StaticResource BodySm}" />
                     </VerticalStackLayout>
-                    <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" OnColor="{StaticResource BrandPrimary}" VerticalOptions="Center" />
+                    <Switch Grid.Column="1" IsToggled="{Binding IsPublicado}" OnColor="{DynamicResource BrandPrimary}" VerticalOptions="Center" />
                 </Grid>
             </Border>
 

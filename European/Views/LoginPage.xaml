@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.LoginPage"
@@ -10,30 +11,34 @@
     <ScrollView>
         <VerticalStackLayout Padding="28,60,28,28" Spacing="18">
 
-            <Border WidthRequest="72" HeightRequest="72" HorizontalOptions="Start"
-                    BackgroundColor="{StaticResource BrandPrimary}"
-                    StrokeThickness="0" StrokeShape="RoundRectangle 20">
-                <Label Text="&#xe80c;" FontFamily="MaterialIcons" FontSize="38"
-                       TextColor="{StaticResource BrandOnPrimaryContainer}" HorizontalOptions="Center" VerticalOptions="Center" />
-            </Border>
+            <Grid ColumnDefinitions="*,Auto">
+                <Border WidthRequest="72" HeightRequest="72" HorizontalOptions="Start"
+                        BackgroundColor="{DynamicResource BrandPrimary}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 20">
+                    <Label Text="&#xe80c;" FontFamily="MaterialIcons" FontSize="38"
+                           TextColor="{DynamicResource BrandOnPrimaryContainer}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <controls:BotaoTema Grid.Column="1" VerticalOptions="Start" />
+            </Grid>
 
-            <Label Text="European" Style="{StaticResource TitleLg}" />
+            <VerticalStackLayout Spacing="10">
+                <Label Text="European" Style="{StaticResource TitleLg}" FontSize="34" />
+                <BoxView Style="{StaticResource LinhaDourada}" />
+            </VerticalStackLayout>
             <Label Text="Plataforma de aprendizagem para mestrado. Acesse sua conta para continuar."
                    Style="{StaticResource Muted}" />
 
             <VerticalStackLayout Spacing="8" Margin="0,12,0,0">
                 <Label Text="E-mail" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" IsSpellCheckEnabled="False" />
                 </Border>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="8">
                 <Label Text="Senha" Style="{StaticResource BodySm}" />
-                <Border BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
-                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="14,2">
-                    <Entry Text="{Binding Senha}" Placeholder="••••••" IsPassword="True" />
+                <Border Style="{StaticResource Campo}">
+                    <controls:CampoSenha Text="{Binding Senha}" Placeholder="••••••" />
                 </Border>
             </VerticalStackLayout>
 
@@ -54,8 +59,8 @@
                 <VerticalStackLayout Spacing="10">
                     <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
                         <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
-                                BackgroundColor="{StaticResource WarningSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
-                            <Label Text="&#xe8b8;" Style="{StaticResource Icon}" TextColor="{StaticResource Warning}"
+                                BackgroundColor="{DynamicResource WarningSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Label Text="&#xe8b8;" Style="{StaticResource Icon}" TextColor="{DynamicResource Warning}"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
                         </Border>
                         <VerticalStackLayout Grid.Column="1" Spacing="2">

@@ -17,6 +17,9 @@ namespace European.ViewModels
         public string Detalhe { get; init; } = string.Empty;
         public bool Destaque { get; init; }
         public bool Alerta { get; init; }
+
+        /// <summary>Professor sem nenhum curso atribuído (usado no filtro "Sem curso").</summary>
+        public bool SemCurso { get; init; }
         public ICommand? Abrir { get; set; }
     }
 }

@@ -10,6 +10,9 @@ namespace European.Services
 
         public static string Moeda(decimal valor) => valor.ToString("C", PtBr);
 
+        /// <summary>"3.000 horas" (com separador de milhar, como no site).</summary>
+        public static string Horas(int horas) => $"{horas.ToString("N0", PtBr)} horas";
+
         public static string Preco(decimal valor) => valor <= 0 ? "Gratuito" : Moeda(valor);
 
         public static string PrimeiroNome(string? nome)

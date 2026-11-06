@@ -11,8 +11,9 @@ namespace European
                 .UseMauiApp<App>()
                 .ConfigureFonts(fonts =>
                 {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    fonts.AddFont("Lato-Regular.ttf", "Texto");
+                    fonts.AddFont("PlayfairDisplay-Bold.ttf", "Titulo");
+                    fonts.AddFont("Lato-Bold.ttf", "TextoNegrito");
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                 });
 
@@ -32,6 +33,25 @@ namespace European
         // entregue numa URL HTTPS (YouTubePlayer.Origem) interceptada aqui, sem acessar a rede.
         private static void ConfigurarPlayerYouTubeWindows()
         {
+            // O Windows mostra o Title do Picker como um rótulo acima da lista; aqui ele vira o texto de dica, como no celular.
+            // (o MAUI reaplica o rótulo em mais de um mapeamento, então a correção vai em todos eles)
+            static void TitleComoDica(Microsoft.Maui.Handlers.IPickerHandler handler, IPicker picker)
+            {
+                handler.PlatformView.Header = null;
+                handler.PlatformView.HeaderTemplate = null;
+                handler.PlatformView.PlaceholderText = picker.Title ?? string.Empty;
+            }
+            foreach (var mapeamento in new[] { nameof(Picker.Title), nameof(Picker.TitleColor), "PickerSemCabecalho" })
+                Microsoft.Maui.Handlers.PickerHandler.Mapper.AppendToMapping(mapeamento, TitleComoDica);
+
+            // Texto selecionado: o Windows usa a cor de destaque do sistema (que pode ser vermelha, azul...).
+            // Aqui vira o dourado escuro da marca, legível com o texto branco nos dois temas.
+            var selecaoDourada = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 0x99, 0x6D, 0x1C));
+            Microsoft.Maui.Handlers.EntryHandler.Mapper.AppendToMapping("SelecaoDaMarca",
+                (handler, _) => handler.PlatformView.SelectionHighlightColor = selecaoDourada);
+            Microsoft.Maui.Handlers.EditorHandler.Mapper.AppendToMapping("SelecaoDaMarca",
+                (handler, _) => handler.PlatformView.SelectionHighlightColor = selecaoDourada);
+
             Microsoft.Maui.Handlers.WebViewHandler.Mapper.AppendToMapping("YouTubePlayer", (handler, _) =>
             {
                 var webView = handler.PlatformView;

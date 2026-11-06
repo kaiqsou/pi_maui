@@ -5,4 +5,31 @@
     xmlns:maui="using:Microsoft.Maui"
     xmlns:local="using:European.WinUI">
 
+    <!--
+        Os campos de texto ficam dentro de um Border com Style="Campo" (que já desenha o fundo e a borda arredondada).
+        Aqui a caixa nativa do Windows fica transparente, sem a borda e a linha de foco próprias.
+    -->
+    <maui:MauiWinUIApplication.Resources>
+        <SolidColorBrush x:Key="TextControlBackground" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBorderBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+        <Thickness x:Key="TextControlBorderThemeThickness">0</Thickness>
+        <Thickness x:Key="TextControlBorderThemeThicknessFocused">0</Thickness>
+
+        <!-- Mesma ideia para as listas de seleção (Picker = ComboBox no Windows) -->
+        <SolidColorBrush x:Key="ComboBoxBackground" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="Transparent" />
+        <SolidColorBrush x:Key="ComboBoxBorderBrushFocused" Color="Transparent" />
+        <Thickness x:Key="ComboBoxBorderThemeThickness">0</Thickness>
+    </maui:MauiWinUIApplication.Resources>
+
 </maui:MauiWinUIApplication>
