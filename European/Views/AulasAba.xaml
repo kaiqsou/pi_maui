@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
              xmlns:vm="clr-namespace:European.ViewModels"
-             x:Class="European.Views.AulasPage"
+             x:Class="European.Views.AulasAba"
              x:DataType="vm:AulasViewModel"
              BackgroundColor="{StaticResource Surface}">
 
@@ -94,19 +95,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12"
-              Padding="20,0,20,16" IsVisible="{Binding TemPaginacao}">
-            <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
-                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                    IsEnabled="{Binding PodePaginaAnterior}" Command="{Binding PaginaAnteriorCommand}" />
-            <Label Grid.Column="1" Text="{Binding IndicadorPagina}" Style="{StaticResource BodySm}"
-                   HorizontalOptions="Center" VerticalOptions="Center" />
-            <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
-                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                    IsEnabled="{Binding PodePaginaProxima}" Command="{Binding PaginaProximaCommand}" />
-        </Grid>
+        <controls:BarraPaginacao Grid.Row="2" Padding="20,0,20,16" BindingContext="{Binding Paginas}" />
 
     </Grid>
 

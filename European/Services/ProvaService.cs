@@ -89,6 +89,42 @@ namespace European.Services
             return pesoTotal <= 0 ? 0 : Math.Round(pontos / pesoTotal * prova.NotaMaxima, 2);
         }
 
+        /// <summary>Entregas antigas (antes das dissertativas) não guardavam a nota por questão: refaz pelas alternativas.</summary>
+        public static void CompletarNotasAntigas(Prova prova, ResultadoProva resultado)
+        {
+            if (resultado.NotasQuestoes.Count > 0)
+                return;
+
+            resultado.NotasQuestoes = prova.Questoes
+                .Select((q, i) => q.IsDissertativa
+                    ? (double?)null
+                    : i < resultado.Respostas.Count && resultado.Respostas[i] == q.IndiceCorreta ? 10 : 0)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Grava a correção (notas e comentários já preenchidos no resultado). Ao concluir, a nota é liberada ao aluno
+        /// e a média/aprovação dele é recalculada (o que pode emitir o certificado).
+        /// </summary>
+        public static async Task SalvarCorrecaoAsync(Prova prova, ResultadoProva resultado, bool concluir)
+        {
+            resultado.NotaObtida = CalcularNota(prova, resultado);
+            if (concluir)
+            {
+                resultado.Status = StatusProva.Corrigida;
+                resultado.CorrigidaEm = DateTime.Now;
+            }
+
+            await ResultadoRepositorio.AtualizarAsync(resultado);
+
+            if (resultado.Corrigida)
+            {
+                var matricula = await MatriculaRepositorio.PorAlunoECursoAsync(resultado.AlunoId, resultado.CursoId);
+                if (matricula != null)
+                    await ProgressoService.AtualizarAsync(matricula);
+            }
+        }
+
         /// <summary>
         /// Ordem e número fixos para a correção às cegas: não seguem a ordem de entrega nem o nome,
         /// para o professor não conseguir deduzir quem é o aluno.

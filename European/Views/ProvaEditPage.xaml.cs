@@ -1,24 +1,13 @@
-using European.Models;
 using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class ProvaEditPage : ContentPage, IQueryAttributable
+    public partial class ProvaEditPage : BasePage
     {
-        private readonly ProvaEditViewModel _viewModel;
-
         public ProvaEditPage()
         {
             InitializeComponent();
-            _viewModel = new ProvaEditViewModel();
-            BindingContext = _viewModel;
-        }
-
-        public async void ApplyQueryAttributes(IDictionary<string, object> query)
-        {
-            var materia = query.TryGetValue("Materia", out var m) ? m as Materia : null;
-            var prova = query.TryGetValue("Prova", out var p) ? p as Prova : null;
-            await _viewModel.CarregarAsync(materia, prova);
+            BindingContext = new ProvaEditViewModel();
         }
     }
 }

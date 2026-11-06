@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              xmlns:models="clr-namespace:European.Models"
              x:Class="European.Views.CursoDetalhePage"
              x:DataType="vm:CursoDetalheViewModel"
              x:Name="Pagina"
              Title="{Binding Title}"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <!--
         Topo fixo (curso + módulo da página), só as matérias do módulo rolam, e a paginação (< >) fica fixa embaixo.
@@ -133,20 +134,8 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Paginação padrão (< 1 / 3 >) -->
-        <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Padding="20,8,20,16" IsVisible="{Binding TemPaginacao}">
-            <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
-                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                    IsEnabled="{Binding PodePaginaAnterior}" Command="{Binding PaginaAnteriorCommand}" />
-            <Label Grid.Column="1" Text="{Binding IndicadorPagina}" Style="{StaticResource BodySm}"
-                   HorizontalOptions="Center" VerticalOptions="Center" />
-            <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
-                    WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                    BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                    IsEnabled="{Binding PodePaginaProxima}" Command="{Binding PaginaProximaCommand}" />
-        </Grid>
+    <controls:BarraPaginacao Grid.Row="3" Padding="20,8,20,16" BindingContext="{Binding Paginas}" />
 
     </Grid>
 
-</ContentPage>
+</views:BasePage>

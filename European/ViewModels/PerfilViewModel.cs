@@ -1,4 +1,5 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -6,53 +7,23 @@ using European.Services;
 
 namespace European.ViewModels
 {
-    public class PerfilViewModel : BaseViewModel
+    /// <summary>Perfil do usuário logado: dados da conta, matrícula (aluno) e troca de senha.</summary>
+    public partial class PerfilViewModel : BaseViewModel
     {
-        private Usuario? _usuario;
-        private bool _temMatricula;
-        private string _cursoNome = string.Empty;
-        private string _situacaoTexto = string.Empty;
-        private bool _cursoConcluido;
-        private string _matriculadoEmTexto = string.Empty;
-        private double _progresso;
-        private string _turmaTexto = string.Empty;
-        private string _acessoAteTexto = string.Empty;
-        private bool _alterandoSenha;
-        private string _senhaAtual = string.Empty;
-        private string _novaSenha = string.Empty;
-        private string _confirmacaoSenha = string.Empty;
-        private string _mensagemSenha = string.Empty;
-
         public PerfilViewModel()
         {
             Title = "Perfil";
-            LogoutCommand = new Command(async () => await AcessoService.SairAsync());
-            VoltarCommand = new Command(async () => await VoltarAsync());
-            AlternarSenhaCommand = new Command(() => AlterandoSenha = !AlterandoSenha);
-            SalvarSenhaCommand = new Command(async () => await SalvarSenhaAsync());
         }
 
-        public Usuario? Usuario
-        {
-            get => _usuario;
-            set
-            {
-                if (SetProperty(ref _usuario, value))
-                {
-                    OnPropertyChanged(nameof(Nome));
-                    OnPropertyChanged(nameof(Email));
-                    OnPropertyChanged(nameof(RoleTexto));
-                    OnPropertyChanged(nameof(Iniciais));
-                    OnPropertyChanged(nameof(IsAluno));
-                    OnPropertyChanged(nameof(MembroDesdeTexto));
-                    OnPropertyChanged(nameof(NascimentoTexto));
-                    OnPropertyChanged(nameof(TemNascimento));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Nome), nameof(Email), nameof(RoleTexto), nameof(Iniciais), nameof(IsAluno),
+            nameof(MembroDesdeTexto), nameof(NascimentoTexto), nameof(TemNascimento))]
+        public partial Usuario? Usuario { get; private set; }
 
         public string Nome => Usuario?.Nome ?? string.Empty;
         public string Email => Usuario?.Email ?? string.Empty;
+        public string Iniciais => Usuario?.Iniciais ?? "?";
+        public bool IsAluno => Usuario?.Roles == Roles.Aluno;
         public string RoleTexto => Usuario?.Roles switch
         {
             Roles.Coordenador or Roles.Administrador => "Coordenação",
@@ -61,116 +32,78 @@ namespace European.ViewModels
             _ => string.Empty
         };
 
-        public string Iniciais => Usuario?.Iniciais ?? "?";
-        public bool IsAluno => Usuario?.Roles == Roles.Aluno;
-
         public string MembroDesdeTexto => Usuario?.CreatedAt.ToString("dd/MM/yyyy") ?? string.Empty;
         public string NascimentoTexto => Usuario?.DataNascimento?.ToString("dd/MM/yyyy") ?? string.Empty;
         public bool TemNascimento => Usuario?.DataNascimento != null;
 
         // ---- Matrícula (aluno) ----
 
-        public bool TemMatricula
-        {
-            get => _temMatricula;
-            private set => SetProperty(ref _temMatricula, value);
-        }
+        [ObservableProperty]
+        public partial bool TemMatricula { get; private set; }
 
-        public string CursoNome
-        {
-            get => _cursoNome;
-            private set => SetProperty(ref _cursoNome, value);
-        }
+        [ObservableProperty]
+        public partial string CursoNome { get; private set; } = string.Empty;
 
-        public string SituacaoTexto
-        {
-            get => _situacaoTexto;
-            private set => SetProperty(ref _situacaoTexto, value);
-        }
+        [ObservableProperty]
+        public partial string SituacaoTexto { get; private set; } = string.Empty;
 
-        public bool CursoConcluido
-        {
-            get => _cursoConcluido;
-            private set => SetProperty(ref _cursoConcluido, value);
-        }
+        [ObservableProperty]
+        public partial bool CursoConcluido { get; private set; }
 
-        public string MatriculadoEmTexto
-        {
-            get => _matriculadoEmTexto;
-            private set => SetProperty(ref _matriculadoEmTexto, value);
-        }
+        [ObservableProperty]
+        public partial string MatriculadoEmTexto { get; private set; } = string.Empty;
 
-        public double Progresso
-        {
-            get => _progresso;
-            private set => SetProperty(ref _progresso, value);
-        }
+        [ObservableProperty]
+        public partial double Progresso { get; private set; }
 
-        public string TurmaTexto
-        {
-            get => _turmaTexto;
-            private set
-            {
-                if (SetProperty(ref _turmaTexto, value))
-                    OnPropertyChanged(nameof(TemTurma));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemTurma))]
+        public partial string TurmaTexto { get; private set; } = string.Empty;
 
         public bool TemTurma => !string.IsNullOrEmpty(TurmaTexto);
 
-        public string AcessoAteTexto
-        {
-            get => _acessoAteTexto;
-            private set
-            {
-                if (SetProperty(ref _acessoAteTexto, value))
-                    OnPropertyChanged(nameof(TemAcessoAte));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemAcessoAte))]
+        public partial string AcessoAteTexto { get; private set; } = string.Empty;
 
         public bool TemAcessoAte => !string.IsNullOrEmpty(AcessoAteTexto);
 
         // ---- Alterar senha ----
 
-        public bool AlterandoSenha
-        {
-            get => _alterandoSenha;
-            set
-            {
-                if (SetProperty(ref _alterandoSenha, value))
-                {
-                    OnPropertyChanged(nameof(SetaSenha));
-                    if (!value)
-                        LimparSenha();
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(SetaSenha))]
+        public partial bool AlterandoSenha { get; set; }
 
-        /// <summary>Seta do item "Alterar senha": para baixo quando aberto, para o lado quando fechado.</summary>
+        /// <summary>Seta do item "Alterar senha": muda quando a seção está aberta ou fechada.</summary>
         public string SetaSenha => AlterandoSenha ? "" : "";
 
-        public string SenhaAtual { get => _senhaAtual; set => SetProperty(ref _senhaAtual, value); }
-        public string NovaSenha { get => _novaSenha; set => SetProperty(ref _novaSenha, value); }
-        public string ConfirmacaoSenha { get => _confirmacaoSenha; set => SetProperty(ref _confirmacaoSenha, value); }
+        [ObservableProperty]
+        public partial string SenhaAtual { get; set; } = string.Empty;
 
-        public string MensagemSenha
-        {
-            get => _mensagemSenha;
-            private set
-            {
-                if (SetProperty(ref _mensagemSenha, value))
-                    OnPropertyChanged(nameof(TemMensagemSenha));
-            }
-        }
+        [ObservableProperty]
+        public partial string NovaSenha { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string ConfirmacaoSenha { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemMensagemSenha))]
+        public partial string MensagemSenha { get; private set; } = string.Empty;
 
         public bool TemMensagemSenha => !string.IsNullOrEmpty(MensagemSenha);
 
-        public ICommand LogoutCommand { get; }
-        public ICommand VoltarCommand { get; }
-        public ICommand AlternarSenhaCommand { get; }
-        public ICommand SalvarSenhaCommand { get; }
+        partial void OnAlterandoSenhaChanged(bool value)
+        {
+            if (value)
+                return;
 
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+            SenhaAtual = string.Empty;
+            NovaSenha = string.Empty;
+            ConfirmacaoSenha = string.Empty;
+            MensagemSenha = string.Empty;
+        }
+
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             Usuario = SessionService.UsuarioAtual;
             AlterandoSenha = false;
@@ -202,6 +135,16 @@ namespace European.ViewModels
             TurmaTexto = string.Join(", ", salas.Where(s => s.CursoId == null || s.CursoId == matricula.CursoId).Select(s => s.Nome));
         });
 
+        [RelayCommand]
+        private Task Logout() => AcessoService.SairAsync();
+
+        [RelayCommand]
+        private Task Voltar() => VoltarAsync();
+
+        [RelayCommand]
+        private void AlternarSenha() => AlterandoSenha = !AlterandoSenha;
+
+        [RelayCommand]
         private async Task SalvarSenhaAsync()
         {
             var usuario = Usuario;
@@ -238,14 +181,6 @@ namespace European.ViewModels
                 AlterandoSenha = false;
                 await AvisarAsync("Senha", "Sua senha foi alterada.");
             }
-        }
-
-        private void LimparSenha()
-        {
-            SenhaAtual = string.Empty;
-            NovaSenha = string.Empty;
-            ConfirmacaoSenha = string.Empty;
-            MensagemSenha = string.Empty;
         }
     }
 }

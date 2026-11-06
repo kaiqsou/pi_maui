@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -10,203 +11,106 @@ namespace European.ViewModels
     /// Tela inicial do aluno: só o que ajuda a decidir o próximo passo — continuar a aula, ver o
     /// andamento do curso, provas pendentes e, quando houver, o certificado.
     /// </summary>
-    public class InicioViewModel : BaseViewModel
+    public partial class InicioViewModel : BaseViewModel
     {
         private const int MaxProvasPendentes = 3;
-
-        private string _saudacao = string.Empty;
-        private Aula? _ultimaAula;
-        private string _ultimaCursoNome = string.Empty;
-        private Matricula? _matriculaAtiva;
-        private string _cardTitulo = string.Empty;
-        private string _botaoTexto = string.Empty;
-        private string _ultimaDuracao = string.Empty;
-        private double _ultimaPercentual;
-        private double _progressoCurso;
-        private string _aulasTexto = string.Empty;
-        private string _moduloTexto = string.Empty;
-        private ObservableCollection<ProvaItem> _provasPendentes = new();
-        private int _totalProvasPendentes;
-        private Certificado? _certificado;
-        private string _validadeTexto = string.Empty;
 
         public InicioViewModel()
         {
             Title = "Início";
-            ContinuarCommand = new Command(async () => await ContinuarAsync());
-            IniciarAulasCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("aulas"));
-            AbrirProvasCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("provas"));
-            AbrirCertificadoCommand = new Command(() => MainViewModel.Atual?.SelecionarAba("certificados"));
-            AbrirPerfilCommand = new Command(async () => await Shell.Current.GoToAsync("perfil"));
         }
 
-        public string Saudacao
-        {
-            get => _saudacao;
-            set => SetProperty(ref _saudacao, value);
-        }
+        /// <summary>Pede à tela principal para trocar de aba ("aulas", "provas"...). A MainPage liga este evento.</summary>
+        public event Action<string>? AbaSolicitada;
 
-        public Matricula? MatriculaAtiva
-        {
-            get => _matriculaAtiva;
-            set
-            {
-                if (SetProperty(ref _matriculaAtiva, value))
-                {
-                    OnPropertyChanged(nameof(TemCurso));
-                    OnPropertyChanged(nameof(SemCurso));
-                    OnPropertyChanged(nameof(MostrarIniciarAulas));
-                }
-            }
-        }
+        [ObservableProperty]
+        public partial string Saudacao { get; private set; } = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemCurso), nameof(SemCurso), nameof(MostrarIniciarAulas))]
+        public partial Matricula? MatriculaAtiva { get; private set; }
 
         public bool TemCurso => MatriculaAtiva != null;
         public bool SemCurso => MatriculaAtiva == null;
 
-        public string UltimaCursoNome
-        {
-            get => _ultimaCursoNome;
-            set => SetProperty(ref _ultimaCursoNome, value);
-        }
+        [ObservableProperty]
+        public partial string UltimaCursoNome { get; private set; } = string.Empty;
 
         // ---- Continuar estudando ----
 
         /// <summary>A aula em que o aluno parou: a primeira ainda não concluída, na ordem do curso.</summary>
-        public Aula? UltimaAula
-        {
-            get => _ultimaAula;
-            set
-            {
-                if (SetProperty(ref _ultimaAula, value))
-                {
-                    OnPropertyChanged(nameof(TemUltimaAula));
-                    OnPropertyChanged(nameof(MostrarIniciarAulas));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemUltimaAula), nameof(MostrarIniciarAulas))]
+        public partial Aula? UltimaAula { get; private set; }
 
         public bool TemUltimaAula => UltimaAula != null;
 
         /// <summary>Todas as aulas já concluídas: o card oferece rever as aulas.</summary>
         public bool MostrarIniciarAulas => UltimaAula == null && MatriculaAtiva != null;
 
-        public string CardTitulo
-        {
-            get => _cardTitulo;
-            private set => SetProperty(ref _cardTitulo, value);
-        }
+        [ObservableProperty]
+        public partial string CardTitulo { get; private set; } = string.Empty;
 
-        public string BotaoTexto
-        {
-            get => _botaoTexto;
-            private set => SetProperty(ref _botaoTexto, value);
-        }
+        [ObservableProperty]
+        public partial string BotaoTexto { get; private set; } = string.Empty;
 
         /// <summary>"Parou em 03:25 de 07:08" quando a aula foi assistida pela metade; senão, só a duração.</summary>
-        public string UltimaDuracao
-        {
-            get => _ultimaDuracao;
-            private set => SetProperty(ref _ultimaDuracao, value);
-        }
+        [ObservableProperty]
+        public partial string UltimaDuracao { get; private set; } = string.Empty;
 
         /// <summary>De 0 a 100, quanto da aula atual já foi assistido.</summary>
-        public double UltimaPercentual
-        {
-            get => _ultimaPercentual;
-            private set
-            {
-                if (SetProperty(ref _ultimaPercentual, value))
-                    OnPropertyChanged(nameof(UltimaIniciada));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(UltimaIniciada))]
+        public partial double UltimaPercentual { get; private set; }
 
         public bool UltimaIniciada => UltimaPercentual > 0;
 
         // ---- Andamento do curso ----
 
-        public double ProgressoCurso
-        {
-            get => _progressoCurso;
-            private set => SetProperty(ref _progressoCurso, value);
-        }
+        [ObservableProperty]
+        public partial double ProgressoCurso { get; private set; }
 
-        public string AulasTexto
-        {
-            get => _aulasTexto;
-            private set => SetProperty(ref _aulasTexto, value);
-        }
+        [ObservableProperty]
+        public partial string AulasTexto { get; private set; } = string.Empty;
 
-        public string ModuloTexto
-        {
-            get => _moduloTexto;
-            private set
-            {
-                if (SetProperty(ref _moduloTexto, value))
-                    OnPropertyChanged(nameof(TemModuloTexto));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemModuloTexto))]
+        public partial string ModuloTexto { get; private set; } = string.Empty;
 
         public bool TemModuloTexto => !string.IsNullOrEmpty(ModuloTexto);
 
         // ---- Provas pendentes ----
 
-        public ObservableCollection<ProvaItem> ProvasPendentes
-        {
-            get => _provasPendentes;
-            private set
-            {
-                if (SetProperty(ref _provasPendentes, value))
-                    OnPropertyChanged(nameof(TemProvasPendentes));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemProvasPendentes))]
+        public partial ObservableCollection<ProvaItem> ProvasPendentes { get; private set; } = new();
 
         public bool TemProvasPendentes => ProvasPendentes.Count > 0;
 
-        public int TotalProvasPendentes
-        {
-            get => _totalProvasPendentes;
-            private set
-            {
-                if (SetProperty(ref _totalProvasPendentes, value))
-                    OnPropertyChanged(nameof(ProvasPendentesTexto));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ProvasPendentesTexto))]
+        public partial int TotalProvasPendentes { get; private set; }
 
         public string ProvasPendentesTexto => TotalProvasPendentes == 1 ? "1 prova para fazer" : $"{TotalProvasPendentes} provas para fazer";
 
         // ---- Certificado ----
 
-        public Certificado? Certificado
-        {
-            get => _certificado;
-            private set
-            {
-                if (SetProperty(ref _certificado, value))
-                    OnPropertyChanged(nameof(TemCertificado));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemCertificado))]
+        public partial Certificado? Certificado { get; private set; }
 
         public bool TemCertificado => Certificado != null;
 
-        public string ValidadeTexto
-        {
-            get => _validadeTexto;
-            private set => SetProperty(ref _validadeTexto, value);
-        }
+        [ObservableProperty]
+        public partial string ValidadeTexto { get; private set; } = string.Empty;
 
-        public ICommand ContinuarCommand { get; }
-        public ICommand IniciarAulasCommand { get; }
-        public ICommand AbrirProvasCommand { get; }
-        public ICommand AbrirCertificadoCommand { get; }
-        public ICommand AbrirPerfilCommand { get; }
-
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             if (aluno == null)
                 return;
 
-            Saudacao = $"Olá, {PrimeiroNome(aluno.Nome)}";
+            Saudacao = Formatos.Saudacao(aluno.Nome);
 
             // inclui a matrícula concluída (dentro da validade), para o aluno poder rever as aulas; ativas vêm primeiro
             var matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
@@ -217,15 +121,9 @@ namespace European.ViewModels
             await CarregarProvasPendentesAsync(aluno.Id, matriculas);
 
             Certificado = (await CertificadoRepositorio.DoAlunoAsync(aluno.Id)).FirstOrDefault();
-            if (Certificado != null)
-            {
-                var acessoAte = MatriculaAtiva?.AcessoAte ?? Certificado.EmitidoEm.AddMonths(Matricula.MesesAcessoAposConclusao);
-                ValidadeTexto = $"Aulas disponíveis até {acessoAte:dd/MM/yyyy}";
-            }
-            else
-            {
-                ValidadeTexto = string.Empty;
-            }
+            ValidadeTexto = Certificado == null
+                ? string.Empty
+                : $"Aulas disponíveis até {Certificado.AcessoAulasAte(MatriculaAtiva):dd/MM/yyyy}";
         });
 
         private async Task CarregarContinuarEAndamentoAsync()
@@ -264,8 +162,8 @@ namespace European.ViewModels
                 CardTitulo = "Continuar de onde parou";
                 BotaoTexto = "Continuar aula";
                 UltimaDuracao = proxima.DuracaoSegundos > 0
-                    ? $"Parou em {Tempo(posicao)} de {proxima.DuracaoTexto}"
-                    : $"Parou em {Tempo(posicao)}";
+                    ? $"Parou em {Formatos.Tempo(posicao)} de {proxima.DuracaoTexto}"
+                    : $"Parou em {Formatos.Tempo(posicao)}";
             }
             else
             {
@@ -299,23 +197,22 @@ namespace European.ViewModels
                 pendentes.Take(MaxProvasPendentes).Select(p => new ProvaItem { Prova = p }));
         }
 
-        private async Task ContinuarAsync()
-        {
-            if (UltimaAula == null || MatriculaAtiva == null)
-                return;
+        [RelayCommand]
+        private Task Continuar()
+            => UltimaAula == null || MatriculaAtiva == null
+                ? Task.CompletedTask
+                : Navegacao.IrAsync(Navegacao.Aula, ("Aula", UltimaAula), ("Matricula", MatriculaAtiva));
 
-            var parametros = new Dictionary<string, object>
-            {
-                ["Aula"] = UltimaAula,
-                ["Matricula"] = MatriculaAtiva
-            };
-            await Shell.Current.GoToAsync("aula", parametros);
-        }
+        [RelayCommand]
+        private void IniciarAulas() => AbaSolicitada?.Invoke("aulas");
 
-        private static string Tempo(double segundos)
-            => TimeSpan.FromSeconds(segundos).ToString(segundos >= 3600 ? @"h\:mm\:ss" : @"mm\:ss");
+        [RelayCommand]
+        private void AbrirProvas() => AbaSolicitada?.Invoke("provas");
 
-        private static string PrimeiroNome(string nome)
-            => string.IsNullOrWhiteSpace(nome) ? string.Empty : nome.Split(' ')[0];
+        [RelayCommand]
+        private void AbrirCertificado() => AbaSolicitada?.Invoke("certificados");
+
+        [RelayCommand]
+        private Task AbrirPerfil() => Navegacao.IrAsync(Navegacao.Perfil);
     }
 }

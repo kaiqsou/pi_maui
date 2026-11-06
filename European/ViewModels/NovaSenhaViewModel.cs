@@ -1,49 +1,39 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Services;
 
 namespace European.ViewModels
 {
     /// <summary>Primeiro login com senha provisória (criada pela coordenação): o usuário define a própria senha.</summary>
-    public class NovaSenhaViewModel : BaseViewModel
+    public partial class NovaSenhaViewModel : BaseViewModel
     {
-        private string _novaSenha = string.Empty;
-        private string _confirmacao = string.Empty;
-        private string _mensagem = string.Empty;
+        [ObservableProperty]
+        public partial string NovaSenha { get; set; } = string.Empty;
 
-        public NovaSenhaViewModel()
-        {
-            SalvarCommand = new Command(async () => await SalvarAsync());
-            SairCommand = new Command(async () => await AcessoService.SairAsync());
-        }
+        [ObservableProperty]
+        public partial string Confirmacao { get; set; } = string.Empty;
 
-        public string PrimeiroNome => SessionService.NomeAtual.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
-        public string NovaSenha { get => _novaSenha; set => SetProperty(ref _novaSenha, value); }
-        public string Confirmacao { get => _confirmacao; set => SetProperty(ref _confirmacao, value); }
-
-        public string Mensagem
-        {
-            get => _mensagem;
-            private set
-            {
-                if (SetProperty(ref _mensagem, value))
-                    OnPropertyChanged(nameof(TemMensagem));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemMensagem))]
+        public partial string Mensagem { get; private set; } = string.Empty;
 
         public bool TemMensagem => !string.IsNullOrEmpty(Mensagem);
+        public string PrimeiroNome => Formatos.PrimeiroNome(SessionService.NomeAtual);
 
-        public ICommand SalvarCommand { get; }
-        public ICommand SairCommand { get; }
-
-        public void Atualizar()
+        public override Task AoAparecerAsync()
         {
             NovaSenha = string.Empty;
             Confirmacao = string.Empty;
             Mensagem = string.Empty;
             OnPropertyChanged(nameof(PrimeiroNome));
+            return Task.CompletedTask;
         }
 
+        [RelayCommand]
+        private Task Sair() => AcessoService.SairAsync();
+
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             var usuario = SessionService.UsuarioAtual;
@@ -84,7 +74,7 @@ namespace European.ViewModels
                 NovaSenha = string.Empty;
                 Confirmacao = string.Empty;
                 await AvisarAsync("Senha", "Sua senha foi definida.");
-                await Shell.Current.GoToAsync(resultado.Rota ?? "//login");
+                await Shell.Current.GoToAsync(resultado.Rota ?? Navegacao.Login);
             });
         }
     }

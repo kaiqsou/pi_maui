@@ -1,42 +1,32 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace European.ViewModels
 {
-    public class MainViewModel : BaseViewModel
+    /// <summary>Área do aluno: guarda qual aba está aberta ("inicio", "aulas", "provas", "desempenho" ou "certificados").</summary>
+    public partial class MainViewModel : BaseViewModel
     {
-        private string _aba = "inicio";
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MostrarInicio), nameof(MostrarAulas), nameof(MostrarProvas),
+            nameof(MostrarDesempenho), nameof(MostrarCertificados))]
+        public partial string AbaAtual { get; private set; } = "inicio";
 
-        public static MainViewModel? Atual { get; set; }
+        public bool MostrarInicio => AbaAtual == "inicio";
+        public bool MostrarAulas => AbaAtual == "aulas";
+        public bool MostrarProvas => AbaAtual == "provas";
+        public bool MostrarDesempenho => AbaAtual == "desempenho";
+        public bool MostrarCertificados => AbaAtual == "certificados";
 
+        /// <summary>A MainPage troca o conteúdo exibido quando a aba muda.</summary>
         public event Action? AbaAlterada;
 
-        public MainViewModel()
-        {
-            SelecionarAbaCommand = new Command<string>(SelecionarAba);
-        }
+        partial void OnAbaAtualChanged(string value) => AbaAlterada?.Invoke();
 
-        public ICommand SelecionarAbaCommand { get; }
-
-        public string AbaAtual => _aba;
-
+        [RelayCommand]
         public void SelecionarAba(string aba)
         {
-            if (string.IsNullOrWhiteSpace(aba) || aba == _aba)
-                return;
-
-            _aba = aba;
-            OnPropertyChanged(nameof(MostrarInicio));
-            OnPropertyChanged(nameof(MostrarAulas));
-            OnPropertyChanged(nameof(MostrarProvas));
-            OnPropertyChanged(nameof(MostrarDesempenho));
-            OnPropertyChanged(nameof(MostrarCertificados));
-            AbaAlterada?.Invoke();
+            if (!string.IsNullOrWhiteSpace(aba))
+                AbaAtual = aba;
         }
-
-        public bool MostrarInicio => _aba == "inicio";
-        public bool MostrarAulas => _aba == "aulas";
-        public bool MostrarProvas => _aba == "provas";
-        public bool MostrarDesempenho => _aba == "desempenho";
-        public bool MostrarCertificados => _aba == "certificados";
     }
 }

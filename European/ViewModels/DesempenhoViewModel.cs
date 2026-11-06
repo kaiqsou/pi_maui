@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -52,48 +53,30 @@ namespace European.ViewModels
         };
     }
 
-    public class DesempenhoViewModel : BaseViewModel
+    /// <summary>Aba "Desempenho": média e situação do aluno em cada matéria.</summary>
+    public partial class DesempenhoViewModel : BaseViewModel
     {
-        private double _mediaGeral;
-        private bool _aprovado;
-        private ObservableCollection<MateriaDesempenho> _materias = new();
-
         public DesempenhoViewModel()
         {
             Title = "Desempenho";
         }
 
-        public ObservableCollection<MateriaDesempenho> Materias
-        {
-            get => _materias;
-            private set
-            {
-                if (SetProperty(ref _materias, value))
-                    OnPropertyChanged(nameof(SemMaterias));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(SemMaterias))]
+        public partial ObservableCollection<MateriaDesempenho> Materias { get; private set; } = new();
 
         public bool SemMaterias => Materias.Count == 0;
 
-        public double MediaGeral
-        {
-            get => _mediaGeral;
-            set
-            {
-                if (SetProperty(ref _mediaGeral, value))
-                    OnPropertyChanged(nameof(MediaTexto));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MediaTexto))]
+        public partial double MediaGeral { get; private set; }
 
         public string MediaTexto => MediaGeral.ToString("0.0");
 
-        public bool Aprovado
-        {
-            get => _aprovado;
-            set => SetProperty(ref _aprovado, value);
-        }
+        [ObservableProperty]
+        public partial bool Aprovado { get; private set; }
 
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             var materias = new ObservableCollection<MateriaDesempenho>();

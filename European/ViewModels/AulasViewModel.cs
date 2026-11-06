@@ -1,5 +1,5 @@
-using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -11,10 +11,13 @@ namespace European.ViewModels
         public Aula Aula { get; set; } = new();
         public bool Concluida { get; set; }
         public bool Liberada { get; set; } = true;
+
+        /// <summary>Aula aberta agora (destaque na lista da tela da aula).</summary>
         public bool IsSelecionada { get; set; }
         public double Percentual { get; set; }
         public string Cabecalho { get; set; } = string.Empty;
-        public bool IniciaGrupo { get; set; }
+
+        /// <summary>Primeira aula da matéria: mostra o nome da matéria acima dela.</summary>
         public bool MostrarCabecalho { get; set; }
 
         public string Duracao => Aula.DuracaoTexto;
@@ -25,163 +28,90 @@ namespace European.ViewModels
         public string MateriaNome => Aula.Materia?.Nome ?? string.Empty;
     }
 
-    public class AulasViewModel : BaseViewModel
+    /// <summary>Aba "Aulas" do aluno: uma página por módulo do curso.</summary>
+    public partial class AulasViewModel : BaseViewModel
     {
-        private Matricula? _matriculaAtiva;
-        private string _cursoNome = string.Empty;
-        private ObservableCollection<Matricula> _matriculas = new();
         private List<Modulo> _modulos = new();
         private List<List<AulaItem>> _aulasPorModulo = new();
-        private int _indicePagina;
-        private IReadOnlyList<AulaItem> _aulasPagina = new List<AulaItem>();
 
         public AulasViewModel()
         {
             Title = "Aulas";
-            AbrirAulaCommand = new Command<AulaItem>(async item => await AbrirAulaAsync(item));
-            PaginaAnteriorCommand = new Command(() => MudarPagina(-1));
-            PaginaProximaCommand = new Command(() => MudarPagina(1));
+            Paginas.Mudou += AplicarPagina;
         }
 
-        public ObservableCollection<Matricula> Matriculas
-        {
-            get => _matriculas;
-            private set => SetProperty(ref _matriculas, value);
-        }
+        public Paginador Paginas { get; } = new();
 
-        public string CursoNome
-        {
-            get => _cursoNome;
-            set => SetProperty(ref _cursoNome, value);
-        }
+        [ObservableProperty]
+        public partial string CursoNome { get; private set; } = string.Empty;
 
-        public Matricula? MatriculaAtiva
-        {
-            get => _matriculaAtiva;
-            set => SetProperty(ref _matriculaAtiva, value);
-        }
+        [ObservableProperty]
+        public partial Matricula? MatriculaAtiva { get; private set; }
 
-        public IReadOnlyList<AulaItem> AulasPagina
-        {
-            get => _aulasPagina;
-            private set => SetProperty(ref _aulasPagina, value);
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(SemAulas))]
+        public partial IReadOnlyList<AulaItem> AulasPagina { get; private set; } = new List<AulaItem>();
 
-        public int TotalPaginas => _modulos.Count == 0 ? 1 : _modulos.Count;
-        public int PaginaAtual => _indicePagina + 1;
-        public bool TemPaginacao => TotalPaginas > 1;
-        public bool PodePaginaAnterior => _indicePagina > 0;
-        public bool PodePaginaProxima => _indicePagina < TotalPaginas - 1;
-        public string IndicadorPagina => $"{PaginaAtual} / {TotalPaginas}";
-        public string ModuloAtualTitulo => _indicePagina >= 0 && _indicePagina < _modulos.Count
-            ? _modulos[_indicePagina].Titulo
-            : string.Empty;
-
+        public string ModuloAtualTitulo => Paginas.Indice < _modulos.Count ? _modulos[Paginas.Indice].Titulo : string.Empty;
         public bool SemAulas => AulasPagina.Count == 0;
         public string MensagemSemAulas => _modulos.Count == 0
             ? "Ainda não há aulas disponíveis para você."
             : "Ainda não há aulas neste módulo.";
 
-        public ICommand AbrirAulaCommand { get; }
-        public ICommand PaginaAnteriorCommand { get; }
-        public ICommand PaginaProximaCommand { get; }
-
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
-
-            var matriculas = new List<Matricula>();
             var modulos = new List<Modulo>();
             var aulasPorModulo = new List<List<AulaItem>>();
 
-            if (aluno != null)
+            // inclui a matrícula concluída: ao terminar a última aula o curso continua visível
+            var matricula = aluno == null ? null : (await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id)).FirstOrDefault();
+            MatriculaAtiva = matricula;
+            CursoNome = matricula?.Curso?.Nome ?? string.Empty;
+
+            if (matricula?.Curso != null)
             {
-                // inclui a matrícula concluída: ao terminar a última aula o curso continua visível
-                matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);
-
-                var matriculaAtiva = matriculas.FirstOrDefault();
-                MatriculaAtiva = matriculaAtiva;
-
-                if (matriculaAtiva?.Curso != null)
+                var progressos = await ProgressoRepositorio.DaMatriculaAsync(matricula.Id);
+                foreach (var modulo in matricula.Curso.Modulos.OrderBy(m => m.Ordem))
                 {
-                    CursoNome = matriculaAtiva.Curso.Nome;
-                    var progressos = await ProgressoRepositorio.DaMatriculaAsync(matriculaAtiva.Id);
-
-                    foreach (var modulo in matriculaAtiva.Curso.Modulos.OrderBy(m => m.Ordem))
+                    var aulas = new List<AulaItem>();
+                    foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
                     {
-                        var aulasModulo = new List<AulaItem>();
-
-                        foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
+                        var primeiraDaMateria = true;
+                        foreach (var aula in materia.Aulas.OrderBy(a => a.Ordem))
                         {
-                            var primeiroDaMateria = true;
-
-                            foreach (var aula in materia.Aulas.OrderBy(a => a.Ordem))
+                            var progresso = progressos.FirstOrDefault(p => p.AulaId == aula.Id);
+                            aulas.Add(new AulaItem
                             {
-                                var progresso = progressos.FirstOrDefault(p => p.AulaId == aula.Id);
-                                aulasModulo.Add(new AulaItem
-                                {
-                                    Aula = aula,
-                                    Concluida = progresso?.Concluida ?? false,
-                                    Liberada = ProgressoService.AulaEstaLiberada(matriculaAtiva.Curso, progressos, aula),
-                                    Percentual = progresso?.PercentualAssistido ?? 0,
-                                    Cabecalho = materia.Nome,
-                                    IniciaGrupo = primeiroDaMateria
-                                });
-
-                                primeiroDaMateria = false;
-                            }
+                                Aula = aula,
+                                Concluida = progresso?.Concluida ?? false,
+                                Liberada = ProgressoService.AulaEstaLiberada(matricula.Curso, progressos, aula),
+                                Percentual = progresso?.PercentualAssistido ?? 0,
+                                Cabecalho = materia.Nome,
+                                MostrarCabecalho = primeiraDaMateria
+                            });
+                            primeiraDaMateria = false;
                         }
-
-                        modulos.Add(modulo);
-                        aulasPorModulo.Add(aulasModulo);
                     }
+
+                    modulos.Add(modulo);
+                    aulasPorModulo.Add(aulas);
                 }
             }
-            else
-            {
-                MatriculaAtiva = null;
-                CursoNome = string.Empty;
-            }
 
-            Matriculas = new ObservableCollection<Matricula>(matriculas);
             _modulos = modulos;
             _aulasPorModulo = aulasPorModulo;
-            _indicePagina = 0;
-            AplicarPagina();
+            Paginas.Reiniciar(modulos.Count);
         });
-
-        private void MudarPagina(int delta)
-        {
-            var novo = _indicePagina + delta;
-            if (novo < 0 || novo >= TotalPaginas)
-                return;
-
-            _indicePagina = novo;
-            AplicarPagina();
-        }
 
         private void AplicarPagina()
         {
-            var pagina = _indicePagina >= 0 && _indicePagina < _aulasPorModulo.Count
-                ? _aulasPorModulo[_indicePagina]
-                : new List<AulaItem>();
-
-            for (var i = 0; i < pagina.Count; i++)
-                pagina[i].MostrarCabecalho = pagina[i].IniciaGrupo;
-
-            AulasPagina = pagina;
-
-            OnPropertyChanged(nameof(PaginaAtual));
-            OnPropertyChanged(nameof(TotalPaginas));
-            OnPropertyChanged(nameof(TemPaginacao));
-            OnPropertyChanged(nameof(PodePaginaAnterior));
-            OnPropertyChanged(nameof(PodePaginaProxima));
-            OnPropertyChanged(nameof(IndicadorPagina));
+            AulasPagina = Paginas.Indice < _aulasPorModulo.Count ? _aulasPorModulo[Paginas.Indice] : new List<AulaItem>();
             OnPropertyChanged(nameof(ModuloAtualTitulo));
-            OnPropertyChanged(nameof(SemAulas));
             OnPropertyChanged(nameof(MensagemSemAulas));
         }
 
+        [RelayCommand]
         private async Task AbrirAulaAsync(AulaItem? item)
         {
             if (item == null || MatriculaAtiva == null)
@@ -189,19 +119,11 @@ namespace European.ViewModels
 
             if (!item.Liberada)
             {
-                await Shell.Current.DisplayAlert(
-                    "Aula bloqueada",
-                    "Conclua a aula anterior para liberar esta aula.",
-                    "OK");
+                await AvisarAsync("Aula bloqueada", "Conclua a aula anterior para liberar esta aula.");
                 return;
             }
 
-            var parametros = new Dictionary<string, object>
-            {
-                ["Aula"] = item.Aula,
-                ["Matricula"] = MatriculaAtiva
-            };
-            await Shell.Current.GoToAsync("aula", parametros);
+            await Navegacao.IrAsync(Navegacao.Aula, ("Aula", item.Aula), ("Matricula", MatriculaAtiva));
         }
     }
 }

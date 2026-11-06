@@ -45,15 +45,12 @@ namespace European.Controls
 
         private void Atualizar()
         {
-            var cor = Cor(Ativa ? "BrandPrimary" : "OnSurfaceVariant");
+            var cor = Recursos.Cor(Ativa ? "BrandPrimary" : "OnSurfaceVariant");
             _icone.Text = Icone;
             _icone.TextColor = cor;
             _texto.Text = Texto;
             _texto.TextColor = cor;
             _texto.FontFamily = Ativa ? "OpenSansSemibold" : "OpenSansRegular";
         }
-
-        private static Color Cor(string chave)
-            => Application.Current?.Resources.TryGetValue(chave, out var valor) == true && valor is Color cor ? cor : Colors.Gray;
     }
 }

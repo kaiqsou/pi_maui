@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -7,107 +8,58 @@ using European.Services;
 
 namespace European.ViewModels
 {
-    public class CursoOpcao : Opcao<Curso> { }
-
-    public class PessoaItem
-    {
-        public Usuario Usuario { get; init; } = new();
-
-        /// <summary>Preenchido quando o item é uma solicitação de matrícula (o candidato ainda não é usuário).</summary>
-        public SolicitacaoMatricula? Solicitacao { get; init; }
-        public string Nome => Usuario.Nome;
-        public string Email => Usuario.Email;
-        public string Iniciais => Usuario.Iniciais;
-        public string Status { get; init; } = string.Empty;
-        public string Detalhe { get; init; } = string.Empty;
-        public bool Destaque { get; init; }
-        public bool Alerta { get; init; }
-        public ICommand? Abrir { get; set; }
-    }
-
     /// <summary>
     /// Sala (turma) do professor. Ele só enxerga e adiciona alunos matriculados nos cursos que leciona;
     /// com um curso escolhido na sala, só os alunos desse curso.
     /// </summary>
-    public class SalaEditViewModel : BaseViewModel
+    public partial class SalaEditViewModel : BaseViewModel
     {
         private const int MaxSugestoes = 8;
-
-        private Sala? _sala;
-        private string _nome = string.Empty;
-        private string _descricao = string.Empty;
-        private string _busca = string.Empty;
-        private List<CursoOpcao> _cursos = new();
-        private CursoOpcao? _cursoSelecionado;
 
         /// <summary>Alunos com matrícula ativa nos cursos do professor, com os cursos de cada um.</summary>
         private List<(Usuario Aluno, HashSet<string> CursoIds)> _alunosDosCursos = new();
 
-        public SalaEditViewModel()
-        {
-            AdicionarAlunoCommand = new Command(async () => await AdicionarPorEmailAsync());
-            AdicionarSugestaoCommand = new Command<PessoaItem>(AdicionarSugestao);
-            RemoverAlunoCommand = new Command<PessoaItem>(p =>
-            {
-                if (p == null)
-                    return;
-                Alunos.Remove(p);
-                OnPropertyChanged(nameof(ResumoAlunos));
-                AtualizarSugestoes();
-            });
-            SalvarCommand = new Command(async () => await SalvarAsync());
-            ExcluirCommand = new Command(async () => await ExcluirAsync());
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsEdicao))]
+        private partial Sala? SalaAtual { get; set; }
 
-        public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
-        public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
-        public List<CursoOpcao> Cursos { get => _cursos; private set => SetProperty(ref _cursos, value); }
+        [ObservableProperty]
+        public partial string Nome { get; set; } = string.Empty;
 
-        public CursoOpcao? CursoSelecionado
-        {
-            get => _cursoSelecionado;
-            set
-            {
-                if (SetProperty(ref _cursoSelecionado, value))
-                    AtualizarSugestoes();
-            }
-        }
+        [ObservableProperty]
+        public partial string Descricao { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial List<CursoOpcao> Cursos { get; private set; } = new();
+
+        [ObservableProperty]
+        public partial CursoOpcao? CursoSelecionado { get; set; }
 
         /// <summary>Nome ou e-mail digitado; as sugestões aparecem enquanto o professor digita.</summary>
-        public string Busca
-        {
-            get => _busca;
-            set
-            {
-                if (SetProperty(ref _busca, value))
-                    AtualizarSugestoes();
-            }
-        }
+        [ObservableProperty]
+        public partial string Busca { get; set; } = string.Empty;
 
         public ObservableCollection<PessoaItem> Alunos { get; } = new();
         public ObservableCollection<PessoaItem> Sugestoes { get; } = new();
         public bool TemSugestoes => Sugestoes.Count > 0;
         public bool SemResultado => Busca.Trim().Length >= 2 && Sugestoes.Count == 0;
         public string ResumoAlunos => $"{Alunos.Count} aluno(s) na sala";
-        public bool IsEdicao => _sala != null;
+        public bool IsEdicao => SalaAtual != null;
 
-        public ICommand AdicionarAlunoCommand { get; }
-        public ICommand AdicionarSugestaoCommand { get; }
-        public ICommand RemoverAlunoCommand { get; }
-        public ICommand SalvarCommand { get; }
-        public ICommand ExcluirCommand { get; }
+        partial void OnCursoSelecionadoChanged(CursoOpcao? value) => AtualizarSugestoes();
+        partial void OnBuscaChanged(string value) => AtualizarSugestoes();
 
-        public async Task CarregarAsync(Sala? sala)
+        protected override async Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
             var professor = SessionService.UsuarioAtual;
             if (professor == null)
                 return;
 
-            _sala = sala;
+            var sala = parametros.Obter<Sala>("Sala");
+            SalaAtual = sala;
             Title = sala == null ? "Nova sala" : "Editar sala";
             Nome = sala?.Nome ?? string.Empty;
             Descricao = sala?.Descricao ?? string.Empty;
-            OnPropertyChanged(nameof(IsEdicao));
 
             await ExecutarAsync(async () =>
             {
@@ -177,6 +129,7 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(SemResultado));
         }
 
+        [RelayCommand]
         private void AdicionarSugestao(PessoaItem? item)
         {
             if (item == null || Alunos.Any(a => a.Usuario.Id == item.Usuario.Id))
@@ -187,8 +140,20 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(ResumoAlunos));
         }
 
+        [RelayCommand]
+        private void RemoverAluno(PessoaItem? item)
+        {
+            if (item == null)
+                return;
+
+            Alunos.Remove(item);
+            OnPropertyChanged(nameof(ResumoAlunos));
+            AtualizarSugestoes();
+        }
+
         /// <summary>Enter no campo: adiciona pelo e-mail exato, ou a única sugestão encontrada.</summary>
-        private async Task AdicionarPorEmailAsync()
+        [RelayCommand]
+        private async Task AdicionarAlunoAsync()
         {
             var termo = Busca.Trim();
             if (termo.Length == 0)
@@ -219,6 +184,7 @@ namespace European.ViewModels
                 : "Nenhum aluno dos seus cursos com este nome ou e-mail.");
         }
 
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             var professor = SessionService.UsuarioAtual;
@@ -231,23 +197,20 @@ namespace European.ViewModels
                 return;
             }
 
-            var sala = _sala ?? new Sala { ProfessorId = professor.Id };
+            var sala = SalaAtual ?? new Sala { ProfessorId = professor.Id };
             sala.Nome = Nome.Trim();
             sala.Descricao = Descricao.Trim();
             sala.CursoId = CursoSelecionado?.Valor?.Id;
             sala.AlunoIds = Alunos.Select(a => a.Usuario.Id).ToList();
 
-            if (await ExecutarAsync(() => SalaRepositorio.SalvarAsync(sala)))
-                await VoltarAsync();
+            await SalvarEVoltarAsync(() => SalaRepositorio.SalvarAsync(sala));
         }
 
-        private async Task ExcluirAsync()
-        {
-            if (_sala == null || !await ConfirmarAsync($"Excluir a sala \"{_sala.Nome}\"? Provas direcionadas a ela passarão a valer para todo o curso."))
-                return;
-
-            if (await ExecutarAsync(() => SalaRepositorio.ExcluirAsync(_sala.Id)))
-                await VoltarAsync();
-        }
+        [RelayCommand]
+        private Task Excluir()
+            => SalaAtual == null
+                ? Task.CompletedTask
+                : ExcluirEVoltarAsync($"Excluir a sala \"{SalaAtual.Nome}\"? Provas direcionadas a ela passarão a valer para todo o curso.",
+                    () => SalaRepositorio.ExcluirAsync(SalaAtual.Id));
     }
 }

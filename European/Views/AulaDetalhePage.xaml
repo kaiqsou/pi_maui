@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              xmlns:models="clr-namespace:European.Models"
              x:Class="European.Views.AulaDetalhePage"
              x:DataType="vm:AulaViewModel"
              Title="{Binding Title}"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <!-- Voltar e o vídeo ficam fixos no topo; o restante (detalhes, aulas e materiais) rola por baixo. -->
     <!-- A margem lateral fica dentro do conteúdo para a barra de rolagem ficar na borda, sem cobrir os cards. -->
@@ -27,7 +28,9 @@
             </Grid>
 
             <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="220">
-                <WebView x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220" />
+                <controls:PlayerYouTube x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220"
+                                        DuracaoCommand="{Binding RegistrarDuracaoCommand}"
+                                        PosicaoCommand="{Binding RegistrarPosicaoCommand}" />
             </Border>
         </VerticalStackLayout>
 
@@ -148,4 +151,4 @@
         </ScrollView>
     </Grid>
 
-</ContentPage>
+</views:BasePage>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.CursoInfoPage"
              x:DataType="vm:CursoInfoViewModel"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <!-- Botão de escolher fica fixo embaixo; o conteúdo rola acima dele -->
     <Grid RowDefinitions="*,Auto">
@@ -107,4 +107,4 @@
 
     </Grid>
 
-</ContentPage>
+</views:BasePage>

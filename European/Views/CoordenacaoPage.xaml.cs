@@ -2,20 +2,12 @@ using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class CoordenacaoPage : ContentPage
+    public partial class CoordenacaoPage : BasePage
     {
-        private readonly CoordenacaoViewModel _viewModel = new();
-
         public CoordenacaoPage()
         {
             InitializeComponent();
-            BindingContext = _viewModel;
-        }
-
-        protected override async void OnAppearing()
-        {
-            base.OnAppearing();
-            await _viewModel.CarregarAsync();
+            BindingContext = new CoordenacaoViewModel();
         }
     }
 }

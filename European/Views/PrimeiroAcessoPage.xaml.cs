@@ -2,12 +2,12 @@ using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class PrimeiroAcessoPage : ContentPage
+    public partial class PrimeiroAcessoPage : BasePage
     {
         public PrimeiroAcessoPage()
         {
             InitializeComponent();
-            BindingContext = new UserViewModel();
+            BindingContext = new PrimeiroAcessoViewModel();
         }
     }
 }

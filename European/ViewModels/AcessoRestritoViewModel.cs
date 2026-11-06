@@ -1,4 +1,5 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -9,43 +10,24 @@ namespace European.ViewModels
     /// Telas de quem ainda não acessa as aulas: candidato com solicitação aguardando a coordenação
     /// (ou com pendência), conta antiga pendente, ou ex-aluno (somente certificado).
     /// </summary>
-    public class AcessoRestritoViewModel : BaseViewModel
+    public partial class AcessoRestritoViewModel : BaseViewModel
     {
-        private string _cursoNome = string.Empty;
-
-        public AcessoRestritoViewModel()
-        {
-            VerificarCommand = new Command(async () => await VerificarAsync());
-            SairCommand = new Command(async () => await AcessoService.SairAsync());
-            RefazerPagamentoCommand = new Command(async () => await Shell.Current.GoToAsync(Navegacao.Pagamento));
-        }
-
         public string Nome => SessionService.NomeAtual;
         public string Email => SessionService.EmailAtual;
         public string Iniciais => SessionService.IniciaisAtuais;
 
-        public ICommand VerificarCommand { get; }
-        public ICommand SairCommand { get; }
-        public ICommand RefazerPagamentoCommand { get; }
-
         private static SolicitacaoMatricula? Solicitacao => SessionService.SolicitacaoAtual;
 
         /// <summary>Curso escolhido na solicitação de matrícula.</summary>
-        public string CursoNome
-        {
-            get => _cursoNome;
-            private set
-            {
-                if (SetProperty(ref _cursoNome, value))
-                    OnPropertyChanged(nameof(TemPedido));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemPedido))]
+        public partial string CursoNome { get; private set; } = string.Empty;
 
         public bool TemPedido => !string.IsNullOrEmpty(CursoNome);
 
-        public string PagamentoTexto => Solicitacao is { PagamentoEm: { } quando, FormaPagamento: { } forma }
-            ? $"Pagamento confirmado via {PagamentoService.Nome(forma)} em {quando:dd/MM/yyyy}"
-            : string.Empty;
+        public string PagamentoTexto => Solicitacao == null || !Solicitacao.Pago
+            ? string.Empty
+            : $"Pagamento confirmado {Formatos.Pagamento(Solicitacao.FormaPagamento, Solicitacao.PagamentoEm, "dd/MM/yyyy")}";
 
         /// <summary>Pendência registrada pela coordenação ao não liberar a matrícula.</summary>
         public bool TemPendencia => Solicitacao?.TemPendencia == true;
@@ -53,21 +35,10 @@ namespace European.ViewModels
         public string PendenciaTexto => Solicitacao?.PendenciaMotivo ?? string.Empty;
         public bool PodeRefazerPagamento => TemPendencia;
 
-        public void Atualizar()
-        {
-            OnPropertyChanged(nameof(Nome));
-            OnPropertyChanged(nameof(Email));
-            OnPropertyChanged(nameof(Iniciais));
-            OnPropertyChanged(nameof(PagamentoTexto));
-            OnPropertyChanged(nameof(TemPendencia));
-            OnPropertyChanged(nameof(SemPendencia));
-            OnPropertyChanged(nameof(PendenciaTexto));
-            OnPropertyChanged(nameof(PodeRefazerPagamento));
-        }
-
         /// <summary>Relê a solicitação: a coordenação pode ter registrado uma pendência ou liberado a matrícula.</summary>
-        public async Task CarregarPedidoAsync()
+        public override async Task AoAparecerAsync()
         {
+            NotificarDadosDaSessao();
             try
             {
                 if (Solicitacao != null && await RecarregarSolicitacaoAsync() is { } rota)
@@ -77,12 +48,25 @@ namespace European.ViewModels
                 }
 
                 CursoNome = Solicitacao == null ? string.Empty : (await CursoRepositorio.PorIdAsync(Solicitacao.CursoId))?.Nome ?? string.Empty;
-                Atualizar();
+                NotificarDadosDaSessao();
             }
             catch (Exception ex)
             {
-                CrashLogger.Registrar(nameof(CarregarPedidoAsync), ex);
+                // sem conexão: a tela continua com os dados que já tinha
+                CrashLogger.Registrar(nameof(AcessoRestritoViewModel), ex);
             }
+        }
+
+        private void NotificarDadosDaSessao()
+        {
+            OnPropertyChanged(nameof(Nome));
+            OnPropertyChanged(nameof(Email));
+            OnPropertyChanged(nameof(Iniciais));
+            OnPropertyChanged(nameof(PagamentoTexto));
+            OnPropertyChanged(nameof(TemPendencia));
+            OnPropertyChanged(nameof(SemPendencia));
+            OnPropertyChanged(nameof(PendenciaTexto));
+            OnPropertyChanged(nameof(PodeRefazerPagamento));
         }
 
         /// <summary>
@@ -111,6 +95,13 @@ namespace European.ViewModels
             return resultado.Rota;
         }
 
+        [RelayCommand]
+        private Task Sair() => AcessoService.SairAsync();
+
+        [RelayCommand]
+        private Task RefazerPagamento() => Shell.Current.GoToAsync(Navegacao.Pagamento);
+
+        [RelayCommand]
         private async Task VerificarAsync()
         {
             if (!SessionService.EstaLogado)
@@ -131,7 +122,7 @@ namespace European.ViewModels
                         return;
                     }
 
-                    Atualizar();
+                    NotificarDadosDaSessao();
                     await AvisarAsync("Acesso", TemPendencia
                         ? "Sua matrícula tem uma pendência. Veja o motivo na tela."
                         : "Sua matrícula ainda não foi liberada pela coordenação.");

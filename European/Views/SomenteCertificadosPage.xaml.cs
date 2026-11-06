@@ -1,22 +1,29 @@
+using European.Services;
 using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class SomenteCertificadosPage : ContentPage
+    /// <summary>Ex-aluno: só consulta o certificado (a aba de certificados do aluno é reaproveitada aqui).</summary>
+    public partial class SomenteCertificadosPage : BasePage
     {
-        private readonly AcessoRestritoViewModel _viewModel = new();
-
         public SomenteCertificadosPage()
         {
             InitializeComponent();
-            BindingContext = _viewModel;
+            BindingContext = new AcessoRestritoViewModel();
         }
 
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            _viewModel.Atualizar();
-            await Certificados.RecarregarAsync();
+            try
+            {
+                if (Certificados.BindingContext is BaseViewModel aba)
+                    await aba.AoAparecerAsync();
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(SomenteCertificadosPage), ex);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 using System.Globalization;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -17,69 +18,29 @@ namespace European.ViewModels
     /// Pagamento da matrícula — apenas simulado: nada é cobrado e os dados do cartão não são
     /// gravados; só a forma de pagamento e a data ficam na solicitação para a coordenação conferir.
     /// </summary>
-    public class PagamentoViewModel : BaseViewModel
+    public partial class PagamentoViewModel : BaseViewModel
     {
-        public static readonly CultureInfo PtBr = new("pt-BR");
         private const int MaxParcelas = 12;
-
-        private Curso? _curso;
-        private FormaPagamento _forma = FormaPagamento.Pix;
-        private string _numeroCartao = string.Empty;
-        private string _nomeCartao = string.Empty;
-        private string _validade = string.Empty;
-        private string _cvv = string.Empty;
-        private List<ParcelaOpcao> _parcelas = new();
-        private ParcelaOpcao? _parcelaSelecionada;
-        private string _mensagem = string.Empty;
-        private string _codigoPix = string.Empty;
 
         public PagamentoViewModel()
         {
             Title = "Pagamento";
-            SelecionarFormaCommand = new Command<string>(SelecionarForma);
-            CopiarPixCommand = new Command(async () => await CopiarPixAsync());
-            PagarCommand = new Command(async () => await PagarAsync());
-            SairCommand = new Command(async () => await AcessoService.SairAsync());
         }
 
-        public Curso? Curso
-        {
-            get => _curso;
-            private set
-            {
-                if (SetProperty(ref _curso, value))
-                {
-                    OnPropertyChanged(nameof(CursoNome));
-                    OnPropertyChanged(nameof(CargaTexto));
-                    OnPropertyChanged(nameof(PrecoTexto));
-                    OnPropertyChanged(nameof(BotaoTexto));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CursoNome), nameof(CargaTexto), nameof(PrecoTexto), nameof(BotaoTexto))]
+        public partial Curso? Curso { get; private set; }
 
         public string CursoNome => Curso?.Nome ?? string.Empty;
         public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras} horas · Certificado de conclusão" : "Certificado de conclusão";
         public decimal Valor => Curso?.Preco ?? 0;
-        public string PrecoTexto => Valor.ToString("C", PtBr);
+        public string PrecoTexto => Formatos.Moeda(Valor);
 
         // ---- Forma de pagamento ----
 
-        public FormaPagamento Forma
-        {
-            get => _forma;
-            private set
-            {
-                if (SetProperty(ref _forma, value))
-                {
-                    OnPropertyChanged(nameof(IsPix));
-                    OnPropertyChanged(nameof(IsCredito));
-                    OnPropertyChanged(nameof(IsDebito));
-                    OnPropertyChanged(nameof(IsCartao));
-                    OnPropertyChanged(nameof(BotaoTexto));
-                    Mensagem = string.Empty;
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsPix), nameof(IsCredito), nameof(IsDebito), nameof(IsCartao), nameof(BotaoTexto))]
+        public partial FormaPagamento Forma { get; private set; } = FormaPagamento.Pix;
 
         public bool IsPix => Forma == FormaPagamento.Pix;
         public bool IsCredito => Forma == FormaPagamento.CartaoCredito;
@@ -88,51 +49,38 @@ namespace European.ViewModels
 
         public string BotaoTexto => IsPix ? "Já fiz o Pix" : $"Pagar {PrecoTexto}";
 
-        // ---- Pix ----
+        partial void OnFormaChanged(FormaPagamento value) => Mensagem = string.Empty;
 
-        public string CodigoPix
-        {
-            get => _codigoPix;
-            private set => SetProperty(ref _codigoPix, value);
-        }
+        // ---- Pix e cartão ----
 
-        // ---- Cartão ----
+        [ObservableProperty]
+        public partial string CodigoPix { get; private set; } = string.Empty;
 
-        public string NumeroCartao { get => _numeroCartao; set => SetProperty(ref _numeroCartao, value); }
-        public string NomeCartao { get => _nomeCartao; set => SetProperty(ref _nomeCartao, value); }
-        public string Validade { get => _validade; set => SetProperty(ref _validade, value); }
-        public string Cvv { get => _cvv; set => SetProperty(ref _cvv, value); }
+        [ObservableProperty]
+        public partial string NumeroCartao { get; set; } = string.Empty;
 
-        public List<ParcelaOpcao> Parcelas
-        {
-            get => _parcelas;
-            private set => SetProperty(ref _parcelas, value);
-        }
+        [ObservableProperty]
+        public partial string NomeCartao { get; set; } = string.Empty;
 
-        public ParcelaOpcao? ParcelaSelecionada
-        {
-            get => _parcelaSelecionada;
-            set => SetProperty(ref _parcelaSelecionada, value);
-        }
+        [ObservableProperty]
+        public partial string Validade { get; set; } = string.Empty;
 
-        public string Mensagem
-        {
-            get => _mensagem;
-            private set
-            {
-                if (SetProperty(ref _mensagem, value))
-                    OnPropertyChanged(nameof(TemMensagem));
-            }
-        }
+        [ObservableProperty]
+        public partial string Cvv { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial List<ParcelaOpcao> Parcelas { get; private set; } = new();
+
+        [ObservableProperty]
+        public partial ParcelaOpcao? ParcelaSelecionada { get; set; }
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemMensagem))]
+        public partial string Mensagem { get; private set; } = string.Empty;
 
         public bool TemMensagem => !string.IsNullOrEmpty(Mensagem);
 
-        public ICommand SelecionarFormaCommand { get; }
-        public ICommand CopiarPixCommand { get; }
-        public ICommand PagarCommand { get; }
-        public ICommand SairCommand { get; }
-
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var solicitacao = SessionService.SolicitacaoAtual;
             Curso = solicitacao == null ? null : await CursoRepositorio.PorIdAsync(solicitacao.CursoId);
@@ -141,7 +89,7 @@ namespace European.ViewModels
                 .Select(n => new ParcelaOpcao
                 {
                     Quantidade = n,
-                    Texto = n == 1 ? $"À vista · {PrecoTexto}" : $"{n}x de {(Valor / n).ToString("C", PtBr)} sem juros"
+                    Texto = n == 1 ? $"À vista · {PrecoTexto}" : $"{n}x de {Formatos.Moeda(Valor / n)} sem juros"
                 })
                 .ToList();
             ParcelaSelecionada = Parcelas.FirstOrDefault();
@@ -150,6 +98,7 @@ namespace European.ViewModels
             CodigoPix = $"00020126580014BR.GOV.BCB.PIX0136european-{solicitacao?.Id[^8..]}5204000053039865406{Valor.ToString("0.00", CultureInfo.InvariantCulture)}5802BR5908EUROPEAN6304ABCD";
         });
 
+        [RelayCommand]
         private void SelecionarForma(string forma) => Forma = forma switch
         {
             "credito" => FormaPagamento.CartaoCredito,
@@ -157,19 +106,24 @@ namespace European.ViewModels
             _ => FormaPagamento.Pix
         };
 
+        [RelayCommand]
         private async Task CopiarPixAsync()
         {
             await Clipboard.Default.SetTextAsync(CodigoPix);
             await AvisarAsync("Pix", "Código copiado.");
         }
 
+        [RelayCommand]
+        private Task Sair() => AcessoService.SairAsync();
+
+        [RelayCommand]
         private async Task PagarAsync()
         {
             var solicitacao = SessionService.SolicitacaoAtual;
             if (solicitacao == null)
                 return;
 
-            if (IsCartao && !CartaoValido(out var erro))
+            if (IsCartao && ValidarCartao() is { } erro)
             {
                 Mensagem = erro;
                 return;
@@ -190,56 +144,32 @@ namespace European.ViewModels
             if (!ok)
                 return;
 
-            LimparCartao();
+            NumeroCartao = NomeCartao = Validade = Cvv = string.Empty;
             await AvisarAsync("Pagamento confirmado", "Agora é só aguardar a coordenação liberar o seu acesso ao curso.");
             await Shell.Current.GoToAsync(Navegacao.Aguardando);
         }
 
-        private bool CartaoValido(out string erro)
+        /// <summary>Confere o formato dos dados do cartão (nada é enviado a operadora). Retorna o erro, ou null se estiver ok.</summary>
+        private string? ValidarCartao()
         {
             var digitos = new string(NumeroCartao.Where(char.IsDigit).ToArray());
             if (digitos.Length is < 13 or > 19)
-            {
-                erro = "Informe o número do cartão.";
-                return false;
-            }
+                return "Informe o número do cartão.";
 
             if (string.IsNullOrWhiteSpace(NomeCartao))
-            {
-                erro = "Informe o nome impresso no cartão.";
-                return false;
-            }
+                return "Informe o nome impresso no cartão.";
 
             var partes = Validade.Split('/');
             if (partes.Length != 2 || !int.TryParse(partes[0], out var mes) || !int.TryParse(partes[1], out var ano) || mes is < 1 or > 12)
-            {
-                erro = "Informe a validade no formato MM/AA.";
-                return false;
-            }
+                return "Informe a validade no formato MM/AA.";
 
-            var fimDoMes = new DateTime(2000 + ano % 100, mes, 1).AddMonths(1);
-            if (fimDoMes <= DateTime.Today)
-            {
-                erro = "Este cartão está vencido.";
-                return false;
-            }
+            if (new DateTime(2000 + ano % 100, mes, 1).AddMonths(1) <= DateTime.Today)
+                return "Este cartão está vencido.";
 
             if (Cvv.Length is < 3 or > 4 || !Cvv.All(char.IsDigit))
-            {
-                erro = "Informe o código de segurança (CVV).";
-                return false;
-            }
+                return "Informe o código de segurança (CVV).";
 
-            erro = string.Empty;
-            return true;
-        }
-
-        private void LimparCartao()
-        {
-            NumeroCartao = string.Empty;
-            NomeCartao = string.Empty;
-            Validade = string.Empty;
-            Cvv = string.Empty;
+            return null;
         }
     }
 }

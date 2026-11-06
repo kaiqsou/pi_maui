@@ -1,20 +1,22 @@
 ﻿using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
-using European.Enums;
 using European.Models;
 using European.Services;
 
 namespace European.ViewModels
 {
-    public class CursoAtribuicao : BaseViewModel
+    public partial class CursoAtribuicao : ObservableObject
     {
-        private bool _atribuido;
-
         public Curso Curso { get; init; } = new();
         public string Nome => Curso.Nome;
+
+        /// <summary>Se o curso já era do professor ao abrir a tela (para salvar só o que mudou).</summary>
         public bool Original { get; init; }
-        public bool Atribuido { get => _atribuido; set => SetProperty(ref _atribuido, value); }
+
+        [ObservableProperty]
+        public partial bool Atribuido { get; set; }
     }
 
     public class TurmaResumo
@@ -33,53 +35,11 @@ namespace European.ViewModels
     }
 
     /// <summary>Coordenação: cursos, turmas e provas de um professor e o acesso dele ao aplicativo.</summary>
-    public class ProfessorAcessoViewModel : BaseViewModel
+    public partial class ProfessorAcessoViewModel : BaseViewModel
     {
-        private Usuario? _professor;
-        private string _resumoTexto = string.Empty;
-
-        public ProfessorAcessoViewModel()
-        {
-            SalvarCommand = new Command(async () => await SalvarAsync());
-            AlternarAcessoCommand = new Command(async () => await AlternarAcessoAsync());
-            RedefinirSenhaCommand = new Command(async () => await RedefinirSenhaAsync());
-            AbrirProvaCommand = new Command<ProvaDoProfessor>(async p =>
-            {
-                if (p != null)
-                    await Shell.Current.GoToAsync("provaresultados", new Dictionary<string, object> { ["Prova"] = p.Prova });
-            });
-        }
-
-        public ObservableCollection<TurmaResumo> Turmas { get; } = new();
-        public ObservableCollection<ProvaDoProfessor> Provas { get; } = new();
-        public bool TemTurmas => Turmas.Count > 0;
-        public bool TemProvas => Provas.Count > 0;
-
-        /// <summary>"2 cursos · 3 provas · 1 turma", no cartão do professor.</summary>
-        public string ResumoTexto
-        {
-            get => _resumoTexto;
-            private set => SetProperty(ref _resumoTexto, value);
-        }
-
-        public ICommand AbrirProvaCommand { get; }
-
-        public Usuario? Professor
-        {
-            get => _professor;
-            private set
-            {
-                if (SetProperty(ref _professor, value))
-                {
-                    OnPropertyChanged(nameof(Nome));
-                    OnPropertyChanged(nameof(Email));
-                    OnPropertyChanged(nameof(Iniciais));
-                    OnPropertyChanged(nameof(AcessoLiberado));
-                    OnPropertyChanged(nameof(StatusTexto));
-                    OnPropertyChanged(nameof(AcessoBotaoTexto));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Nome), nameof(Email), nameof(Iniciais), nameof(AcessoLiberado), nameof(StatusTexto), nameof(AcessoBotaoTexto))]
+        public partial Usuario? Professor { get; private set; }
 
         public string Nome => Professor?.Nome ?? string.Empty;
         public string Email => Professor?.Email ?? string.Empty;
@@ -89,12 +49,23 @@ namespace European.ViewModels
         public string AcessoBotaoTexto => AcessoLiberado ? "Remover acesso ao aplicativo" : "Restaurar acesso";
 
         public ObservableCollection<CursoAtribuicao> Cursos { get; } = new();
+        public ObservableCollection<TurmaResumo> Turmas { get; } = new();
+        public ObservableCollection<ProvaDoProfessor> Provas { get; } = new();
+        public bool TemTurmas => Turmas.Count > 0;
+        public bool TemProvas => Provas.Count > 0;
 
-        public ICommand SalvarCommand { get; }
-        public ICommand AlternarAcessoCommand { get; }
-        public ICommand RedefinirSenhaCommand { get; }
+        /// <summary>"2 cursos · 3 provas · 1 turma", no cartão do professor.</summary>
+        [ObservableProperty]
+        public partial string ResumoTexto { get; private set; } = string.Empty;
 
-        public Task CarregarAsync(string professorId) => ExecutarAsync(async () =>
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
+        {
+            var professor = parametros.Obter<Usuario>("Usuario");
+            parametros.Clear();
+            return professor == null ? Task.CompletedTask : CarregarAsync(professor.Id);
+        }
+
+        private Task CarregarAsync(string professorId) => ExecutarAsync(async () =>
         {
             Professor = await UsuarioRepositorio.PorIdAsync(professorId);
             if (Professor == null)
@@ -116,11 +87,7 @@ namespace European.ViewModels
             foreach (var sala in salas)
             {
                 var curso = sala.CursoId == null ? "Todos os cursos" : nomesCursos.GetValueOrDefault(sala.CursoId, "Curso removido");
-                Turmas.Add(new TurmaResumo
-                {
-                    Nome = sala.Nome,
-                    Detalhe = $"{Plural(sala.AlunoIds.Count, "aluno", "alunos")} · {curso}"
-                });
+                Turmas.Add(new TurmaResumo { Nome = sala.Nome, Detalhe = $"{Plural(sala.AlunoIds.Count, "aluno", "alunos")} · {curso}" });
             }
 
             // provas que o professor criou, com quantos alunos já fizeram
@@ -147,6 +114,8 @@ namespace European.ViewModels
 
         private static string Plural(int n, string um, string varios) => $"{n} {(n == 1 ? um : varios)}";
 
+        /// <summary>Grava só os cursos que foram marcados ou desmarcados.</summary>
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             if (Professor == null)
@@ -173,6 +142,7 @@ namespace European.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task AlternarAcessoAsync()
         {
             if (Professor == null)
@@ -182,8 +152,7 @@ namespace European.ViewModels
             if (remover && !await ConfirmarAsync($"Remover o acesso de {Professor.Nome}? As provas e aulas criadas por ele continuam no curso.", "Remover acesso"))
                 return;
 
-            Professor.StatusAcesso = remover ? StatusAcesso.Removido : StatusAcesso.Liberado;
-            if (await ExecutarAsync(() => UsuarioRepositorio.AtualizarAsync(Professor)))
+            if (await ExecutarAsync(() => ContaService.DefinirAcessoProfessorAsync(Professor, liberado: !remover)))
             {
                 OnPropertyChanged(nameof(AcessoLiberado));
                 OnPropertyChanged(nameof(StatusTexto));
@@ -191,24 +160,11 @@ namespace European.ViewModels
             }
         }
 
-        private async Task RedefinirSenhaAsync()
-        {
-            if (Professor == null)
-                return;
+        [RelayCommand]
+        private Task RedefinirSenha() => Professor == null ? Task.CompletedTask : RedefinirSenhaProvisoriaAsync(Professor, "professor");
 
-            var senha = await Shell.Current.DisplayPromptAsync("Nova senha", $"Defina uma senha provisória para {Professor.Nome}.", "Salvar", "Cancelar");
-            if (string.IsNullOrEmpty(senha))
-                return;
-
-            if (!SenhaService.EhValida(senha, out var erro))
-            {
-                await AvisarAsync("Senha", erro);
-                return;
-            }
-
-            var hash = SenhaService.GerarHash(senha);
-            if (await ExecutarAsync(() => UsuarioRepositorio.AtualizarSenhaAsync(Professor.Id, hash, provisoria: true)))
-                await AvisarAsync("Senha", "Senha alterada. Informe a nova senha ao professor.");
-        }
+        [RelayCommand]
+        private Task AbrirProva(ProvaDoProfessor? item)
+            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaResultados, ("Prova", item.Prova));
     }
 }

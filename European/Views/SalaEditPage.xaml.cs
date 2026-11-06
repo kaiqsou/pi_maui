@@ -1,19 +1,13 @@
-using European.Models;
 using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class SalaEditPage : ContentPage, IQueryAttributable
+    public partial class SalaEditPage : BasePage
     {
-        private readonly SalaEditViewModel _viewModel = new();
-
         public SalaEditPage()
         {
             InitializeComponent();
-            BindingContext = _viewModel;
+            BindingContext = new SalaEditViewModel();
         }
-
-        public async void ApplyQueryAttributes(IDictionary<string, object> query)
-            => await _viewModel.CarregarAsync(query.TryGetValue("Sala", out var valor) ? valor as Sala : null);
     }
 }

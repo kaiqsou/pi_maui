@@ -1,6 +1,6 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
-using European.Enums;
 using European.Models;
 using European.Services;
 
@@ -10,49 +10,29 @@ namespace European.ViewModels
     /// Coordenação: analisa uma solicitação de matrícula. "Liberar" cria a conta do aluno e a matrícula
     /// (só então o e-mail passa a existir como usuário); "Não liberar" guarda a pendência para o candidato ver.
     /// </summary>
-    public class SolicitacaoViewModel : BaseViewModel
+    public partial class SolicitacaoViewModel : BaseViewModel
     {
-        private SolicitacaoMatricula? _solicitacao;
         private Curso? _curso;
 
         public SolicitacaoViewModel()
         {
             Title = "Solicitação de matrícula";
-            LiberarCommand = new Command(async () => await LiberarAsync());
-            NaoLiberarCommand = new Command(async () => await NaoLiberarAsync());
         }
 
-        public SolicitacaoMatricula? Solicitacao
-        {
-            get => _solicitacao;
-            private set
-            {
-                if (SetProperty(ref _solicitacao, value))
-                {
-                    OnPropertyChanged(nameof(Nome));
-                    OnPropertyChanged(nameof(Email));
-                    OnPropertyChanged(nameof(Iniciais));
-                    OnPropertyChanged(nameof(CriadaEmTexto));
-                    OnPropertyChanged(nameof(Pago));
-                    OnPropertyChanged(nameof(PagamentoTexto));
-                    OnPropertyChanged(nameof(TemPendencia));
-                    OnPropertyChanged(nameof(PendenciaTexto));
-                    OnPropertyChanged(nameof(StatusTexto));
-                    OnPropertyChanged(nameof(PodeLiberar));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Nome), nameof(Email), nameof(Iniciais), nameof(CriadaEmTexto), nameof(Pago),
+            nameof(PagamentoTexto), nameof(TemPendencia), nameof(PendenciaTexto), nameof(StatusTexto), nameof(PodeLiberar), nameof(CursoNome))]
+        public partial SolicitacaoMatricula? Solicitacao { get; private set; }
 
         public string Nome => Solicitacao?.Nome ?? string.Empty;
         public string Email => Solicitacao?.Email ?? string.Empty;
         public string Iniciais => Solicitacao?.Iniciais ?? "?";
         public string CriadaEmTexto => Solicitacao == null ? string.Empty : $"Solicitada em {Solicitacao.CriadaEm:dd/MM/yyyy HH:mm}";
-
         public string CursoNome => _curso?.Nome ?? "Curso não encontrado";
 
         public bool Pago => Solicitacao?.Pago == true;
-        public string PagamentoTexto => Solicitacao is { PagamentoEm: { } quando, FormaPagamento: { } forma }
-            ? $"Pago via {PagamentoService.Nome(forma)} em {quando:dd/MM/yyyy HH:mm}"
+        public string PagamentoTexto => Pago
+            ? $"Pago {Formatos.Pagamento(Solicitacao!.FormaPagamento, Solicitacao.PagamentoEm)}"
             : "Pagamento ainda não realizado";
 
         public bool TemPendencia => Solicitacao?.TemPendencia == true;
@@ -71,10 +51,12 @@ namespace European.ViewModels
         /// <summary>Só libera com o pagamento feito e o curso ainda existente.</summary>
         public bool PodeLiberar => Pago && _curso != null;
 
-        public ICommand LiberarCommand { get; }
-        public ICommand NaoLiberarCommand { get; }
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
+            => parametros.Obter<SolicitacaoMatricula>("Solicitacao") is { } solicitacao
+                ? CarregarAsync(solicitacao.Id)
+                : Task.CompletedTask;
 
-        public Task CarregarAsync(string solicitacaoId) => ExecutarAsync(async () =>
+        private Task CarregarAsync(string solicitacaoId) => ExecutarAsync(async () =>
         {
             var solicitacao = await SolicitacaoRepositorio.PorIdAsync(solicitacaoId);
             _curso = solicitacao == null ? null : await CursoRepositorio.PorIdAsync(solicitacao.CursoId);
@@ -89,6 +71,7 @@ namespace European.ViewModels
             }
         });
 
+        [RelayCommand]
         private async Task LiberarAsync()
         {
             var solicitacao = Solicitacao;
@@ -100,37 +83,7 @@ namespace European.ViewModels
                 return;
 
             var criada = false;
-            var ok = await ExecutarAsync(async () =>
-            {
-                var aluno = new Usuario
-                {
-                    Nome = solicitacao.Nome,
-                    Email = solicitacao.Email,
-                    SenhaHash = solicitacao.SenhaHash,
-                    Roles = Roles.Aluno,
-                    StatusAcesso = StatusAcesso.Liberado,
-                    FormaPagamento = solicitacao.FormaPagamento,
-                    PagamentoEm = solicitacao.PagamentoEm
-                };
-
-                // só aqui o e-mail passa a existir como usuário
-                if (!await UsuarioRepositorio.InserirAsync(aluno))
-                    return;
-
-                await MatriculaRepositorio.InserirAsync(new Matricula
-                {
-                    AlunoId = aluno.Id,
-                    CursoId = curso.Id,
-                    Status = StatusMatricula.Ativa,
-                    LiberadaPorId = SessionService.UsuarioAtual?.Id,
-                    DataMatricula = DateTime.Now
-                });
-
-                await SolicitacaoRepositorio.ExcluirAsync(solicitacao.Id);
-                criada = true;
-            });
-
-            if (!ok)
+            if (!await ExecutarAsync(async () => criada = await ContaService.LiberarSolicitacaoAsync(solicitacao)))
                 return;
 
             if (!criada)
@@ -143,6 +96,7 @@ namespace European.ViewModels
             await VoltarAsync();
         }
 
+        [RelayCommand]
         private async Task NaoLiberarAsync()
         {
             var solicitacao = Solicitacao;

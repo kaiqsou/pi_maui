@@ -15,5 +15,9 @@ namespace European.Models
         public DateTime EmitidoEm { get; set; } = DateTime.Now;
 
         public string TipoTexto => "Certificado de conclusão do mestrado";
+
+        /// <summary>Até quando o aluno pode reassistir as aulas: a data da matrícula concluída ou, sem ela, a contada da emissão.</summary>
+        public DateTime AcessoAulasAte(Matricula? matricula)
+            => matricula?.AcessoAte ?? EmitidoEm.AddMonths(Matricula.MesesAcessoAposConclusao);
     }
 }

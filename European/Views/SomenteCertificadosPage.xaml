@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
              xmlns:views="clr-namespace:European.Views"
              x:Class="European.Views.SomenteCertificadosPage"
              x:DataType="vm:AcessoRestritoViewModel"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="Auto,Auto,*">
 
@@ -26,8 +25,8 @@
             </Grid>
         </Border>
 
-        <views:CertificadosPage Grid.Row="2" x:Name="Certificados" />
+        <views:CertificadosAba Grid.Row="2" x:Name="Certificados" />
 
     </Grid>
 
-</ContentPage>
+</views:BasePage>

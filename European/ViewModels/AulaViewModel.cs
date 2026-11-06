@@ -1,205 +1,82 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
 
 namespace European.ViewModels
 {
-    public class AulaViewModel : BaseViewModel
+    /// <summary>Tela da aula: vídeo, progresso, outras aulas do módulo e materiais complementares.</summary>
+    public partial class AulaViewModel : BaseViewModel
     {
-        private Aula? _aula;
-        private Matricula? _matricula;
         private List<ProgressoAula> _progressos = new();
-        private double _percentualAssistido;
-        private bool _concluida;
-        private string _abaSelecionada = "aulas";
         private double _duracaoSegundos;
         private double _segundosParaRetomar;
         private bool _salvandoPosicao;
 
-        public AulaViewModel()
-        {
-            ConcluirCommand = new Command(async () => await ConcluirAsync());
-            SelecionarAbaCommand = new Command<string>(SelecionarAba);
-            AbrirAulaCommand = new Command<AulaItem>(async item => await AbrirAulaAsync(item));
-            AbrirMaterialCommand = new Command<MaterialComplementar>(async m => await AbrirMaterialAsync(m));
-            VoltarCommand = new Command(async () => await VoltarAsync());
-        }
+        // VideoSource é notificado em AtualizarProgresso, depois de saber o minuto em que o aluno parou
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DuracaoFormatada), nameof(MateriaNome))]
+        public partial Aula? Aula { get; private set; }
 
-        public Aula? Aula
-        {
-            get => _aula;
-            set
-            {
-                if (SetProperty(ref _aula, value))
-                {
-                    OnPropertyChanged(nameof(DuracaoFormatada));
-                    OnPropertyChanged(nameof(MateriaNome));
-                    // VideoSource é notificado em AtualizarProgresso, depois de saber o minuto em que o aluno parou
-                }
-            }
-        }
-
-        public Matricula? Matricula
-        {
-            get => _matricula;
-            set => SetProperty(ref _matricula, value);
-        }
+        [ObservableProperty]
+        public partial Matricula? Matricula { get; private set; }
 
         public ObservableCollection<MaterialComplementar> Materiais { get; } = new();
         public ObservableCollection<AulaItem> AulasDoModulo { get; } = new();
 
-        public string DuracaoFormatada
-        {
-            get
-            {
-                if (Aula == null)
-                    return "00:00";
-
-                var total = _duracaoSegundos > 0 ? _duracaoSegundos : Aula.DuracaoSegundos;
-                return TimeSpan.FromSeconds(total).ToString(total >= 3600 ? @"h\:mm\:ss" : @"mm\:ss");
-            }
-        }
-
         public string MateriaNome => Aula?.Materia?.Nome ?? string.Empty;
+        public string DuracaoFormatada => Formatos.Tempo(_duracaoSegundos > 0 ? _duracaoSegundos : Aula?.DuracaoSegundos ?? 0);
 
-        public WebViewSource VideoSource
-        {
-            get
-            {
-                if (Aula == null)
-                    return new UrlWebViewSource { Url = "about:blank" };
+        /// <summary>Página do player, já posicionada onde o aluno parou.</summary>
+        public WebViewSource VideoSource => Aula == null
+            ? new UrlWebViewSource { Url = "about:blank" }
+            : YouTubePlayer.Fonte(Aula.VideoId, _segundosParaRetomar);
 
-                return CriarFonteDoVideo(Aula);
-            }
-        }
-
-        public double SegundosParaRetomar => _segundosParaRetomar;
-
-        public bool PossuiMateriais => Materiais.Count > 0;
-
-        public void RegistrarDuracao(double segundos)
-        {
-            if (segundos <= 0 || Math.Abs(segundos - _duracaoSegundos) < 1)
-                return;
-
-            _duracaoSegundos = segundos;
-            OnPropertyChanged(nameof(DuracaoFormatada));
-
-            if (Aula == null || Math.Abs(Aula.DuracaoSegundos - segundos) < 1)
-                return;
-
-            Aula.DuracaoSegundos = (int)Math.Round(segundos);
-            var cursoId = Aula.Materia?.Modulo?.Curso?.Id;
-            if (cursoId != null)
-                _ = SalvarEmSegundoPlanoAsync(() => CursoRepositorio.AtualizarDuracaoAulaAsync(cursoId, Aula.Id, Aula.DuracaoSegundos));
-        }
-
-        public void RegistrarPosicao(double segundos)
-        {
-            if (Aula == null || Matricula == null || segundos < 0 || _salvandoPosicao)
-                return;
-
-            var total = _duracaoSegundos > 0 ? _duracaoSegundos : Aula.DuracaoSegundos;
-            var progresso = ProgressoLocal(Aula.Id);
-            progresso.UltimaPosicaoSegundos = segundos;
-
-            if (total > 0)
-            {
-                progresso.PercentualAssistido = Math.Max(progresso.PercentualAssistido, Math.Min(100, segundos / total * 100));
-                PercentualAssistido = progresso.Concluida ? 100 : progresso.PercentualAssistido;
-            }
-
-            _salvandoPosicao = true;
-            _ = SalvarEmSegundoPlanoAsync(async () =>
-            {
-                try { await ProgressoRepositorio.SalvarAsync(progresso); }
-                finally { _salvandoPosicao = false; }
-            });
-        }
-
-        public void RecarregarVideo()
-        {
-            _segundosParaRetomar = Aula == null ? 0 : ProgressoLocal(Aula.Id).UltimaPosicaoSegundos;
-            OnPropertyChanged(nameof(VideoSource));
-        }
-
-        private WebViewSource CriarFonteDoVideo(Aula aula)
-        {
-            var videoId = YouTubePlayer.ExtrairId(aula.VideoId) ?? YouTubePlayer.ExtrairId(YouTubePlayer.VideoPadrao)!;
-
-            // No Windows (WebView2) o HTML é entregue pela interceptação de requisições configurada
-            // em MauiProgram; nas demais plataformas o BaseUrl HTTPS já define a origem da página.
-            if (DeviceInfo.Platform == DevicePlatform.WinUI)
-                return new UrlWebViewSource { Url = YouTubePlayer.UrlDoPlayer(videoId, _segundosParaRetomar) };
-
-            return new HtmlWebViewSource
-            {
-                Html = YouTubePlayer.GerarHtml(videoId, _segundosParaRetomar),
-                BaseUrl = $"{YouTubePlayer.Origem}/"
-            };
-        }
-
-        public double PercentualAssistido
-        {
-            get => _percentualAssistido;
-            set
-            {
-                if (SetProperty(ref _percentualAssistido, value))
-                    OnPropertyChanged(nameof(ProgressoTexto));
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ProgressoTexto))]
+        public partial double PercentualAssistido { get; private set; }
 
         public string ProgressoTexto => $"{PercentualAssistido:0}% assistido";
 
-        public bool Concluida
-        {
-            get => _concluida;
-            set
-            {
-                if (SetProperty(ref _concluida, value))
-                {
-                    OnPropertyChanged(nameof(ConcluirTexto));
-                    OnPropertyChanged(nameof(PodeConcluir));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ConcluirTexto), nameof(PodeConcluir))]
+        public partial bool Concluida { get; private set; }
 
         public bool PodeConcluir => !Concluida;
-
         public string ConcluirTexto => Concluida ? "Aula concluída" : "Marcar como concluída";
 
-        public string AbaSelecionada
-        {
-            get => _abaSelecionada;
-            set
-            {
-                if (SetProperty(ref _abaSelecionada, value))
-                {
-                    OnPropertyChanged(nameof(MostrarAulas));
-                    OnPropertyChanged(nameof(MostrarMateriais));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MostrarAulas), nameof(MostrarMateriais))]
+        public partial string AbaSelecionada { get; set; } = "aulas";
 
         public bool MostrarAulas => AbaSelecionada == "aulas";
         public bool MostrarMateriais => AbaSelecionada == "materiais";
 
-        public ICommand ConcluirCommand { get; }
-        public ICommand SelecionarAbaCommand { get; }
-        public ICommand AbrirAulaCommand { get; }
-        public ICommand AbrirMaterialCommand { get; }
-        public ICommand VoltarCommand { get; }
-
-        public async Task CarregarAsync(Aula aula, Matricula? matricula)
+        protected override async Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
+            if (parametros.Obter<Aula>("Aula") is not { } aula)
+                return;
+
+            var matricula = parametros.Obter<Matricula>("Matricula");
             Matricula = matricula;
             await ExecutarAsync(async () =>
             {
                 _progressos = matricula == null ? new() : await ProgressoRepositorio.DaMatriculaAsync(matricula.Id);
                 await SelecionarAulaAsync(aula);
             });
+        }
+
+        /// <summary>Ao voltar para a tela, recarrega o player a partir da última posição salva.</summary>
+        public override Task AoAparecerAsync()
+        {
+            if (Aula != null)
+            {
+                _segundosParaRetomar = ProgressoLocal(Aula.Id).UltimaPosicaoSegundos;
+                OnPropertyChanged(nameof(VideoSource));
+            }
+            return Task.CompletedTask;
         }
 
         private async Task SelecionarAulaAsync(Aula aula)
@@ -209,16 +86,14 @@ namespace European.ViewModels
             AbaSelecionada = "aulas";
 
             if (Matricula != null)
-            {
-                var progresso = ProgressoLocal(aula.Id);
-                await ProgressoRepositorio.SalvarAsync(progresso);
-            }
+                await ProgressoRepositorio.SalvarAsync(ProgressoLocal(aula.Id));
 
             AtualizarProgresso();
             CarregarAulas();
             await CarregarMateriaisAsync();
         }
 
+        /// <summary>Progresso da aula já carregado (ou um novo, criado agora e mantido na lista).</summary>
         private ProgressoAula ProgressoLocal(string aulaId)
         {
             var progresso = _progressos.FirstOrDefault(p => p.AulaId == aulaId);
@@ -229,20 +104,6 @@ namespace European.ViewModels
             }
 
             return progresso;
-        }
-
-        private async Task AbrirAulaAsync(AulaItem? item)
-        {
-            if (item == null)
-                return;
-
-            if (!item.Liberada)
-            {
-                await AvisarAsync("Aula bloqueada", "Conclua a aula anterior para liberar esta aula.");
-                return;
-            }
-
-            await ExecutarAsync(() => SelecionarAulaAsync(item.Aula));
         }
 
         private void AtualizarProgresso()
@@ -266,43 +127,118 @@ namespace European.ViewModels
                 foreach (var material in await MaterialRepositorio.DaAulaAsync(Aula.Id))
                     Materiais.Add(material);
             }
-
-            OnPropertyChanged(nameof(PossuiMateriais));
         }
 
         private void CarregarAulas()
         {
             AulasDoModulo.Clear();
-            var curso = Aula?.Materia?.Modulo?.Curso;
             var modulo = Aula?.Materia?.Modulo;
+            var curso = modulo?.Curso;
             if (curso == null || modulo == null)
                 return;
 
-            foreach (var materia in modulo.Materias.OrderBy(m => m.Ordem))
+            foreach (var aula in modulo.Materias.OrderBy(m => m.Ordem).SelectMany(m => m.Aulas.OrderBy(a => a.Ordem)))
             {
-                foreach (var aula in materia.Aulas.OrderBy(a => a.Ordem))
+                var progresso = _progressos.FirstOrDefault(p => p.AulaId == aula.Id);
+                AulasDoModulo.Add(new AulaItem
                 {
-                    var progresso = _progressos.FirstOrDefault(p => p.AulaId == aula.Id);
-                    AulasDoModulo.Add(new AulaItem
-                    {
-                        Aula = aula,
-                        Concluida = progresso?.Concluida ?? false,
-                        Liberada = Matricula == null || ProgressoService.AulaEstaLiberada(curso, _progressos, aula),
-                        IsSelecionada = Aula != null && aula.Id == Aula.Id,
-                        Percentual = progresso?.PercentualAssistido ?? 0
-                    });
-                }
+                    Aula = aula,
+                    Concluida = progresso?.Concluida ?? false,
+                    Liberada = Matricula == null || ProgressoService.AulaEstaLiberada(curso, _progressos, aula),
+                    IsSelecionada = aula.Id == Aula?.Id,
+                    Percentual = progresso?.PercentualAssistido ?? 0
+                });
             }
         }
 
-        private void SelecionarAba(string aba) => AbaSelecionada = aba;
+        // ---- Informações vindas do player (controle PlayerYouTube) ----
 
-        private async Task AbrirMaterialAsync(MaterialComplementar? material)
+        /// <summary>Duração real do vídeo; corrige a cadastrada na aula se for diferente.</summary>
+        [RelayCommand]
+        private void RegistrarDuracao(double segundos)
         {
-            if (material == null)
+            if (segundos <= 0 || Math.Abs(segundos - _duracaoSegundos) < 1)
                 return;
 
-            await ExecutarAsync(async () =>
+            _duracaoSegundos = segundos;
+            OnPropertyChanged(nameof(DuracaoFormatada));
+
+            if (Aula == null || Math.Abs(Aula.DuracaoSegundos - segundos) < 1)
+                return;
+
+            Aula.DuracaoSegundos = (int)Math.Round(segundos);
+            var cursoId = Aula.Materia?.Modulo?.Curso?.Id;
+            if (cursoId != null)
+                _ = SalvarEmSegundoPlanoAsync(() => CursoRepositorio.AtualizarDuracaoAulaAsync(cursoId, Aula.Id, Aula.DuracaoSegundos));
+        }
+
+        /// <summary>Posição atual do vídeo: guarda onde o aluno parou e quanto já assistiu.</summary>
+        [RelayCommand]
+        private void RegistrarPosicao(double segundos)
+        {
+            if (Aula == null || Matricula == null || segundos < 0 || _salvandoPosicao)
+                return;
+
+            var total = _duracaoSegundos > 0 ? _duracaoSegundos : Aula.DuracaoSegundos;
+            var progresso = ProgressoLocal(Aula.Id);
+            progresso.UltimaPosicaoSegundos = segundos;
+
+            if (total > 0)
+            {
+                progresso.PercentualAssistido = Math.Max(progresso.PercentualAssistido, Math.Min(100, segundos / total * 100));
+                PercentualAssistido = progresso.Concluida ? 100 : progresso.PercentualAssistido;
+            }
+
+            _salvandoPosicao = true;
+            _ = SalvarEmSegundoPlanoAsync(async () =>
+            {
+                try { await ProgressoRepositorio.SalvarAsync(progresso); }
+                finally { _salvandoPosicao = false; }
+            });
+        }
+
+        private static async Task SalvarEmSegundoPlanoAsync(Func<Task> operacao)
+        {
+            try
+            {
+                await operacao();
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(AulaViewModel), ex);
+            }
+        }
+
+        // ---- Comandos da tela ----
+
+        [RelayCommand]
+        private Task Voltar() => VoltarAsync();
+
+        [RelayCommand]
+        private void SelecionarAba(string aba) => AbaSelecionada = aba;
+
+        [RelayCommand]
+        private async Task AbrirAulaAsync(AulaItem? item)
+        {
+            if (item == null)
+                return;
+
+            if (!item.Liberada)
+            {
+                await AvisarAsync("Aula bloqueada", "Conclua a aula anterior para liberar esta aula.");
+                return;
+            }
+
+            await ExecutarAsync(() => SelecionarAulaAsync(item.Aula));
+        }
+
+        [RelayCommand]
+        private Task AbrirMaterialAsync(MaterialComplementar? material)
+        {
+            if (material == null)
+                return Task.CompletedTask;
+
+            return ExecutarAsync(async () =>
             {
                 if (material.IsArquivo)
                 {
@@ -316,6 +252,7 @@ namespace European.ViewModels
             });
         }
 
+        [RelayCommand]
         private async Task ConcluirAsync()
         {
             if (Aula == null)
@@ -333,18 +270,6 @@ namespace European.ViewModels
                 Concluida = true;
                 CarregarAulas();
             });
-        }
-
-        private static async Task SalvarEmSegundoPlanoAsync(Func<Task> operacao)
-        {
-            try
-            {
-                await operacao();
-            }
-            catch (Exception ex)
-            {
-                CrashLogger.Registrar(nameof(AulaViewModel), ex);
-            }
         }
     }
 }

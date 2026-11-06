@@ -1,38 +1,37 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
+using European.Services;
 
 namespace European.ViewModels
 {
-    public class MateriaEditViewModel : BaseViewModel
+    public partial class MateriaEditViewModel : BaseViewModel
     {
         private Modulo? _modulo;
         private Materia? _materia;
-        private string _nome = string.Empty;
-        private string _descricao = string.Empty;
 
-        public MateriaEditViewModel()
-        {
-            SalvarCommand = new Command(async () => await SalvarAsync());
-        }
+        [ObservableProperty]
+        public partial string Nome { get; set; } = string.Empty;
 
-        public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
-        public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
+        [ObservableProperty]
+        public partial string Descricao { get; set; } = string.Empty;
+
         public string ModuloTitulo => _modulo?.Titulo ?? string.Empty;
 
-        public ICommand SalvarCommand { get; }
-
-        public void Carregar(Modulo? modulo, Materia? materia)
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            _modulo = modulo ?? materia?.Modulo;
-            _materia = materia;
-            Title = materia == null ? "Nova matéria" : "Editar matéria";
+            _materia = parametros.Obter<Materia>("Materia");
+            _modulo = parametros.Obter<Modulo>("Modulo") ?? _materia?.Modulo;
+            Title = _materia == null ? "Nova matéria" : "Editar matéria";
             OnPropertyChanged(nameof(ModuloTitulo));
 
-            Nome = materia?.Nome ?? string.Empty;
-            Descricao = materia?.Descricao ?? string.Empty;
+            Nome = _materia?.Nome ?? string.Empty;
+            Descricao = _materia?.Descricao ?? string.Empty;
+            return Task.CompletedTask;
         }
 
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             var cursoId = _modulo?.Curso?.Id;
@@ -42,14 +41,11 @@ namespace European.ViewModels
                 return;
             }
 
-            var salvo = await ExecutarAsync(() => CursoRepositorio.SalvarMateriaAsync(cursoId, _modulo.Id, _materia?.Id, materia =>
+            await SalvarEVoltarAsync(() => CursoRepositorio.SalvarMateriaAsync(cursoId, _modulo.Id, _materia?.Id, materia =>
             {
                 materia.Nome = Nome.Trim();
                 materia.Descricao = Descricao.Trim();
             }));
-
-            if (salvo)
-                await VoltarAsync();
         }
     }
 }

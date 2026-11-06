@@ -1,6 +1,7 @@
-using System.Windows.Input;
-using European.Enums;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Models;
+using European.Services;
 
 namespace European.ViewModels
 {
@@ -12,54 +13,18 @@ namespace European.ViewModels
     }
 
     /// <summary>Detalhes do curso para quem está se cadastrando: só o essencial para decidir a compra.</summary>
-    public class CursoInfoViewModel : BaseViewModel
+    public partial class CursoInfoViewModel : BaseViewModel
     {
-        private Curso? _curso;
-
-        public CursoInfoViewModel()
-        {
-            VoltarCommand = new Command(async () => await VoltarAsync());
-            EscolherCommand = new Command(async () => await EscolherAsync());
-        }
-
-        public Curso? Curso
-        {
-            get => _curso;
-            private set
-            {
-                if (SetProperty(ref _curso, value))
-                {
-                    OnPropertyChanged(nameof(Nome));
-                    OnPropertyChanged(nameof(Descricao));
-                    OnPropertyChanged(nameof(CategoriaTexto));
-                    OnPropertyChanged(nameof(PrecoTexto));
-                    OnPropertyChanged(nameof(CargaTexto));
-                    OnPropertyChanged(nameof(ModulosTexto));
-                    OnPropertyChanged(nameof(AulasTexto));
-                    OnPropertyChanged(nameof(Modulos));
-                    OnPropertyChanged(nameof(TemModulos));
-                    OnPropertyChanged(nameof(TemCapa));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(Nome), nameof(Descricao), nameof(CategoriaTexto), nameof(PrecoTexto),
+            nameof(CargaTexto), nameof(ModulosTexto), nameof(AulasTexto), nameof(Modulos), nameof(TemModulos), nameof(TemCapa))]
+        public partial Curso? Curso { get; private set; }
 
         public string Nome => Curso?.Nome ?? string.Empty;
         public string Descricao => Curso?.Descricao ?? string.Empty;
         public bool TemCapa => !string.IsNullOrWhiteSpace(Curso?.CapaUrl);
-
-        public string CategoriaTexto => Curso == null ? string.Empty : NomeCategoria(Curso.Categoria);
-
-        public static string NomeCategoria(CategoriaEnum categoria) => categoria switch
-        {
-            CategoriaEnum.Educacao => "Educação",
-            CategoriaEnum.Engenharia => "Engenharia",
-            CategoriaEnum.Gestao => "Gestão",
-            CategoriaEnum.Direito => "Direito",
-            CategoriaEnum.Saude => "Saúde",
-            _ => categoria.ToString()
-        };
-
-        public string PrecoTexto => Curso == null || Curso.Preco <= 0 ? "Gratuito" : Curso.Preco.ToString("C", PagamentoViewModel.PtBr);
+        public string CategoriaTexto => Curso == null ? string.Empty : Formatos.Categoria(Curso.Categoria);
+        public string PrecoTexto => Formatos.Preco(Curso?.Preco ?? 0);
         public string CargaTexto => Curso?.CargaHorariaHoras > 0 ? $"{Curso.CargaHorariaHoras}h" : "—";
         public string ModulosTexto => (Curso?.Modulos.Count ?? 0).ToString();
         public string AulasTexto => (Curso?.TotalAulas ?? 0).ToString();
@@ -76,22 +41,22 @@ namespace European.ViewModels
 
         public bool TemModulos => Modulos.Count > 0;
 
-        public ICommand VoltarCommand { get; }
-        public ICommand EscolherCommand { get; }
-
-        public void Carregar(Curso curso)
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            Curso = curso;
-            Title = curso.Nome;
+            if (parametros.Obter<Curso>("Curso") is { } curso)
+            {
+                Curso = curso;
+                Title = curso.Nome;
+            }
+            return Task.CompletedTask;
         }
+
+        [RelayCommand]
+        private Task Voltar() => VoltarAsync();
 
         /// <summary>Volta ao cadastro já com este curso marcado.</summary>
-        private async Task EscolherAsync()
-        {
-            if (Curso == null)
-                return;
-
-            await Shell.Current.GoToAsync("..", new Dictionary<string, object> { ["CursoEscolhidoId"] = Curso.Id });
-        }
+        [RelayCommand]
+        private Task Escolher()
+            => Curso == null ? Task.CompletedTask : Navegacao.VoltarAsync(("CursoEscolhidoId", Curso.Id));
     }
 }

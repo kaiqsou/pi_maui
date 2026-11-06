@@ -1,103 +1,22 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
 
 namespace European.ViewModels
 {
-    public class AlternativaOpcao : BaseViewModel
-    {
-        private bool _selecionada;
-
-        public QuestaoResposta Questao { get; init; } = null!;
-        public int Indice { get; init; }
-        public string Letra => ((char)('A' + Indice)).ToString();
-        public string Texto { get; init; } = string.Empty;
-
-        public bool Selecionada
-        {
-            get => _selecionada;
-            set => SetProperty(ref _selecionada, value);
-        }
-    }
-
-    public class QuestaoResposta : BaseViewModel
-    {
-        private int _marcada = -1;
-        private string _texto = string.Empty;
-
-        public int Numero { get; init; }
-        public string Enunciado { get; init; } = string.Empty;
-        public string PesoTexto { get; init; } = string.Empty;
-        public bool IsDissertativa { get; init; }
-        public bool IsAlternativas => !IsDissertativa;
-        public List<AlternativaOpcao> Alternativas { get; } = new();
-
-        private bool _atual;
-
-        /// <summary>Resposta escrita (questão dissertativa).</summary>
-        public string Texto
-        {
-            get => _texto;
-            set
-            {
-                if (SetProperty(ref _texto, value))
-                    OnPropertyChanged(nameof(Respondida));
-            }
-        }
-
-        public bool EmBranco => IsDissertativa ? string.IsNullOrWhiteSpace(Texto) : Marcada < 0;
-        public bool Respondida => !EmBranco;
-
-        /// <summary>Questão aberta agora (destaca o número no mapa de questões).</summary>
-        public bool Atual { get => _atual; set => SetProperty(ref _atual, value); }
-
-        public int Marcada
-        {
-            get => _marcada;
-            set
-            {
-                if (SetProperty(ref _marcada, value))
-                {
-                    foreach (var alternativa in Alternativas)
-                        alternativa.Selecionada = alternativa.Indice == value;
-                    OnPropertyChanged(nameof(Respondida));
-                }
-            }
-        }
-    }
-
-    public class ProvaRealizarViewModel : BaseViewModel
+    /// <summary>O aluno faz a prova: uma questão por vez, com cronômetro quando a prova tem tempo limite.</summary>
+    public partial class ProvaRealizarViewModel : BaseViewModel
     {
         private Prova? _prova;
         private IDispatcherTimer? _timer;
         private DateTime _fim;
-        private string _tempoRestante = string.Empty;
-        private bool _tempoAcabando;
         private bool _enviada;
-
-        public ProvaRealizarViewModel()
-        {
-            SelecionarCommand = new Command<AlternativaOpcao>(a => { if (a != null && !_enviada) a.Questao.Marcada = a.Indice; });
-            EnviarCommand = new Command(async () => await EnviarAsync(confirmar: true, tempoEsgotado: false));
-            SairCommand = new Command(async () => await SairAsync());
-            AnteriorCommand = new Command(() => IrPara(_indice - 1));
-            ProximaCommand = new Command(async () =>
-            {
-                if (EhUltima)
-                    await EnviarAsync(confirmar: true, tempoEsgotado: false);
-                else
-                    IrPara(_indice + 1);
-            });
-            IrParaCommand = new Command<QuestaoResposta>(q => { if (q != null) IrPara(Questoes.IndexOf(q)); });
-        }
+        private int _indice;
 
         public ObservableCollection<QuestaoResposta> Questoes { get; } = new();
-
-        // ---- Uma questão por vez ----
-
-        private int _indice;
 
         public QuestaoResposta? QuestaoAtual => _indice >= 0 && _indice < Questoes.Count ? Questoes[_indice] : null;
         public string IndicadorQuestao => Questoes.Count == 0 ? string.Empty : $"Questão {_indice + 1} de {Questoes.Count}";
@@ -105,51 +24,21 @@ namespace European.ViewModels
         public bool EhUltima => _indice >= Questoes.Count - 1;
         public string BotaoProximaTexto => EhUltima ? "Enviar prova" : "Próxima";
 
-        public ICommand AnteriorCommand { get; }
-        public ICommand ProximaCommand { get; }
-        public ICommand IrParaCommand { get; }
-
-        private void IrPara(int indice)
-        {
-            if (Questoes.Count == 0)
-                return;
-
-            _indice = Math.Clamp(indice, 0, Questoes.Count - 1);
-            for (var i = 0; i < Questoes.Count; i++)
-                Questoes[i].Atual = i == _indice;
-
-            OnPropertyChanged(nameof(QuestaoAtual));
-            OnPropertyChanged(nameof(IndicadorQuestao));
-            OnPropertyChanged(nameof(PodeAnterior));
-            OnPropertyChanged(nameof(EhUltima));
-            OnPropertyChanged(nameof(BotaoProximaTexto));
-        }
-
         public string Instrucoes => _prova?.Instrucoes ?? string.Empty;
         public bool TemInstrucoes => !string.IsNullOrWhiteSpace(Instrucoes);
         public string Subtitulo => _prova == null ? string.Empty : $"{_prova.Questoes.Count} questões · nota máxima {_prova.NotaMaxima:0.#}";
         public bool TemTempo => _prova?.DuracaoMinutos > 0;
 
-        public string TempoRestante
-        {
-            get => _tempoRestante;
-            private set => SetProperty(ref _tempoRestante, value);
-        }
+        [ObservableProperty]
+        public partial string TempoRestante { get; private set; } = string.Empty;
 
-        public bool TempoAcabando
-        {
-            get => _tempoAcabando;
-            private set => SetProperty(ref _tempoAcabando, value);
-        }
+        [ObservableProperty]
+        public partial bool TempoAcabando { get; private set; }
 
-        public ICommand SelecionarCommand { get; }
-        public ICommand EnviarCommand { get; }
-        public ICommand SairCommand { get; }
-
-        public async Task CarregarAsync(Prova prova)
+        protected override async Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
             var aluno = SessionService.UsuarioAtual;
-            if (aluno == null)
+            if (aluno == null || parametros.Obter<Prova>("Prova") is not { } prova)
                 return;
 
             await ExecutarAsync(async () =>
@@ -165,33 +54,64 @@ namespace European.ViewModels
                 _prova = prova;
                 Title = prova.Titulo;
                 Questoes.Clear();
-
                 for (var i = 0; i < prova.Questoes.Count; i++)
-                {
-                    var questao = prova.Questoes[i];
-                    var resposta = new QuestaoResposta
-                    {
-                        Numero = i + 1,
-                        Enunciado = questao.Enunciado,
-                        PesoTexto = questao.Peso == 1 ? string.Empty : $"Peso {questao.Peso:0.#}",
-                        IsDissertativa = questao.IsDissertativa
-                    };
-
-                    for (var j = 0; j < questao.Alternativas.Count; j++)
-                        resposta.Alternativas.Add(new AlternativaOpcao { Questao = resposta, Indice = j, Texto = questao.Alternativas[j] });
-
-                    Questoes.Add(resposta);
-                }
+                    Questoes.Add(QuestaoResposta.De(prova.Questoes[i], i));
 
                 OnPropertyChanged(nameof(Instrucoes));
                 OnPropertyChanged(nameof(TemInstrucoes));
                 OnPropertyChanged(nameof(Subtitulo));
                 OnPropertyChanged(nameof(TemTempo));
-                IrPara(0);
+                MostrarQuestao(0);
 
                 IniciarTimer(prova.DuracaoMinutos);
             });
         }
+
+        // ---- Navegação entre questões ----
+
+        [RelayCommand]
+        private void Anterior() => MostrarQuestao(_indice - 1);
+
+        [RelayCommand]
+        private async Task ProximaAsync()
+        {
+            if (EhUltima)
+                await EnviarAsync(confirmar: true, tempoEsgotado: false);
+            else
+                MostrarQuestao(_indice + 1);
+        }
+
+        [RelayCommand]
+        private void IrPara(QuestaoResposta? questao)
+        {
+            if (questao != null)
+                MostrarQuestao(Questoes.IndexOf(questao));
+        }
+
+        [RelayCommand]
+        private void Selecionar(AlternativaOpcao? alternativa)
+        {
+            if (alternativa != null && !_enviada)
+                alternativa.Questao.Marcada = alternativa.Indice;
+        }
+
+        private void MostrarQuestao(int indice)
+        {
+            if (Questoes.Count == 0)
+                return;
+
+            _indice = Math.Clamp(indice, 0, Questoes.Count - 1);
+            for (var i = 0; i < Questoes.Count; i++)
+                Questoes[i].Atual = i == _indice;
+
+            OnPropertyChanged(nameof(QuestaoAtual));
+            OnPropertyChanged(nameof(IndicadorQuestao));
+            OnPropertyChanged(nameof(PodeAnterior));
+            OnPropertyChanged(nameof(EhUltima));
+            OnPropertyChanged(nameof(BotaoProximaTexto));
+        }
+
+        // ---- Cronômetro ----
 
         private void IniciarTimer(int minutos)
         {
@@ -218,12 +138,17 @@ namespace European.ViewModels
             if (restante < TimeSpan.Zero)
                 restante = TimeSpan.Zero;
 
-            TempoRestante = restante.ToString(restante.TotalHours >= 1 ? @"h\:mm\:ss" : @"mm\:ss");
+            TempoRestante = Formatos.Tempo(restante.TotalSeconds);
             TempoAcabando = restante.TotalMinutes < 1;
         }
 
+        /// <summary>Para o cronômetro quando a tela some.</summary>
         public void Parar() => _timer?.Stop();
 
+        // ---- Envio ----
+
+        /// <summary>Sair (botão ou voltar do sistema) envia a prova com o que já foi respondido.</summary>
+        [RelayCommand]
         private async Task SairAsync()
         {
             if (_enviada || _prova == null)

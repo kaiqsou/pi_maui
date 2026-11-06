@@ -1,5 +1,5 @@
-using System.Security.Cryptography;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -8,60 +8,42 @@ using European.Services;
 namespace European.ViewModels
 {
     /// <summary>Coordenação cria a conta de um aluno (já com acesso ao curso) ou de um professor.</summary>
-    public class ContaNovaViewModel : BaseViewModel
+    public partial class ContaNovaViewModel : BaseViewModel
     {
+        private const string IconeCopiar = "";  // content_copy
+        private const string IconeCopiado = ""; // check
+
         private Roles _role = Roles.Aluno;
-        private string _nome = string.Empty;
-        private string _email = string.Empty;
-        private string _senha = string.Empty;
-        private List<CursoOpcao> _cursos = new();
-        private CursoOpcao? _cursoSelecionado;
 
-        public ContaNovaViewModel()
-        {
-            GerarSenhaCommand = new Command(() => Senha = GerarSenha());
-            CopiarSenhaCommand = new Command(async () => await CopiarSenhaAsync());
-            SalvarCommand = new Command(async () => await SalvarAsync());
-        }
+        [ObservableProperty]
+        public partial string Nome { get; set; } = string.Empty;
 
-        private const string IconeCopiar = "";   // content_copy
-        private const string IconeCopiado = "";  // check
-        private string _copiarIcone = IconeCopiar;
+        [ObservableProperty]
+        public partial string Email { get; set; } = string.Empty;
 
-        public string CopiarIcone { get => _copiarIcone; private set => SetProperty(ref _copiarIcone, value); }
-        public ICommand CopiarSenhaCommand { get; }
+        [ObservableProperty]
+        public partial string Senha { get; set; } = string.Empty;
 
-        private async Task CopiarSenhaAsync()
-        {
-            if (string.IsNullOrEmpty(Senha))
-                return;
+        [ObservableProperty]
+        public partial string CopiarIcone { get; private set; } = IconeCopiar;
 
-            await Clipboard.Default.SetTextAsync(Senha);
-            CopiarIcone = IconeCopiado;
-            await Task.Delay(1500);
-            CopiarIcone = IconeCopiar;
-        }
+        [ObservableProperty]
+        public partial List<CursoOpcao> Cursos { get; private set; } = new();
 
-        public string Nome { get => _nome; set => SetProperty(ref _nome, value); }
-        public string Email { get => _email; set => SetProperty(ref _email, value); }
-        public string Senha { get => _senha; set => SetProperty(ref _senha, value); }
-        public List<CursoOpcao> Cursos { get => _cursos; private set => SetProperty(ref _cursos, value); }
-        public CursoOpcao? CursoSelecionado { get => _cursoSelecionado; set => SetProperty(ref _cursoSelecionado, value); }
+        [ObservableProperty]
+        public partial CursoOpcao? CursoSelecionado { get; set; }
 
         public bool IsAluno => _role == Roles.Aluno;
         public string Descricao => IsAluno
             ? "Para alunos que ainda não têm conta. A conta já nasce com acesso ao curso escolhido."
             : "A conta do professor é criada com acesso liberado. Depois, escolha os cursos que ele leciona.";
 
-        public ICommand GerarSenhaCommand { get; }
-        public ICommand SalvarCommand { get; }
-
-        public Task CarregarAsync(Roles role, string? email)
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            _role = role;
-            Title = role == Roles.Aluno ? "Criar conta de aluno" : "Criar conta de professor";
-            Email = email ?? string.Empty;
-            Senha = GerarSenha();
+            _role = parametros.Obter<Roles?>("Role") ?? Roles.Aluno;
+            Title = IsAluno ? "Criar conta de aluno" : "Criar conta de professor";
+            Email = parametros.Obter<string>("Email") ?? string.Empty;
+            Senha = ContaService.GerarSenhaProvisoria();
             OnPropertyChanged(nameof(IsAluno));
             OnPropertyChanged(nameof(Descricao));
 
@@ -73,9 +55,25 @@ namespace European.ViewModels
             });
         }
 
+        [RelayCommand]
+        private void GerarSenha() => Senha = ContaService.GerarSenhaProvisoria();
+
+        [RelayCommand]
+        private async Task CopiarSenhaAsync()
+        {
+            if (string.IsNullOrEmpty(Senha))
+                return;
+
+            await Clipboard.Default.SetTextAsync(Senha);
+            CopiarIcone = IconeCopiado;
+            await Task.Delay(1500);
+            CopiarIcone = IconeCopiar;
+        }
+
+        [RelayCommand]
         private async Task SalvarAsync()
         {
-            if (string.IsNullOrWhiteSpace(Nome) || !UserViewModel.EmailValido(Email))
+            if (string.IsNullOrWhiteSpace(Nome) || !ContaService.EmailValido(Email))
             {
                 await AvisarAsync("Conta", "Informe o nome e um e-mail válido.");
                 return;
@@ -104,25 +102,7 @@ namespace European.ViewModels
             };
 
             var criado = false;
-            var ok = await ExecutarAsync(async () =>
-            {
-                criado = await UsuarioRepositorio.InserirAsync(usuario);
-                if (!criado)
-                    return;
-
-                if (IsAluno)
-                {
-                    await MatriculaRepositorio.InserirAsync(new Matricula
-                    {
-                        AlunoId = usuario.Id,
-                        CursoId = CursoSelecionado!.Valor!.Id,
-                        Status = StatusMatricula.Ativa,
-                        LiberadaPorId = SessionService.UsuarioAtual?.Id
-                    });
-                }
-            });
-
-            if (!ok)
+            if (!await ExecutarAsync(async () => criado = await ContaService.CriarContaAsync(usuario, IsAluno ? CursoSelecionado!.Valor!.Id : null)))
                 return;
 
             if (!criado)
@@ -134,19 +114,11 @@ namespace European.ViewModels
             await AvisarAsync("Conta criada",
                 $"Envie os dados de acesso para {usuario.Nome}:\n\nE-mail: {usuario.Email}\nSenha provisória: {Senha}");
 
+            // professor: segue direto para a tela dele, para escolher os cursos que leciona
             if (IsAluno)
                 await VoltarAsync();
             else
-                await Shell.Current.GoToAsync("../professoracesso", new Dictionary<string, object> { ["Usuario"] = usuario });
-        }
-
-        private static string GerarSenha()
-        {
-            const string letras = "abcdefghjkmnpqrstuvwxyz";
-            const string numeros = "23456789";
-            var chars = Enumerable.Range(0, 5).Select(_ => letras[RandomNumberGenerator.GetInt32(letras.Length)])
-                .Concat(Enumerable.Range(0, 3).Select(_ => numeros[RandomNumberGenerator.GetInt32(numeros.Length)]));
-            return new string(chars.ToArray());
+                await Navegacao.IrAsync($"../{Navegacao.ProfessorAcesso}", ("Usuario", usuario));
         }
     }
 }

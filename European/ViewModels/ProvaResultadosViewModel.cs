@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -21,29 +22,30 @@ namespace European.ViewModels
     /// Entregas de uma prova. Enquanto houver entregas a corrigir, a lista é às cegas ("Resposta #3"),
     /// sem nome nem horário; os nomes só aparecem quando todas estiverem corrigidas.
     /// </summary>
-    public class ProvaResultadosViewModel : BaseViewModel
+    public partial class ProvaResultadosViewModel : BaseViewModel
     {
         private Prova? _prova;
-        private string _resumo = string.Empty;
-        private bool _modoCego;
-
-        public ProvaResultadosViewModel()
-        {
-            AbrirCommand = new Command<ResultadoAlunoItem>(async item => await AbrirAsync(item));
-        }
 
         public ObservableCollection<ResultadoAlunoItem> Resultados { get; } = new();
 
-        public string Resumo { get => _resumo; private set => SetProperty(ref _resumo, value); }
-        public bool ModoCego { get => _modoCego; private set => SetProperty(ref _modoCego, value); }
-        public bool SemEntregas => Resultados.Count == 0;
+        [ObservableProperty]
+        public partial string Resumo { get; private set; } = string.Empty;
 
-        public ICommand AbrirCommand { get; }
+        [ObservableProperty]
+        public partial bool ModoCego { get; private set; }
 
-        public Task CarregarAsync(Prova prova) => ExecutarAsync(async () =>
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
+        {
+            _prova = parametros.Obter<Prova>("Prova") ?? _prova;
+            parametros.Clear();
+            return Task.CompletedTask;
+        }
+
+        /// <summary>Recarrega também ao voltar da correção de uma entrega (e revela os nomes se acabou).</summary>
+        public override Task AoAparecerAsync() => _prova == null ? Task.CompletedTask : ExecutarAsync(async () =>
         {
             // relê a prova: as questões podem ter mudado desde que a lista foi aberta
-            _prova = await ProvaRepositorio.PorIdAsync(prova.Id) ?? prova;
+            _prova = await ProvaRepositorio.PorIdAsync(_prova.Id) ?? _prova;
             Title = _prova.Titulo;
 
             var resultados = await ResultadoRepositorio.DaProvaAsync(_prova.Id);
@@ -69,33 +71,28 @@ namespace European.ViewModels
 
                 Resumo = $"Correção às cegas: {pendentes} de {resultados.Count} entrega(s) a corrigir. " +
                          "Os nomes dos alunos aparecem quando todas estiverem corrigidas.";
+                return;
             }
-            else
+
+            var alunos = (await UsuarioRepositorio.PorIdsAsync(resultados.Select(r => r.AlunoId))).ToDictionary(u => u.Id);
+            foreach (var r in resultados.OrderByDescending(r => r.NotaObtida))
             {
-                var alunos = (await UsuarioRepositorio.PorIdsAsync(resultados.Select(r => r.AlunoId))).ToDictionary(u => u.Id);
-                foreach (var r in resultados.OrderByDescending(r => r.NotaObtida))
+                var aluno = alunos.GetValueOrDefault(r.AlunoId);
+                Resultados.Add(new ResultadoAlunoItem
                 {
-                    var aluno = alunos.GetValueOrDefault(r.AlunoId);
-                    Resultados.Add(new ResultadoAlunoItem
-                    {
-                        Resultado = r,
-                        Nome = aluno?.Nome ?? "Aluno removido",
-                        Iniciais = aluno?.Iniciais ?? "?",
-                        Detalhe = $"Entregue em {r.DataRealizacao:dd/MM/yyyy HH:mm}" + (r.TempoEsgotado ? " · tempo esgotado" : string.Empty),
-                        Aprovado = r.NotaObtida >= _prova.NotaCorte
-                    });
-                }
-
-                Resumo = resultados.Count == 0
-                    ? "Nenhum aluno fez esta prova ainda."
-                    : $"Todas corrigidas · {resultados.Count} entrega(s) · média {resultados.Average(r => r.NotaObtida):0.0} · " +
-                      $"{Resultados.Count(r => r.Aprovado)} aprovado(s)";
+                    Resultado = r,
+                    Nome = aluno?.Nome ?? "Aluno removido",
+                    Iniciais = aluno?.Iniciais ?? "?",
+                    Detalhe = $"Entregue em {r.DataRealizacao:dd/MM/yyyy HH:mm}" + (r.TempoEsgotado ? " · tempo esgotado" : string.Empty),
+                    Aprovado = r.NotaObtida >= _prova.NotaCorte
+                });
             }
 
-            OnPropertyChanged(nameof(SemEntregas));
+            Resumo = resultados.Count == 0
+                ? "Nenhum aluno fez esta prova ainda."
+                : $"Todas corrigidas · {resultados.Count} entrega(s) · média {resultados.Average(r => r.NotaObtida):0.0} · " +
+                  $"{Resultados.Count(r => r.Aprovado)} aprovado(s)";
         });
-
-        public Task RecarregarAsync() => _prova == null ? Task.CompletedTask : CarregarAsync(_prova);
 
         private static string DetalheACorrigir(Prova prova, ResultadoProva resultado)
         {
@@ -109,17 +106,10 @@ namespace European.ViewModels
             return string.Join(" · ", partes);
         }
 
-        private async Task AbrirAsync(ResultadoAlunoItem? item)
-        {
-            if (item == null || _prova == null)
-                return;
-
-            await Shell.Current.GoToAsync("correcao", new Dictionary<string, object>
-            {
-                ["Prova"] = _prova,
-                ["ResultadoId"] = item.Resultado.Id,
-                ["Rotulo"] = item.Nome
-            });
-        }
+        [RelayCommand]
+        private Task Abrir(ResultadoAlunoItem? item)
+            => item == null || _prova == null
+                ? Task.CompletedTask
+                : Navegacao.IrAsync(Navegacao.Correcao, ("Prova", _prova), ("ResultadoId", item.Resultado.Id), ("Rotulo", item.Nome));
     }
 }

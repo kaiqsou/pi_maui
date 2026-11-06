@@ -50,5 +50,9 @@ namespace European.Services
         /// <summary>Volta para a tela anterior, opcionalmente devolvendo parâmetros a ela.</summary>
         public static Task VoltarAsync(params (string Chave, object? Valor)[] parametros)
             => IrAsync("..", parametros);
+
+        /// <summary>Lê um parâmetro recebido na navegação (null se ausente ou de outro tipo).</summary>
+        public static T? Obter<T>(this IDictionary<string, object> parametros, string chave)
+            => parametros.TryGetValue(chave, out var valor) && valor is T tipado ? tipado : default;
     }
 }

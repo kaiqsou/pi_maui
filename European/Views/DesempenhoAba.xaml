@@ -2,7 +2,7 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:European.ViewModels"
-             x:Class="European.Views.DesempenhoPage"
+             x:Class="European.Views.DesempenhoAba"
              x:DataType="vm:DesempenhoViewModel"
              BackgroundColor="{StaticResource Surface}">
 

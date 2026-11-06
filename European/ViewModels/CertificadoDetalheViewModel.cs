@@ -1,38 +1,48 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Models;
+using European.Services;
 
 namespace European.ViewModels
 {
-    public class CertificadoDetalheViewModel : BaseViewModel
+    public partial class CertificadoDetalheViewModel : BaseViewModel
     {
-        private Certificado? _certificado;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(EmissaoTexto))]
+        public partial Certificado? Certificado { get; set; }
 
-        public CertificadoDetalheViewModel()
+        public string EmissaoTexto => Certificado?.EmitidoEm.ToString("dd/MM/yyyy") ?? string.Empty;
+
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            Title = "Certificado";
-            VoltarCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+            if (parametros.Obter<Certificado>("Certificado") is { } certificado)
+            {
+                Certificado = certificado;
+                Title = certificado.Titulo;
+            }
+            return Task.CompletedTask;
         }
 
-        public Certificado? Certificado
+        [RelayCommand]
+        private Task Voltar() => VoltarAsync();
+
+        [RelayCommand]
+        private async Task BaixarAsync()
         {
-            get => _certificado;
-            set
+            if (Certificado == null)
+                return;
+
+            try
             {
-                if (SetProperty(ref _certificado, value))
-                {
-                    OnPropertyChanged(nameof(EmissaoTexto));
-                }
+                var caminho = await CertificadoPdf.BaixarAsync(Certificado);
+                if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                    await AvisarAsync("Certificado", $"PDF salvo em:\n{caminho}");
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(CertificadoDetalheViewModel), ex);
+                await AvisarAsync("Certificado", $"Não foi possível gerar o PDF: {ex.Message}");
             }
         }
-
-        public string EmissaoTexto => Certificado == null ? string.Empty : Certificado.EmitidoEm.ToString("dd/MM/yyyy");
-
-        public void Carregar(Certificado certificado)
-        {
-            Certificado = certificado;
-            Title = certificado.Titulo;
-        }
-
-        public ICommand VoltarCommand { get; }
     }
 }

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              xmlns:models="clr-namespace:European.Models"
              xmlns:controls="clr-namespace:European.Controls"
              x:Class="European.Views.ProvaEditPage"
              x:DataType="vm:ProvaEditViewModel"
              Title="{Binding Title}"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <!--
         Assistente em 3 etapas (Dados → Regras → Questões): "Continuar" valida a etapa atual e
@@ -313,10 +313,10 @@
                 <Button Grid.Column="0" Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}"
                         IsVisible="{Binding PodeVoltarEtapa}" />
                 <Button Grid.Column="1" Text="{Binding BotaoAvancarTexto}" Style="{StaticResource PrimaryButton}" Command="{Binding AvancarCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                        IsEnabled="{Binding IsNotBusy}" />
             </Grid>
         </Grid>
 
     </Grid>
 
-</ContentPage>
+</views:BasePage>

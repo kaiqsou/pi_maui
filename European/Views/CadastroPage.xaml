@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
              x:Class="European.Views.CadastroPage"
-             x:DataType="vm:UserViewModel"
+             x:DataType="vm:CadastroViewModel"
              Title="Criar conta"
-             Shell.NavBarIsVisible="False"
-             BackgroundColor="{StaticResource Surface}">
+             Shell.NavBarIsVisible="False">
 
     <ScrollView>
         <VerticalStackLayout Padding="28,32,28,28" Spacing="18">
@@ -56,7 +57,7 @@
                 <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
 
                 <Button Text="Continuar" Style="{StaticResource PrimaryButton}" Command="{Binding AvancarEtapaCommand}" Margin="0,8,0,0"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                        IsEnabled="{Binding IsNotBusy}" />
                 <Button Text="Já tenho conta? Entrar" Style="{StaticResource GhostButton}" Command="{Binding IrParaLoginCommand}" />
             </VerticalStackLayout>
 
@@ -78,7 +79,7 @@
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UserViewModel}}, Path=SelecionarCursoCommand, x:DataType=vm:UserViewModel}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CadastroViewModel}}, Path=SelecionarCursoCommand, x:DataType=vm:CadastroViewModel}"
                                         CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
                                 <VerticalStackLayout Spacing="10">
@@ -101,7 +102,7 @@
                                            TextColor="{StaticResource BrandPrimary}" HorizontalOptions="Start">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:UserViewModel}}, Path=VerDetalhesCommand, x:DataType=vm:UserViewModel}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CadastroViewModel}}, Path=VerDetalhesCommand, x:DataType=vm:CadastroViewModel}"
                                                 CommandParameter="{Binding .}" />
                                         </Label.GestureRecognizers>
                                     </Label>
@@ -114,28 +115,16 @@
                 <Label Text="Nenhum curso com inscrições abertas no momento." Style="{StaticResource Muted}"
                        IsVisible="{Binding SemCursos}" />
 
-                <!-- paginação: só aparece quando houver mais de uma página de cursos -->
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" IsVisible="{Binding TemPaginacao}">
-                    <Button Grid.Column="0" Text="&#xe5c4;" FontFamily="MaterialIcons" FontSize="20"
-                            WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                            BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                            IsEnabled="{Binding PodePaginaAnterior}" Command="{Binding PaginaAnteriorCommand}" />
-                    <Label Grid.Column="1" Text="{Binding IndicadorPagina}" Style="{StaticResource BodySm}"
-                           HorizontalOptions="Center" VerticalOptions="Center" />
-                    <Button Grid.Column="2" Text="&#xe5c8;" FontFamily="MaterialIcons" FontSize="20"
-                            WidthRequest="40" HeightRequest="40" Padding="0" CornerRadius="20"
-                            BackgroundColor="{StaticResource SurfaceCard}" TextColor="{StaticResource OnSurface}"
-                            IsEnabled="{Binding PodePaginaProxima}" Command="{Binding PaginaProximaCommand}" />
-                </Grid>
+                <controls:BarraPaginacao BindingContext="{Binding Paginas}" />
 
                 <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Danger}" FontSize="13" />
 
                 <Button Text="Continuar para o pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding CadastroCommand}"
-                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                        IsEnabled="{Binding IsNotBusy}" />
                 <Button Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}" />
             </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>
 
-</ContentPage>
+</views:BasePage>

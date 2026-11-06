@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -7,153 +8,80 @@ using European.Services;
 
 namespace European.ViewModels
 {
-    public class CoordenacaoViewModel : BaseViewModel
+    /// <summary>Painel da coordenação, com três abas: cursos, alunos (e solicitações de matrícula) e professores.</summary>
+    public partial class CoordenacaoViewModel : BaseViewModel
     {
-        private string _aba = "cursos";
-        private string _filtroAlunos = "todos";
-        private string _busca = string.Empty;
-        private string _saudacao = string.Empty;
-        private int _totalPendentes;
         private List<PessoaItem> _todosAlunos = new();
 
-        public CoordenacaoViewModel()
-        {
-            SelecionarAbaCommand = new Command<string>(a => Aba = a);
-            FiltrarAlunosCommand = new Command<string>(f => FiltroAlunos = f);
-            AbrirPerfilCommand = new Command(async () => await Shell.Current.GoToAsync("perfil"));
-
-            NovoCursoCommand = new Command(async () => await Ir("cursoedit", "Novo", true));
-            AbrirCursoCommand = new Command<CursoResumo>(async c => await Ir("curso", "Curso", c?.Curso));
-
-            LiberarPorEmailCommand = new Command(async () => await LiberarPorEmailAsync());
-            CriarContaAlunoCommand = new Command(async () => await Ir("contanova", "Role", Roles.Aluno));
-            AbrirAlunoCommand = new Command<PessoaItem>(async p => await Ir("alunoacesso", "Usuario", p?.Usuario));
-            AbrirSolicitacaoCommand = new Command<PessoaItem>(async p => await Ir("solicitacao", "Solicitacao", p?.Solicitacao));
-
-            AdicionarProfessorCommand = new Command(async () => await AdicionarProfessorAsync());
-            AbrirProfessorCommand = new Command<PessoaItem>(async p => await Ir("professoracesso", "Usuario", p?.Usuario));
-        }
-
-        public string Aba
-        {
-            get => _aba;
-            set
-            {
-                if (SetProperty(ref _aba, value))
-                {
-                    OnPropertyChanged(nameof(MostrarCursos));
-                    OnPropertyChanged(nameof(MostrarAlunos));
-                    OnPropertyChanged(nameof(MostrarProfessores));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MostrarCursos), nameof(MostrarAlunos), nameof(MostrarProfessores))]
+        public partial string Aba { get; set; } = "cursos";
 
         public bool MostrarCursos => Aba == "cursos";
         public bool MostrarAlunos => Aba == "alunos";
         public bool MostrarProfessores => Aba == "professores";
 
-        public string FiltroAlunos
-        {
-            get => _filtroAlunos;
-            set
-            {
-                if (SetProperty(ref _filtroAlunos, value))
-                {
-                    OnPropertyChanged(nameof(FiltroPendentes));
-                    OnPropertyChanged(nameof(FiltroAtivos));
-                    OnPropertyChanged(nameof(FiltroTodos));
-                    AplicarFiltroAlunos();
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FiltroPendentes), nameof(FiltroAtivos), nameof(FiltroTodos))]
+        public partial string FiltroAlunos { get; set; } = "todos";
 
         public bool FiltroPendentes => FiltroAlunos == "pendentes";
         public bool FiltroAtivos => FiltroAlunos == "ativos";
         public bool FiltroTodos => FiltroAlunos == "todos";
 
-        public string Busca
-        {
-            get => _busca;
-            set
-            {
-                if (SetProperty(ref _busca, value))
-                    AplicarFiltroAlunos();
-            }
-        }
+        [ObservableProperty]
+        public partial string Busca { get; set; } = string.Empty;
 
-        public string Saudacao { get => _saudacao; private set => SetProperty(ref _saudacao, value); }
+        [ObservableProperty]
+        public partial string Saudacao { get; private set; } = string.Empty;
 
-        public int TotalPendentes
-        {
-            get => _totalPendentes;
-            private set
-            {
-                if (SetProperty(ref _totalPendentes, value))
-                {
-                    OnPropertyChanged(nameof(PendentesTexto));
-                    OnPropertyChanged(nameof(TemPendentes));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PendentesTexto))]
+        public partial int TotalPendentes { get; private set; }
 
         public string PendentesTexto => $"Pendentes ({TotalPendentes})";
-        public bool TemPendentes => TotalPendentes > 0;
 
         public ObservableCollection<CursoResumo> Cursos { get; } = new();
         public ObservableCollection<PessoaItem> Alunos { get; } = new();
         public ObservableCollection<PessoaItem> Professores { get; } = new();
 
-        public ICommand SelecionarAbaCommand { get; }
-        public ICommand FiltrarAlunosCommand { get; }
-        public ICommand AbrirPerfilCommand { get; }
-        public ICommand NovoCursoCommand { get; }
-        public ICommand AbrirCursoCommand { get; }
-        public ICommand LiberarPorEmailCommand { get; }
-        public ICommand CriarContaAlunoCommand { get; }
-        public ICommand AbrirAlunoCommand { get; }
-        public ICommand AbrirSolicitacaoCommand { get; }
-        public ICommand AdicionarProfessorCommand { get; }
-        public ICommand AbrirProfessorCommand { get; }
+        partial void OnFiltroAlunosChanged(string value) => AplicarFiltroAlunos();
+        partial void OnBuscaChanged(string value) => AplicarFiltroAlunos();
 
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
-            var usuario = SessionService.UsuarioAtual;
-            Saudacao = $"Olá, {usuario?.Nome.Split(' ')[0]}";
+            Saudacao = Formatos.Saudacao(SessionService.UsuarioAtual?.Nome);
 
             var cursos = await CursoRepositorio.ListarAsync();
             var ativosPorCurso = await MatriculaRepositorio.AtivasPorCursoAsync();
             Cursos.Clear();
             foreach (var curso in cursos)
             {
-                var ativos = ativosPorCurso.GetValueOrDefault(curso.Id);
                 Cursos.Add(new CursoResumo
                 {
                     Curso = curso,
-                    Detalhe = $"{ativos} aluno(s) ativos · {curso.ProfessorIds.Count} professor(es)" + (curso.IsPublicado ? string.Empty : " · inativo")
+                    Detalhe = $"{ativosPorCurso.GetValueOrDefault(curso.Id)} aluno(s) ativos · {curso.ProfessorIds.Count} professor(es)"
+                              + (curso.IsPublicado ? string.Empty : " · inativo")
                 });
             }
 
             var nomesCursos = cursos.ToDictionary(c => c.Id, c => c.Nome);
 
-            var alunos = await UsuarioRepositorio.ListarAsync(Roles.Aluno);
-            var matriculas = (await MatriculaRepositorio.DosAlunosAsync(alunos.Select(a => a.Id))).ToLookup(m => m.AlunoId);
-            _todosAlunos = alunos.Select(a => ItemAluno(a, matriculas[a.Id].ToList(), nomesCursos)).ToList();
-            _todosAlunos.ForEach(a => a.Abrir = AbrirAlunoCommand);
-
             // solicitações de matrícula (candidatos que ainda não são usuários) aparecem primeiro
             var solicitacoes = await SolicitacaoRepositorio.ListarAsync();
-            var itensSolicitacao = solicitacoes.Select(s => ItemSolicitacao(s, nomesCursos)).ToList();
-            itensSolicitacao.ForEach(s => s.Abrir = AbrirSolicitacaoCommand);
-            _todosAlunos.InsertRange(0, itensSolicitacao);
+            var alunos = await UsuarioRepositorio.ListarAsync(Roles.Aluno);
+            var matriculas = (await MatriculaRepositorio.DosAlunosAsync(alunos.Select(a => a.Id))).ToLookup(m => m.AlunoId);
+            _todosAlunos = solicitacoes.Select(s => ItemSolicitacao(s, nomesCursos))
+                .Concat(alunos.Select(a => ItemAluno(a, matriculas[a.Id].ToList(), nomesCursos)))
+                .ToList();
 
             TotalPendentes = alunos.Count(a => a.StatusAcesso == StatusAcesso.Pendente) + solicitacoes.Count;
 
+            // na primeira carga, com pendências, a lista já abre filtrada nelas
             if (TotalPendentes > 0 && FiltroAlunos == "todos" && Alunos.Count == 0)
-                _filtroAlunos = "pendentes";
-            OnPropertyChanged(nameof(FiltroPendentes));
-            OnPropertyChanged(nameof(FiltroAtivos));
-            OnPropertyChanged(nameof(FiltroTodos));
-            AplicarFiltroAlunos();
+                FiltroAlunos = "pendentes";
+            else
+                AplicarFiltroAlunos();
 
             var professores = await UsuarioRepositorio.ListarAsync(Roles.Professor);
             Professores.Clear();
@@ -171,17 +99,10 @@ namespace European.ViewModels
             }
         });
 
-        public static PessoaItem ItemAluno(Usuario aluno, List<Matricula> matriculas, IReadOnlyDictionary<string, string> nomesCursos)
+        private PessoaItem ItemAluno(Usuario aluno, List<Matricula> matriculas, IReadOnlyDictionary<string, string> nomesCursos)
         {
+            var status = ContaService.Situacao(aluno, matriculas);
             var ativas = matriculas.Where(m => m.Status == StatusMatricula.Ativa).ToList();
-            var (status, alerta, destaque) = aluno.StatusAcesso switch
-            {
-                StatusAcesso.Pendente => ("Pendente", true, true),
-                StatusAcesso.Removido => (matriculas.Count > 0 ? "Ex-aluno" : "Sem acesso", true, false),
-                _ when ativas.Count > 0 => ("Ativo", false, false),
-                _ => (matriculas.Count > 0 ? "Ex-aluno" : "Sem curso", true, false)
-            };
-
             var cursos = (ativas.Count > 0 ? ativas : matriculas)
                 .Select(m => nomesCursos.GetValueOrDefault(m.CursoId))
                 .Where(n => n != null)
@@ -191,13 +112,14 @@ namespace European.ViewModels
             {
                 Usuario = aluno,
                 Status = status,
-                Alerta = alerta,
-                Destaque = destaque,
-                Detalhe = cursos.Count > 0 ? string.Join(", ", cursos) : $"Cadastrado em {aluno.CreatedAt:dd/MM/yyyy}"
+                Alerta = status != "Ativo",
+                Destaque = aluno.StatusAcesso == StatusAcesso.Pendente,
+                Detalhe = cursos.Count > 0 ? string.Join(", ", cursos) : $"Cadastrado em {aluno.CreatedAt:dd/MM/yyyy}",
+                Abrir = AbrirAlunoCommand
             };
         }
 
-        private static PessoaItem ItemSolicitacao(SolicitacaoMatricula solicitacao, IReadOnlyDictionary<string, string> nomesCursos)
+        private PessoaItem ItemSolicitacao(SolicitacaoMatricula solicitacao, IReadOnlyDictionary<string, string> nomesCursos)
         {
             var (status, destaque) = solicitacao switch
             {
@@ -214,7 +136,8 @@ namespace European.ViewModels
                 Status = status,
                 Alerta = true,
                 Destaque = destaque,
-                Detalhe = $"{nomesCursos.GetValueOrDefault(solicitacao.CursoId) ?? "Curso removido"} · {solicitacao.CriadaEm:dd/MM/yyyy}"
+                Detalhe = $"{nomesCursos.GetValueOrDefault(solicitacao.CursoId) ?? "Curso removido"} · {solicitacao.CriadaEm:dd/MM/yyyy}",
+                Abrir = AbrirSolicitacaoCommand
             };
         }
 
@@ -237,10 +160,46 @@ namespace European.ViewModels
                 Alunos.Add(aluno);
         }
 
+        // ---- Navegação ----
+
+        [RelayCommand]
+        private void SelecionarAba(string aba) => Aba = aba;
+
+        [RelayCommand]
+        private void FiltrarAlunos(string filtro) => FiltroAlunos = filtro;
+
+        [RelayCommand]
+        private Task AbrirPerfil() => Navegacao.IrAsync(Navegacao.Perfil);
+
+        [RelayCommand]
+        private Task NovoCurso() => Navegacao.IrAsync(Navegacao.CursoEdit);
+
+        [RelayCommand]
+        private Task AbrirCurso(CursoResumo? item)
+            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.Curso, ("Curso", item.Curso));
+
+        [RelayCommand]
+        private Task CriarContaAluno() => Navegacao.IrAsync(Navegacao.ContaNova, ("Role", Roles.Aluno));
+
+        [RelayCommand]
+        private Task AbrirAluno(PessoaItem? item)
+            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.AlunoAcesso, ("Usuario", item.Usuario));
+
+        [RelayCommand]
+        private Task AbrirSolicitacao(PessoaItem? item)
+            => item?.Solicitacao == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.Solicitacao, ("Solicitacao", item.Solicitacao));
+
+        [RelayCommand]
+        private Task AbrirProfessor(PessoaItem? item)
+            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProfessorAcesso, ("Usuario", item.Usuario));
+
+        // ---- Buscar por e-mail ----
+
+        /// <summary>Busca o aluno (ou o candidato) pelo e-mail e abre a tela certa; oferece criar a conta se não existir.</summary>
+        [RelayCommand]
         private async Task LiberarPorEmailAsync()
         {
-            var email = await Shell.Current.DisplayPromptAsync("Liberar acesso", "E-mail com que o aluno se cadastrou", "Buscar", "Cancelar",
-                "aluno@email.com", keyboard: Keyboard.Email);
+            var email = await PerguntarAsync("Liberar acesso", "E-mail com que o aluno se cadastrou", "Buscar", "aluno@email.com", teclado: Keyboard.Email);
             if (string.IsNullOrWhiteSpace(email))
                 return;
 
@@ -257,14 +216,14 @@ namespace European.ViewModels
             // candidato que se cadastrou pelo app: abre a solicitação de matrícula
             if (solicitacao != null)
             {
-                await Ir("solicitacao", "Solicitacao", solicitacao);
+                await Navegacao.IrAsync(Navegacao.Solicitacao, ("Solicitacao", solicitacao));
                 return;
             }
 
             if (usuario == null)
             {
                 if (await ConfirmarAsync("Nenhuma conta usa este e-mail. Deseja criar a conta do aluno agora?", "Criar conta"))
-                    await Shell.Current.GoToAsync("contanova", new Dictionary<string, object> { ["Role"] = Roles.Aluno, ["Email"] = email.Trim() });
+                    await Navegacao.IrAsync(Navegacao.ContaNova, ("Role", Roles.Aluno), ("Email", email.Trim()));
                 return;
             }
 
@@ -274,30 +233,31 @@ namespace European.ViewModels
                 return;
             }
 
-            await Ir("alunoacesso", "Usuario", usuario);
+            await Navegacao.IrAsync(Navegacao.AlunoAcesso, ("Usuario", usuario));
         }
 
+        /// <summary>Busca a conta pelo e-mail: abre o professor, transforma um aluno sem matrícula em professor ou oferece criar a conta.</summary>
+        [RelayCommand]
         private async Task AdicionarProfessorAsync()
         {
-            var email = await Shell.Current.DisplayPromptAsync("Adicionar professor", "E-mail do professor", "Buscar", "Cancelar",
-                "professor@email.com", keyboard: Keyboard.Email);
+            var email = await PerguntarAsync("Adicionar professor", "E-mail do professor", "Buscar", "professor@email.com", teclado: Keyboard.Email);
             if (string.IsNullOrWhiteSpace(email))
                 return;
 
             Usuario? usuario = null;
             var matriculas = 0;
             if (!await ExecutarAsync(async () =>
-            {
-                usuario = await UsuarioRepositorio.PorEmailAsync(email);
-                if (usuario != null)
-                    matriculas = (await MatriculaRepositorio.DoAlunoAsync(usuario.Id)).Count;
-            }))
+                {
+                    usuario = await UsuarioRepositorio.PorEmailAsync(email);
+                    if (usuario != null)
+                        matriculas = (await MatriculaRepositorio.DoAlunoAsync(usuario.Id)).Count;
+                }))
                 return;
 
             if (usuario == null)
             {
                 if (await ConfirmarAsync("Nenhuma conta usa este e-mail. Deseja criar a conta do professor agora?", "Criar conta"))
-                    await Shell.Current.GoToAsync("contanova", new Dictionary<string, object> { ["Role"] = Roles.Professor, ["Email"] = email.Trim() });
+                    await Navegacao.IrAsync(Navegacao.ContaNova, ("Role", Roles.Professor), ("Email", email.Trim()));
                 return;
             }
 
@@ -315,22 +275,12 @@ namespace European.ViewModels
                     return;
                 }
 
-                if (!await ConfirmarAsync($"{usuario.Nome} se cadastrou pelo app. Liberar esta conta como professor?", "Liberar"))
-                    return;
-
-                usuario.Roles = Roles.Professor;
-                usuario.StatusAcesso = StatusAcesso.Liberado;
-                if (!await ExecutarAsync(() => UsuarioRepositorio.AtualizarAsync(usuario)))
+                if (!await ConfirmarAsync($"{usuario.Nome} se cadastrou pelo app. Liberar esta conta como professor?", "Liberar")
+                    || !await ExecutarAsync(() => ContaService.TornarProfessorAsync(usuario)))
                     return;
             }
 
-            await Ir("professoracesso", "Usuario", usuario);
-        }
-
-        private static async Task Ir(string rota, string chave, object? valor)
-        {
-            if (valor != null)
-                await Shell.Current.GoToAsync(rota, new Dictionary<string, object> { [chave] = valor });
+            await Navegacao.IrAsync(Navegacao.ProfessorAcesso, ("Usuario", usuario));
         }
     }
 }

@@ -33,6 +33,19 @@ namespace European.Services
             return match.Success ? match.Groups[1].Value : null;
         }
 
+        /// <summary>Fonte do WebView para o vídeo (sem vídeo cadastrado, usa o de demonstração), começando no segundo indicado.</summary>
+        public static WebViewSource Fonte(string? urlOuId, double inicioSegundos)
+        {
+            var videoId = ExtrairId(urlOuId) ?? ExtrairId(VideoPadrao)!;
+
+            // No Windows (WebView2) o HTML é entregue pela interceptação de requisições configurada
+            // em MauiProgram; nas demais plataformas o BaseUrl HTTPS já define a origem da página.
+            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+                return new UrlWebViewSource { Url = UrlDoPlayer(videoId, inicioSegundos) };
+
+            return new HtmlWebViewSource { Html = GerarHtml(videoId, inicioSegundos), BaseUrl = $"{Origem}/" };
+        }
+
         public static string UrlDoPlayer(string videoId, double inicioSegundos) =>
             $"{Origem}/player?v={videoId}&t={(int)Math.Max(0, inicioSegundos)}";
 

@@ -1,4 +1,5 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -6,83 +7,57 @@ using European.Services;
 namespace European.ViewModels
 {
     /// <summary>O certificado único do mestrado: emitido ao concluir todos os módulos com aprovação pela média em todas as matérias.</summary>
-    public class CertificadoViewModel : BaseViewModel
+    public partial class CertificadoViewModel : BaseViewModel
     {
-        private Certificado? _certificado;
-        private ProgressoService.SituacaoCertificado? _situacao;
-        private string _cursoNome = string.Empty;
-        private string _validadeTexto = string.Empty;
-
         public CertificadoViewModel()
         {
             Title = "Certificados";
-            AbrirCommand = new Command(async () => await AbrirAsync());
-            BaixarPdfCommand = new Command(async () => await BaixarPdfAsync());
         }
 
-        public Certificado? Certificado
-        {
-            get => _certificado;
-            private set
-            {
-                if (SetProperty(ref _certificado, value))
-                {
-                    OnPropertyChanged(nameof(PossuiCertificado));
-                    OnPropertyChanged(nameof(Pendente));
-                    OnPropertyChanged(nameof(EmissaoTexto));
-                    OnPropertyChanged(nameof(MediaTexto));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PossuiCertificado), nameof(Pendente), nameof(EmissaoTexto), nameof(MediaTexto))]
+        public partial Certificado? Certificado { get; private set; }
 
         public bool PossuiCertificado => Certificado != null;
         public bool Pendente => Certificado == null;
-        public bool PossuiSituacao => _situacao != null;
-
-        public string CursoNome
-        {
-            get => _cursoNome;
-            private set => SetProperty(ref _cursoNome, value);
-        }
-
-        /// <summary>Até quando o aluno pode reassistir as aulas depois de concluir o curso.</summary>
-        public string ValidadeTexto
-        {
-            get => _validadeTexto;
-            private set
-            {
-                if (SetProperty(ref _validadeTexto, value))
-                    OnPropertyChanged(nameof(PossuiValidade));
-            }
-        }
-
-        public bool PossuiValidade => !string.IsNullOrEmpty(ValidadeTexto);
-
         public string EmissaoTexto => Certificado?.EmitidoEm.ToString("dd/MM/yyyy") ?? string.Empty;
         public string MediaTexto => Certificado?.MediaFinal.ToString("0.0") ?? string.Empty;
 
-        public string ModulosTexto => _situacao == null ? string.Empty : $"{_situacao.ModulosConcluidos} de {_situacao.TotalModulos}";
-        public string MateriasTexto => _situacao == null ? string.Empty : $"{_situacao.MateriasAprovadas} de {_situacao.TotalMateriasComProva}";
-        public double ModulosPercentual => Percentual(_situacao?.ModulosConcluidos, _situacao?.TotalModulos);
-        public double MateriasPercentual => _situacao?.TotalMateriasComProva == 0 ? 100 : Percentual(_situacao?.MateriasAprovadas, _situacao?.TotalMateriasComProva);
-        public bool ModulosOk => _situacao != null && _situacao.TotalModulos > 0 && _situacao.ModulosConcluidos == _situacao.TotalModulos;
-        public bool MateriasOk => _situacao != null && _situacao.MateriasAprovadas == _situacao.TotalMateriasComProva;
+        [ObservableProperty]
+        public partial string CursoNome { get; private set; } = string.Empty;
 
-        public ICommand AbrirCommand { get; }
-        public ICommand BaixarPdfCommand { get; }
+        /// <summary>Até quando o aluno pode reassistir as aulas depois de concluir o curso.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PossuiValidade))]
+        public partial string ValidadeTexto { get; private set; } = string.Empty;
 
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public bool PossuiValidade => !string.IsNullOrEmpty(ValidadeTexto);
+
+        /// <summary>Quanto falta para o certificado (módulos concluídos e matérias aprovadas).</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PossuiSituacao), nameof(ModulosTexto), nameof(MateriasTexto), nameof(ModulosPercentual),
+            nameof(MateriasPercentual), nameof(ModulosOk), nameof(MateriasOk))]
+        private partial ProgressoService.SituacaoCertificado? Situacao { get; set; }
+
+        public bool PossuiSituacao => Situacao != null;
+        public string ModulosTexto => Situacao == null ? string.Empty : $"{Situacao.ModulosConcluidos} de {Situacao.TotalModulos}";
+        public string MateriasTexto => Situacao == null ? string.Empty : $"{Situacao.MateriasAprovadas} de {Situacao.TotalMateriasComProva}";
+        public double ModulosPercentual => Percentual(Situacao?.ModulosConcluidos, Situacao?.TotalModulos);
+        public double MateriasPercentual => Situacao?.TotalMateriasComProva == 0 ? 100 : Percentual(Situacao?.MateriasAprovadas, Situacao?.TotalMateriasComProva);
+        public bool ModulosOk => Situacao != null && Situacao.TotalModulos > 0 && Situacao.ModulosConcluidos == Situacao.TotalModulos;
+        public bool MateriasOk => Situacao != null && Situacao.MateriasAprovadas == Situacao.TotalMateriasComProva;
+
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
             Certificado? certificado = null;
             ProgressoService.SituacaoCertificado? situacao = null;
             var cursoNome = string.Empty;
             var validade = string.Empty;
-            Matricula? matricula = null;
 
             if (aluno != null)
             {
-                matricula = (await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id)).FirstOrDefault();
+                var matricula = (await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id)).FirstOrDefault();
                 if (matricula?.Curso != null)
                 {
                     cursoNome = matricula.Curso.Nome;
@@ -94,45 +69,33 @@ namespace European.ViewModels
                 }
 
                 certificado = (await CertificadoRepositorio.DoAlunoAsync(aluno.Id)).FirstOrDefault();
-                if (certificado != null && string.IsNullOrEmpty(cursoNome))
-                    cursoNome = certificado.CursoNome;
-
                 if (certificado != null)
                 {
-                    // mesma data que libera o login (Matricula.AcessoAte); sem matrícula vigente, conta pela emissão
-                    var acessoAte = matricula?.AcessoAte ?? certificado.EmitidoEm.AddMonths(Matricula.MesesAcessoAposConclusao);
+                    if (string.IsNullOrEmpty(cursoNome))
+                        cursoNome = certificado.CursoNome;
+
+                    // mesma data que libera o login (Matricula.AcessoAte)
+                    var acessoAte = certificado.AcessoAulasAte(matricula);
                     validade = acessoAte > DateTime.Now
                         ? $"Você pode reassistir as aulas até {acessoAte:dd/MM/yyyy}."
                         : $"O acesso às aulas terminou em {acessoAte:dd/MM/yyyy}.";
                 }
             }
 
-            _situacao = situacao;
+            Situacao = situacao;
             CursoNome = cursoNome;
             ValidadeTexto = validade;
             Certificado = certificado;
-
-            OnPropertyChanged(nameof(PossuiSituacao));
-            OnPropertyChanged(nameof(ModulosTexto));
-            OnPropertyChanged(nameof(MateriasTexto));
-            OnPropertyChanged(nameof(ModulosPercentual));
-            OnPropertyChanged(nameof(MateriasPercentual));
-            OnPropertyChanged(nameof(ModulosOk));
-            OnPropertyChanged(nameof(MateriasOk));
         });
 
         private static double Percentual(int? feitos, int? total)
             => feitos == null || total is null or 0 ? 0 : Math.Round(feitos.Value * 100.0 / total.Value);
 
-        private async Task AbrirAsync()
-        {
-            if (Certificado == null)
-                return;
+        [RelayCommand]
+        private Task Abrir()
+            => Certificado == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.Certificado, ("Certificado", Certificado));
 
-            var parametros = new Dictionary<string, object> { ["Certificado"] = Certificado };
-            await Shell.Current.GoToAsync("certificado", parametros);
-        }
-
+        [RelayCommand]
         private async Task BaixarPdfAsync()
         {
             var certificado = Certificado;

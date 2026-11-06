@@ -1,61 +1,55 @@
+using European.Services;
 using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class MainPage : ContentPage
+    /// <summary>Área do aluno: mostra uma aba por vez e recarrega os dados dela sempre que aparece.</summary>
+    public partial class MainPage : BasePage
     {
-        private readonly MainViewModel _viewModel;
-        private readonly InicioPage _abaInicio = new();
-        private readonly AulasPage _abaAulas = new();
-        private readonly ProvasPage _abaProvas = new();
-        private readonly DesempenhoPage _abaDesempenho = new();
-        private readonly CertificadosPage _abaCertificados = new();
+        private readonly MainViewModel _viewModel = new();
+        private readonly InicioAba _inicio = new();
+
+        private readonly Dictionary<string, View> _abas;
 
         public MainPage()
         {
             InitializeComponent();
-            _viewModel = new MainViewModel();
             BindingContext = _viewModel;
-            MainViewModel.Atual = _viewModel;
-            _viewModel.AbaAlterada += AoAlterarAba;
+
+            _abas = new Dictionary<string, View>
+            {
+                ["inicio"] = _inicio,
+                ["aulas"] = new AulasAba(),
+                ["provas"] = new ProvasAba(),
+                ["desempenho"] = new DesempenhoAba(),
+                ["certificados"] = new CertificadosAba()
+            };
+
+            _viewModel.AbaAlterada += MostrarAbaAtual;
+            ((InicioViewModel)_inicio.BindingContext).AbaSolicitada += _viewModel.SelecionarAba;
         }
 
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
-            TrocarAbaVisivel();
-            await RecarregarAbaAsync(_viewModel.AbaAtual);
+            MostrarAbaAtual();
         }
 
-        private async void AoAlterarAba()
+        private async void MostrarAbaAtual()
         {
-            TrocarAbaVisivel();
-            await RecarregarAbaAsync(_viewModel.AbaAtual);
-        }
+            var aba = _abas.GetValueOrDefault(_viewModel.AbaAtual, _inicio);
+            if (!ReferenceEquals(HostAba.Content, aba))
+                HostAba.Content = aba;
 
-        private Task RecarregarAbaAsync(string aba) => aba switch
-        {
-            "aulas" => _abaAulas.RecarregarAsync(),
-            "provas" => _abaProvas.RecarregarAsync(),
-            "desempenho" => _abaDesempenho.RecarregarAsync(),
-            "certificados" => _abaCertificados.RecarregarAsync(),
-            _ => _abaInicio.RecarregarAsync()
-        };
-
-        private void TrocarAbaVisivel()
-        {
-            View alvo;
-            switch (_viewModel.AbaAtual)
+            try
             {
-                case "aulas": alvo = _abaAulas; break;
-                case "provas": alvo = _abaProvas; break;
-                case "desempenho": alvo = _abaDesempenho; break;
-                case "certificados": alvo = _abaCertificados; break;
-                default: alvo = _abaInicio; break;
+                if (aba.BindingContext is BaseViewModel viewModel)
+                    await viewModel.AoAparecerAsync();
             }
-
-            if (!ReferenceEquals(HostAba.Content, alvo))
-                HostAba.Content = alvo;
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(MainPage), ex);
+            }
         }
     }
 }

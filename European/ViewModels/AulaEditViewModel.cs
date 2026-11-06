@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -7,65 +8,50 @@ using European.Services;
 
 namespace European.ViewModels
 {
-    public class AulaEditViewModel : BaseViewModel
+    public partial class AulaEditViewModel : BaseViewModel
     {
         private const long TamanhoMaximoArquivo = 50L * 1024 * 1024;
 
         private Materia? _materia;
-        private Aula? _aula;
-        private string _titulo = string.Empty;
-        private string _descricao = string.Empty;
-        private string _videoUrl = string.Empty;
-        private string _duracaoMinutos = string.Empty;
 
-        public AulaEditViewModel()
-        {
-            SalvarCommand = new Command(async () => await SalvarAsync());
-            AdicionarLinkCommand = new Command(async () => await AdicionarLinkAsync());
-            AdicionarArquivoCommand = new Command(async () => await AdicionarArquivoAsync());
-            RemoverMaterialCommand = new Command<MaterialComplementar>(async m => await RemoverMaterialAsync(m));
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsEdicao))]
+        private partial Aula? AulaAtual { get; set; }
 
-        public string Titulo { get => _titulo; set => SetProperty(ref _titulo, value); }
-        public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
-        public string DuracaoMinutos { get => _duracaoMinutos; set => SetProperty(ref _duracaoMinutos, value); }
+        [ObservableProperty]
+        public partial string Titulo { get; set; } = string.Empty;
 
-        public string VideoUrl
-        {
-            get => _videoUrl;
-            set
-            {
-                if (SetProperty(ref _videoUrl, value))
-                    OnPropertyChanged(nameof(VideoInvalido));
-            }
-        }
+        [ObservableProperty]
+        public partial string Descricao { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string DuracaoMinutos { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(VideoInvalido))]
+        public partial string VideoUrl { get; set; } = string.Empty;
 
         public bool VideoInvalido => !string.IsNullOrWhiteSpace(VideoUrl) && YouTubePlayer.ExtrairId(VideoUrl) == null;
-
         public string MateriaNome => _materia?.Nome ?? string.Empty;
-        public bool IsEdicao => _aula != null;
+
+        /// <summary>Materiais só podem ser anexados depois que a aula existe.</summary>
+        public bool IsEdicao => AulaAtual != null;
 
         public ObservableCollection<MaterialComplementar> Materiais { get; } = new();
 
-        public ICommand SalvarCommand { get; }
-        public ICommand AdicionarLinkCommand { get; }
-        public ICommand AdicionarArquivoCommand { get; }
-        public ICommand RemoverMaterialCommand { get; }
-
         private string? CursoId => _materia?.Modulo?.Curso?.Id;
 
-        public async Task CarregarAsync(Materia? materia, Aula? aula)
+        protected override async Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            _materia = materia ?? aula?.Materia;
-            _aula = aula;
-            Title = aula == null ? "Nova aula" : "Editar aula";
+            AulaAtual = parametros.Obter<Aula>("Aula");
+            _materia = parametros.Obter<Materia>("Materia") ?? AulaAtual?.Materia;
+            Title = AulaAtual == null ? "Nova aula" : "Editar aula";
             OnPropertyChanged(nameof(MateriaNome));
-            OnPropertyChanged(nameof(IsEdicao));
 
-            Titulo = aula?.Titulo ?? string.Empty;
-            Descricao = aula?.Descricao ?? string.Empty;
-            VideoUrl = aula?.VideoId ?? string.Empty;
-            DuracaoMinutos = aula == null || aula.DuracaoSegundos == 0 ? string.Empty : Math.Round(aula.DuracaoSegundos / 60.0).ToString();
+            Titulo = AulaAtual?.Titulo ?? string.Empty;
+            Descricao = AulaAtual?.Descricao ?? string.Empty;
+            VideoUrl = AulaAtual?.VideoId ?? string.Empty;
+            DuracaoMinutos = AulaAtual == null || AulaAtual.DuracaoSegundos == 0 ? string.Empty : Math.Round(AulaAtual.DuracaoSegundos / 60.0).ToString();
 
             await CarregarMateriaisAsync();
         }
@@ -73,16 +59,17 @@ namespace European.ViewModels
         private async Task CarregarMateriaisAsync()
         {
             Materiais.Clear();
-            if (_aula == null)
+            if (AulaAtual == null)
                 return;
 
             await ExecutarAsync(async () =>
             {
-                foreach (var material in await MaterialRepositorio.DaAulaAsync(_aula.Id))
+                foreach (var material in await MaterialRepositorio.DaAulaAsync(AulaAtual.Id))
                     Materiais.Add(material);
             });
         }
 
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             if (string.IsNullOrWhiteSpace(Titulo))
@@ -101,11 +88,11 @@ namespace European.ViewModels
             if (_materia == null || cursoId == null)
                 return;
 
-            var novaAula = _aula == null;
+            var novaAula = AulaAtual == null;
             var segundos = int.TryParse(DuracaoMinutos, out var minutos) ? Math.Max(0, minutos) * 60 : 0;
             Aula? salva = null;
 
-            var ok = await ExecutarAsync(async () => salva = await CursoRepositorio.SalvarAulaAsync(cursoId, _materia.Id, _aula?.Id, aula =>
+            var ok = await ExecutarAsync(async () => salva = await CursoRepositorio.SalvarAulaAsync(cursoId, _materia.Id, AulaAtual?.Id, aula =>
             {
                 aula.Titulo = Titulo.Trim();
                 aula.Descricao = Descricao.Trim();
@@ -119,9 +106,8 @@ namespace European.ViewModels
 
             if (novaAula && salva != null)
             {
-                _aula = salva;
+                AulaAtual = salva;
                 Title = "Editar aula";
-                OnPropertyChanged(nameof(IsEdicao));
 
                 if (await ConfirmarAsync("Aula criada. Deseja anexar materiais (PDF, slides, links) agora?", "Anexar"))
                     return;
@@ -130,16 +116,17 @@ namespace European.ViewModels
             await VoltarAsync();
         }
 
+        [RelayCommand]
         private async Task AdicionarLinkAsync()
         {
-            if (_aula == null || CursoId == null)
+            if (AulaAtual == null || CursoId == null)
                 return;
 
-            var titulo = await Shell.Current.DisplayPromptAsync("Novo link", "Título do material", "Continuar", "Cancelar", "Ex.: Artigo de apoio");
+            var titulo = await PerguntarAsync("Novo link", "Título do material", "Continuar", "Ex.: Artigo de apoio");
             if (string.IsNullOrWhiteSpace(titulo))
                 return;
 
-            var url = await Shell.Current.DisplayPromptAsync("Novo link", "Endereço (URL)", "Adicionar", "Cancelar", "https://", keyboard: Keyboard.Url);
+            var url = await PerguntarAsync("Novo link", "Endereço (URL)", "Adicionar", "https://", teclado: Keyboard.Url);
             if (string.IsNullOrWhiteSpace(url))
                 return;
 
@@ -152,7 +139,7 @@ namespace European.ViewModels
             await ExecutarAsync(() => MaterialRepositorio.InserirAsync(new MaterialComplementar
             {
                 CursoId = CursoId,
-                AulaId = _aula.Id,
+                AulaId = AulaAtual.Id,
                 Titulo = titulo.Trim(),
                 Url = uri.ToString(),
                 Tipo = TipoMaterial.Link
@@ -160,9 +147,10 @@ namespace European.ViewModels
             await CarregarMateriaisAsync();
         }
 
+        [RelayCommand]
         private async Task AdicionarArquivoAsync()
         {
-            if (_aula == null || CursoId == null)
+            if (AulaAtual == null || CursoId == null)
                 return;
 
             FileResult? arquivo;
@@ -188,26 +176,28 @@ namespace European.ViewModels
                     return;
                 }
 
-                var extensao = Path.GetExtension(arquivo.FileName).ToLowerInvariant();
                 await MaterialRepositorio.InserirAsync(new MaterialComplementar
                 {
                     CursoId = CursoId,
-                    AulaId = _aula.Id,
+                    AulaId = AulaAtual.Id,
                     Titulo = Path.GetFileNameWithoutExtension(arquivo.FileName),
                     NomeArquivo = arquivo.FileName,
                     TamanhoBytes = stream.CanSeek ? stream.Length : 0,
-                    Tipo = extensao switch
-                    {
-                        ".pdf" => TipoMaterial.Pdf,
-                        ".ppt" or ".pptx" or ".key" or ".odp" => TipoMaterial.Slide,
-                        ".mp4" or ".mov" or ".avi" or ".mkv" => TipoMaterial.Video,
-                        _ => TipoMaterial.Outro
-                    }
+                    Tipo = TipoPorExtensao(arquivo.FileName)
                 }, stream);
             });
             await CarregarMateriaisAsync();
         }
 
+        private static TipoMaterial TipoPorExtensao(string nomeArquivo) => Path.GetExtension(nomeArquivo).ToLowerInvariant() switch
+        {
+            ".pdf" => TipoMaterial.Pdf,
+            ".ppt" or ".pptx" or ".key" or ".odp" => TipoMaterial.Slide,
+            ".mp4" or ".mov" or ".avi" or ".mkv" => TipoMaterial.Video,
+            _ => TipoMaterial.Outro
+        };
+
+        [RelayCommand]
         private async Task RemoverMaterialAsync(MaterialComplementar? material)
         {
             if (material == null || !await ConfirmarAsync($"Remover o material \"{material.Titulo}\"?", "Remover"))

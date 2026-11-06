@@ -9,6 +9,8 @@ namespace European.Data
 
         public static Task<Prova?> PorIdAsync(string id) => Colecao.PorIdAsync(id);
 
+        public static Task<List<Prova>> PorIdsAsync(IEnumerable<string> ids) => Colecao.PorIdsAsync(ids);
+
         public static Task<List<Prova>> DoProfessorAsync(string professorId)
             => Colecao.Find(p => p.ProfessorId == professorId).SortByDescending(p => p.UpdatedAt).ToListAsync();
 

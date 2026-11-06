@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
 using European.Services;
@@ -19,90 +20,62 @@ namespace European.ViewModels
         public bool Expirada => Prova.Expirada;
     }
 
-    public class ProvasViewModel : BaseViewModel
+    /// <summary>Aba "Provas" do aluno: as disponíveis para fazer e as já realizadas (com nota depois da correção).</summary>
+    public partial class ProvasViewModel : BaseViewModel
     {
-        private string _abaSelecionada = "disponiveis";
-        private ObservableCollection<ProvaItem> _disponiveis = new();
-        private ObservableCollection<ResultadoItem> _realizadas = new();
-
         public ProvasViewModel()
         {
             Title = "Provas";
-            SelecionarAbaCommand = new Command<string>(aba => AbaSelecionada = aba);
-            IniciarCommand = new Command<ProvaItem>(async item => await IniciarAsync(item));
         }
 
-        public ObservableCollection<ProvaItem> Disponiveis
-        {
-            get => _disponiveis;
-            private set => SetProperty(ref _disponiveis, value);
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PossuiDisponiveis), nameof(MostrarVazioDisponiveis))]
+        public partial ObservableCollection<ProvaItem> Disponiveis { get; private set; } = new();
 
-        public ObservableCollection<ResultadoItem> Realizadas
-        {
-            get => _realizadas;
-            private set => SetProperty(ref _realizadas, value);
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PossuiRealizadas), nameof(MostrarVazioRealizadas))]
+        public partial ObservableCollection<ResultadoItem> Realizadas { get; private set; } = new();
 
-        public string AbaSelecionada
-        {
-            get => _abaSelecionada;
-            set
-            {
-                if (SetProperty(ref _abaSelecionada, value))
-                {
-                    OnPropertyChanged(nameof(MostrarDisponiveis));
-                    OnPropertyChanged(nameof(MostrarRealizadas));
-                    OnPropertyChanged(nameof(MostrarVazioDisponiveis));
-                    OnPropertyChanged(nameof(MostrarVazioRealizadas));
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(MostrarDisponiveis), nameof(MostrarRealizadas), nameof(MostrarVazioDisponiveis), nameof(MostrarVazioRealizadas))]
+        public partial string AbaSelecionada { get; set; } = "disponiveis";
 
         public bool MostrarDisponiveis => AbaSelecionada == "disponiveis";
         public bool MostrarRealizadas => AbaSelecionada == "realizadas";
-
         public bool PossuiDisponiveis => Disponiveis.Count > 0;
         public bool PossuiRealizadas => Realizadas.Count > 0;
         public bool MostrarVazioDisponiveis => MostrarDisponiveis && !PossuiDisponiveis;
         public bool MostrarVazioRealizadas => MostrarRealizadas && !PossuiRealizadas;
 
-        public ICommand SelecionarAbaCommand { get; }
-        public ICommand IniciarCommand { get; }
-
-        public Task CarregarAsync() => ExecutarAsync(async () =>
+        public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             var aluno = SessionService.UsuarioAtual;
-            var disponiveis = new ObservableCollection<ProvaItem>();
-            var realizadas = new ObservableCollection<ResultadoItem>();
-
-            if (aluno != null)
+            if (aluno == null)
             {
-                var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
-                var provas = await ProvaService.VisiveisParaAlunoAsync(aluno.Id, matriculas);
-                var resultados = await ResultadoRepositorio.DoAlunoAsync(aluno.Id);
-                var respondidas = resultados.Select(r => r.ProvaId).ToHashSet();
-
-                foreach (var prova in provas.Where(p => !respondidas.Contains(p.Id)))
-                    disponiveis.Add(new ProvaItem { Prova = prova });
-
-                foreach (var resultado in resultados)
-                {
-                    var prova = provas.FirstOrDefault(p => p.Id == resultado.ProvaId) ?? await ProvaRepositorio.PorIdAsync(resultado.ProvaId);
-                    realizadas.Add(ResultadoItem.De(resultado, prova));
-                }
+                Disponiveis = new();
+                Realizadas = new();
+                return;
             }
 
-            Disponiveis = disponiveis;
-            Realizadas = realizadas;
+            var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
+            var provas = await ProvaService.VisiveisParaAlunoAsync(aluno.Id, matriculas);
+            var resultados = await ResultadoRepositorio.DoAlunoAsync(aluno.Id);
+            var respondidas = resultados.Select(r => r.ProvaId).ToHashSet();
 
-            OnPropertyChanged(nameof(PossuiDisponiveis));
-            OnPropertyChanged(nameof(PossuiRealizadas));
-            OnPropertyChanged(nameof(MostrarVazioDisponiveis));
-            OnPropertyChanged(nameof(MostrarVazioRealizadas));
+            // provas já feitas que não aparecem mais para o aluno (ex.: despublicadas) são buscadas de uma vez
+            var porId = provas.ToDictionary(p => p.Id);
+            foreach (var prova in await ProvaRepositorio.PorIdsAsync(respondidas.Where(id => !porId.ContainsKey(id))))
+                porId[prova.Id] = prova;
+
+            Disponiveis = new(provas.Where(p => !respondidas.Contains(p.Id)).Select(p => new ProvaItem { Prova = p }));
+            Realizadas = new(resultados.Select(r => ResultadoItem.De(r, porId.GetValueOrDefault(r.ProvaId))));
         });
 
-        private static async Task IniciarAsync(ProvaItem? item)
+        [RelayCommand]
+        private void SelecionarAba(string aba) => AbaSelecionada = aba;
+
+        [RelayCommand]
+        private async Task IniciarAsync(ProvaItem? item)
         {
             if (item == null)
                 return;
@@ -117,10 +90,8 @@ namespace European.ViewModels
                 ? $"Você terá {item.Prova.DuracaoMinutos} minutos. Ao final do tempo, a prova é enviada automaticamente."
                 : "Esta prova não tem limite de tempo.";
 
-            if (!await ConfirmarAsync($"{item.Titulo}\n\n{item.QuestoesTexto}. {tempo}\nA prova só pode ser feita uma vez.", "Começar"))
-                return;
-
-            await Shell.Current.GoToAsync("provarealizar", new Dictionary<string, object> { ["Prova"] = item.Prova });
+            if (await ConfirmarAsync($"{item.Titulo}\n\n{item.QuestoesTexto}. {tempo}\nA prova só pode ser feita uma vez.", "Começar"))
+                await Navegacao.IrAsync(Navegacao.ProvaRealizar, ("Prova", item.Prova));
         }
     }
 }

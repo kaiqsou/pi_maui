@@ -1,38 +1,37 @@
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using European.Data;
 using European.Models;
+using European.Services;
 
 namespace European.ViewModels
 {
-    public class ModuloEditViewModel : BaseViewModel
+    public partial class ModuloEditViewModel : BaseViewModel
     {
         private Curso? _curso;
         private Modulo? _modulo;
-        private string _titulo = string.Empty;
-        private string _descricao = string.Empty;
 
-        public ModuloEditViewModel()
+        [ObservableProperty]
+        public partial string Titulo { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        public partial string Descricao { get; set; } = string.Empty;
+
+        public string CursoNome => _curso?.Nome ?? string.Empty;
+
+        protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
-            SalvarCommand = new Command(async () => await SalvarAsync());
-        }
-
-        public string Titulo { get => _titulo; set => SetProperty(ref _titulo, value); }
-        public string Descricao { get => _descricao; set => SetProperty(ref _descricao, value); }
-        public string CursoNome => _curso?.Nome ?? _modulo?.Curso?.Nome ?? string.Empty;
-
-        public ICommand SalvarCommand { get; }
-
-        public void Carregar(Curso? curso, Modulo? modulo)
-        {
-            _curso = curso ?? modulo?.Curso;
-            _modulo = modulo;
-            Title = modulo == null ? "Novo módulo" : "Editar módulo";
+            _modulo = parametros.Obter<Modulo>("Modulo");
+            _curso = parametros.Obter<Curso>("Curso") ?? _modulo?.Curso;
+            Title = _modulo == null ? "Novo módulo" : "Editar módulo";
             OnPropertyChanged(nameof(CursoNome));
 
-            Titulo = modulo?.Titulo ?? $"Módulo {(_curso?.Modulos.Count ?? 0) + 1} — ";
-            Descricao = modulo?.Descricao ?? string.Empty;
+            Titulo = _modulo?.Titulo ?? $"Módulo {(_curso?.Modulos.Count ?? 0) + 1} — ";
+            Descricao = _modulo?.Descricao ?? string.Empty;
+            return Task.CompletedTask;
         }
 
+        [RelayCommand]
         private async Task SalvarAsync()
         {
             if (string.IsNullOrWhiteSpace(Titulo) || _curso == null)
@@ -41,14 +40,11 @@ namespace European.ViewModels
                 return;
             }
 
-            var salvo = await ExecutarAsync(() => CursoRepositorio.SalvarModuloAsync(_curso.Id, _modulo?.Id, modulo =>
+            await SalvarEVoltarAsync(() => CursoRepositorio.SalvarModuloAsync(_curso.Id, _modulo?.Id, modulo =>
             {
                 modulo.Titulo = Titulo.Trim();
                 modulo.Descricao = Descricao.Trim();
             }));
-
-            if (salvo)
-                await VoltarAsync();
         }
     }
 }

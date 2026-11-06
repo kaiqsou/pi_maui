@@ -2,20 +2,12 @@ using European.ViewModels;
 
 namespace European.Views
 {
-    public partial class NovaSenhaPage : ContentPage
+    public partial class NovaSenhaPage : BasePage
     {
-        private readonly NovaSenhaViewModel _viewModel = new();
-
         public NovaSenhaPage()
         {
             InitializeComponent();
-            BindingContext = _viewModel;
-        }
-
-        protected override void OnAppearing()
-        {
-            base.OnAppearing();
-            _viewModel.Atualizar();
+            BindingContext = new NovaSenhaViewModel();
         }
     }
 }
