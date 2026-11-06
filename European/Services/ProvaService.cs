@@ -117,6 +117,10 @@ namespace European.Services
 
             await ResultadoRepositorio.AtualizarAsync(resultado);
 
+            if (concluir)
+                await NotificacaoService.ParaUsuarioAsync(resultado.AlunoId, "Nota liberada",
+                    $"A correção da prova \"{prova.Titulo}\" foi concluída. Veja a nota em Provas › Realizadas.");
+
             if (resultado.Corrigida)
             {
                 var matricula = await MatriculaRepositorio.PorAlunoECursoAsync(resultado.AlunoId, resultado.CursoId);

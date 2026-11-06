@@ -10,12 +10,13 @@
     <ScrollView>
         <VerticalStackLayout Padding="20,24,20,28" Spacing="18">
 
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
                 <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
                     <Label Text="{Binding Saudacao}" Style="{StaticResource TitleLg}" />
                     <Label Text="{Binding UltimaCursoNome}" Style="{StaticResource Muted}" IsVisible="{Binding TemCurso}" />
                 </VerticalStackLayout>
-                <Border Grid.Column="1" WidthRequest="44" HeightRequest="44" VerticalOptions="Center"
+                <controls:SinoNotificacoes Grid.Column="1" BindingContext="{Binding Sino}" VerticalOptions="Center" />
+                <Border Grid.Column="2" WidthRequest="44" HeightRequest="44" VerticalOptions="Center"
                         BackgroundColor="{StaticResource SurfaceCard}" Stroke="{StaticResource Outline}"
                         StrokeThickness="1" StrokeShape="RoundRectangle 14">
                     <Border.GestureRecognizers>

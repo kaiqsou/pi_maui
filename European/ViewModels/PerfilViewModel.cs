@@ -41,6 +41,14 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial bool TemMatricula { get; private set; }
 
+        /// <summary>Matrícula exibida; o aluno pode trancar (se ativa) ou reabrir (se trancada).</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PodeTrancar), nameof(PodeReabrir))]
+        private partial Matricula? Matricula { get; set; }
+
+        public bool PodeTrancar => Matricula?.Status == StatusMatricula.Ativa;
+        public bool PodeReabrir => Matricula?.Status == StatusMatricula.Trancada;
+
         [ObservableProperty]
         public partial string CursoNome { get; private set; } = string.Empty;
 
@@ -106,6 +114,7 @@ namespace European.ViewModels
         public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             Usuario = SessionService.UsuarioAtual;
+            Matricula = null;
             AlterandoSenha = false;
             if (Usuario == null || !IsAluno)
                 return;
@@ -114,6 +123,7 @@ namespace European.ViewModels
             var matriculas = await MatriculaRepositorio.DoAlunoAsync(Usuario.Id);
             var matricula = matriculas.FirstOrDefault(m => m.AcessoAulasVigente) ?? matriculas.FirstOrDefault();
 
+            Matricula = matricula;
             TemMatricula = matricula != null;
             if (matricula == null)
                 return;
@@ -137,6 +147,36 @@ namespace European.ViewModels
 
         [RelayCommand]
         private Task Logout() => AcessoService.SairAsync();
+
+        /// <summary>O aluno tranca a própria matrícula (pode informar o motivo) e vai para a tela de acesso restrito.</summary>
+        [RelayCommand]
+        private async Task TrancarMatriculaAsync()
+        {
+            if (Usuario == null || Matricula == null || !PodeTrancar)
+                return;
+
+            var motivo = await PerguntarAsync("Trancar matrícula",
+                "Enquanto estiver trancada, você não acessa aulas nem provas. Seu progresso fica guardado e você pode reabrir quando quiser.\n\nMotivo (opcional):",
+                "Trancar");
+            if (motivo == null)
+                return;
+
+            if (await ExecutarAsync(() => ContaService.TrancarMatriculaAsync(Usuario, Matricula, motivo)))
+            {
+                await AvisarAsync("Matrícula trancada", "A coordenação foi avisada. Reabra a matrícula quando quiser voltar ao curso.");
+                await AcessoService.EntrarAsync(Usuario);
+            }
+        }
+
+        [RelayCommand]
+        private async Task ReabrirMatriculaAsync()
+        {
+            if (Usuario == null || Matricula == null || !PodeReabrir)
+                return;
+
+            if (await ExecutarAsync(() => ContaService.ReabrirMatriculaAsync(Usuario, Matricula)))
+                await AcessoService.EntrarAsync(Usuario);
+        }
 
 
         [RelayCommand]

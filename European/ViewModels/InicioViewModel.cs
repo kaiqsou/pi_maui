@@ -23,6 +23,9 @@ namespace European.ViewModels
         /// <summary>Pede à tela principal para trocar de aba ("aulas", "provas"...). A MainPage liga este evento.</summary>
         public event Action<string>? AbaSolicitada;
 
+        /// <summary>Notificações não lidas (sino no cabeçalho).</summary>
+        public Sino Sino { get; } = new();
+
         [ObservableProperty]
         public partial string Saudacao { get; private set; } = string.Empty;
 
@@ -111,6 +114,7 @@ namespace European.ViewModels
                 return;
 
             Saudacao = Formatos.Saudacao(aluno.Nome);
+            await Sino.AtualizarAsync();
 
             // inclui a matrícula concluída (dentro da validade), para o aluno poder rever as aulas; ativas vêm primeiro
             var matriculas = await MatriculaRepositorio.ComConteudoDoAlunoAsync(aluno.Id);

@@ -36,8 +36,8 @@
                         <Label Grid.Column="1" Text="{Binding EmissaoTexto}" Style="{StaticResource TitleSm}" />
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto">
-                        <Label Grid.Column="0" Text="Média final" Style="{StaticResource Muted}" />
-                        <Label Grid.Column="1" Text="{Binding MediaTexto}" Style="{StaticResource TitleSm}" />
+                        <Label Grid.Column="0" Text="Carga horária" Style="{StaticResource Muted}" />
+                        <Label Grid.Column="1" Text="{Binding Certificado.CargaHorariaHoras, StringFormat='{0} horas'}" Style="{StaticResource TitleSm}" />
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto">
                         <Label Grid.Column="0" Text="Código" Style="{StaticResource Muted}" />
@@ -62,11 +62,12 @@
             <Border Style="{StaticResource Card}" Padding="24" IsVisible="{Binding Pendente}">
                 <VerticalStackLayout Spacing="10">
                     <Label Text="&#xea3f;" Style="{StaticResource Icon}" FontSize="48" TextColor="{StaticResource Outline}" HorizontalOptions="Center" />
-                    <Label Text="Certificado ainda não disponível" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
+                    <Label Text="Certificado de conclusão" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
                     <Label Text="{Binding CursoNome}" Style="{StaticResource BodyMd}" HorizontalTextAlignment="Center"
                            TextColor="{StaticResource BrandPrimary}" />
-                    <Label Text="O certificado é emitido após concluir todos os módulos e ser aprovado pela média em todas as matérias."
-                           Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding PendenteTexto}" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                    <Button Text="Gerar certificado" Style="{StaticResource PrimaryButton}" Margin="0,6,0,0"
+                            Command="{Binding GerarCommand}" IsVisible="{Binding PodeGerar}" IsEnabled="{Binding IsNotBusy}" />
                 </VerticalStackLayout>
             </Border>
 

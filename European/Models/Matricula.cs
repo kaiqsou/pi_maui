@@ -15,6 +15,9 @@ namespace European.Models
         public string? LiberadaPorId { get; set; }
         public DateTime DataMatricula { get; set; } = DateTime.Now;
         public DateTime? DataConclusao { get; set; }
+
+        /// <summary>Quando o aluno trancou (o progresso fica guardado; ao reabrir, volta a valer).</summary>
+        public DateTime? TrancadaEm { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 

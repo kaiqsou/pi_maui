@@ -3,6 +3,7 @@ using System.Text;
 
 namespace European.Services
 {
+    /// <summary>Hash e regras de senha. As senhas são guardadas com PBKDF2-SHA256 e salt aleatório.</summary>
     public static class SenhaService
     {
         public const int TamanhoMinimo = 6;
@@ -11,78 +12,71 @@ namespace European.Services
         private const int TamanhoSalt = 16;
         private const int TamanhoChave = 32;
 
+        /// <summary>Formato: iteracoes.saltBase64.chaveBase64.</summary>
         public static string GerarHash(string senha)
         {
             var salt = RandomNumberGenerator.GetBytes(TamanhoSalt);
-            var chave = Rfc2898DeriveBytes.Pbkdf2(
-                senha ?? string.Empty, salt, Iteracoes, HashAlgorithmName.SHA256, TamanhoChave);
-
+            var chave = Rfc2898DeriveBytes.Pbkdf2(senha ?? string.Empty, salt, Iteracoes, HashAlgorithmName.SHA256, TamanhoChave);
             return $"{Iteracoes}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(chave)}";
         }
 
+        /// <summary>
+        /// Confere a senha com o hash guardado. Aceita o formato atual (PBKDF2) e o SHA-256 sem salt de versões
+        /// antigas, que deve ser trocado no login (<see cref="PrecisaAtualizar"/>). Senha em texto puro nunca é aceita.
+        /// </summary>
         public static bool Verificar(string senha, string armazenado)
         {
-            if (string.IsNullOrEmpty(armazenado))
-                return false;
-
-            // Formato atual: iteracoes.saltBase64.chaveBase64 (salt aleatório por senha).
-            var partes = armazenado.Split('.');
-            if (partes.Length == 3 && int.TryParse(partes[0], out var iteracoes))
+            if (EhPbkdf2(armazenado, out var iteracoes, out var salt, out var esperado))
             {
-                try
-                {
-                    var salt = Convert.FromBase64String(partes[1]);
-                    var esperado = Convert.FromBase64String(partes[2]);
-                    var chave = Rfc2898DeriveBytes.Pbkdf2(
-                        senha ?? string.Empty, salt, iteracoes, HashAlgorithmName.SHA256, esperado.Length);
-
-                    return CryptographicOperations.FixedTimeEquals(chave, esperado);
-                }
-                catch (FormatException)
-                {
-                    return false;
-                }
+                var chave = Rfc2898DeriveBytes.Pbkdf2(senha ?? string.Empty, salt, iteracoes, HashAlgorithmName.SHA256, esperado.Length);
+                return CryptographicOperations.FixedTimeEquals(chave, esperado);
             }
 
-            // Compatibilidade: hash SHA-256 antigo (sem salt).
-            if (EhHashLegado(armazenado))
-                return string.Equals(GerarHashLegado(senha), armazenado, StringComparison.OrdinalIgnoreCase);
+            if (EhSha256Antigo(armazenado))
+            {
+                var calculado = SHA256.HashData(Encoding.UTF8.GetBytes(senha ?? string.Empty));
+                return CryptographicOperations.FixedTimeEquals(calculado, Convert.FromHexString(armazenado));
+            }
 
-            // Compatibilidade: valores antigos salvos em texto puro.
-            return string.Equals(senha, armazenado, StringComparison.Ordinal);
+            return false;
         }
 
-        private static bool EhHashLegado(string valor)
-            => valor.Length == 64 && valor.All(c => "0123456789abcdefABCDEF".Contains(c));
+        /// <summary>Hash em formato antigo (SHA-256 sem salt): gere um novo com <see cref="GerarHash"/> após o login.</summary>
+        public static bool PrecisaAtualizar(string armazenado) => !EhPbkdf2(armazenado, out _, out _, out _);
 
-        private static string GerarHashLegado(string senha)
-        {
-            var bytes = Encoding.UTF8.GetBytes(senha ?? string.Empty);
-            return Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
-        }
+        /// <summary>Valor que não é hash nenhum (senha gravada em texto por versões antigas do app).</summary>
+        public static bool EhTextoPuro(string? armazenado)
+            => !string.IsNullOrEmpty(armazenado) && !EhPbkdf2(armazenado, out _, out _, out _) && !EhSha256Antigo(armazenado);
 
         public static bool EhValida(string senha, out string mensagem)
         {
-            if (string.IsNullOrWhiteSpace(senha) || senha.Length < TamanhoMinimo)
-            {
-                mensagem = $"A senha deve ter pelo menos {TamanhoMinimo} caracteres.";
-                return false;
-            }
-
-            if (senha.Any(char.IsWhiteSpace))
-            {
-                mensagem = "A senha não pode conter espaços.";
-                return false;
-            }
-
-            if (!senha.Any(char.IsLetter) || !senha.Any(char.IsDigit))
-            {
-                mensagem = "A senha deve conter letras e números.";
-                return false;
-            }
-
-            mensagem = string.Empty;
-            return true;
+            mensagem = string.IsNullOrWhiteSpace(senha) || senha.Length < TamanhoMinimo ? $"A senha deve ter pelo menos {TamanhoMinimo} caracteres."
+                : senha.Any(char.IsWhiteSpace) ? "A senha não pode conter espaços."
+                : !senha.Any(char.IsLetter) || !senha.Any(char.IsDigit) ? "A senha deve conter letras e números."
+                : string.Empty;
+            return mensagem.Length == 0;
         }
+
+        private static bool EhPbkdf2(string? armazenado, out int iteracoes, out byte[] salt, out byte[] chave)
+        {
+            iteracoes = 0;
+            salt = chave = Array.Empty<byte>();
+            var partes = (armazenado ?? string.Empty).Split('.');
+            if (partes.Length != 3 || !int.TryParse(partes[0], out iteracoes) || iteracoes <= 0)
+                return false;
+
+            try
+            {
+                salt = Convert.FromBase64String(partes[1]);
+                chave = Convert.FromBase64String(partes[2]);
+                return salt.Length > 0 && chave.Length > 0;
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+
+        private static bool EhSha256Antigo(string? valor) => valor is { Length: 64 } && valor.All(Uri.IsHexDigit);
     }
 }

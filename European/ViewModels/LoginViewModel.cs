@@ -27,7 +27,7 @@ namespace European.ViewModels
 
         public bool TemMensagem => !string.IsNullOrWhiteSpace(Mensagem);
 
-        /// <summary>Verdadeiro enquanto não existe nenhuma conta de coordenação no banco (mostra "Primeiro acesso").</summary>
+        /// <summary>Banco sem nenhuma conta (instalação nova): mostra "Primeiro acesso" para criar a coordenação.</summary>
         [ObservableProperty]
         public partial bool PrecisaConfigurar { get; private set; }
 
@@ -36,7 +36,7 @@ namespace European.ViewModels
             try
             {
                 await MongoContext.InicializarAsync();
-                PrecisaConfigurar = !await UsuarioRepositorio.ExisteCoordenacaoAsync();
+                PrecisaConfigurar = !await UsuarioRepositorio.ExisteAlgumUsuarioAsync();
                 if (Mensagem == SemConexao)
                     Mensagem = string.Empty;
             }
@@ -69,6 +69,7 @@ namespace European.ViewModels
 
                 if (usuario != null && SenhaService.Verificar(Senha, usuario.SenhaHash))
                 {
+                    await ContaService.AtualizarHashAntigoAsync(usuario, Senha);
                     Mensagem = Senha = string.Empty;
                     await AcessoService.EntrarAsync(usuario);
                     return;
@@ -78,6 +79,7 @@ namespace European.ViewModels
                 var solicitacao = usuario == null ? await SolicitacaoRepositorio.PorEmailAsync(Email) : null;
                 if (solicitacao != null && SenhaService.Verificar(Senha, solicitacao.SenhaHash))
                 {
+                    await ContaService.AtualizarHashAntigoAsync(solicitacao, Senha);
                     Mensagem = Senha = string.Empty;
                     await AcessoService.EntrarCandidatoAsync(solicitacao);
                     return;

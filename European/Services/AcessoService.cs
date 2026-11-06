@@ -10,6 +10,60 @@ namespace European.Services
 
         public sealed record Resultado(string? Rota, string? Mensagem = null);
 
+        private static Usuario? Usuario => SessionService.UsuarioAtual;
+        private static bool Logado() => Usuario != null;
+        private static bool Aluno() => Usuario?.Roles == Roles.Aluno;
+        private static bool Professor() => Usuario is { Roles: Roles.Professor, AcessoLiberado: true };
+        private static bool Coordenacao() => Usuario is { IsCoordenacao: true, AcessoLiberado: true };
+        private static bool Candidato() => SessionService.SolicitacaoAtual != null;
+
+        /// <summary>Quem pode abrir cada tela. Telas fora da lista (login, cadastro, detalhes do curso) são livres.</summary>
+        private static readonly Dictionary<string, Func<bool>> Permissoes = new()
+        {
+            // aluno
+            [Nome(Navegacao.Aluno)] = Aluno,
+            [Navegacao.Aula] = Aluno,
+            [Navegacao.ProvaRealizar] = Aluno,
+            [Navegacao.Certificado] = Aluno,
+            [Nome(Navegacao.SomenteCertificados)] = Aluno,
+
+            // professor
+            [Nome(Navegacao.Professor)] = Professor,
+            [Navegacao.ProvaEdit] = Professor,
+            [Navegacao.Correcao] = Professor,
+            [Navegacao.SalaEdit] = Professor,
+            [Navegacao.ProvaResultados] = () => Professor() || Coordenacao(),
+
+            // conteúdo do curso: coordenação e professores
+            [Navegacao.Curso] = () => Professor() || Coordenacao(),
+            [Navegacao.AulaEdit] = () => Professor() || Coordenacao(),
+
+            // coordenação
+            [Nome(Navegacao.Coordenacao)] = Coordenacao,
+            [Navegacao.CursoEdit] = Coordenacao,
+            [Navegacao.ModuloEdit] = Coordenacao,
+            [Navegacao.MateriaEdit] = Coordenacao,
+            [Navegacao.AlunoAcesso] = Coordenacao,
+            [Navegacao.Solicitacao] = Coordenacao,
+            [Navegacao.ProfessorAcesso] = Coordenacao,
+            [Navegacao.ContaNova] = Coordenacao,
+
+            // qualquer conta logada
+            [Navegacao.Perfil] = Logado,
+            [Navegacao.Notificacoes] = Logado,
+            [Nome(Navegacao.NovaSenha)] = Logado,
+            [Nome(Navegacao.Aguardando)] = () => Logado() || Candidato(),
+            [Nome(Navegacao.Pagamento)] = Candidato,
+        };
+
+        /// <summary>Confere todas as telas do destino (ex.: "//coordenacao/alunoacesso") contra o perfil logado.</summary>
+        public static bool PodeAbrir(Uri destino)
+            => destino.OriginalString.Split('?')[0]
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(tela => !Permissoes.TryGetValue(tela, out var pode) || pode());
+
+        private static string Nome(string rota) => rota.TrimStart('/');
+
         public static async Task<Resultado> RotaInicialAsync(Usuario usuario)
         {
             if (usuario.IsCoordenacao)

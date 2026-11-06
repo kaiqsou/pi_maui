@@ -45,6 +45,9 @@ namespace European.Data
             await Colecao.UpdateOneAsync(s => s.Id == id, update);
         }
 
+        public static Task AtualizarSenhaAsync(string id, string senhaHash)
+            => Colecao.UpdateOneAsync(s => s.Id == id, Builders<SolicitacaoMatricula>.Update.Set(s => s.SenhaHash, senhaHash));
+
         public static async Task RegistrarPendenciaAsync(string id, string motivo)
         {
             var update = Builders<SolicitacaoMatricula>.Update

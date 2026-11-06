@@ -307,6 +307,7 @@ namespace European.ViewModels
             }
 
             var prova = _prova ?? new Prova { ProfessorId = professor.Id };
+            var jaEstavaPublicada = prova.IsPublicada;
             prova.CursoId = CursoSelecionado!.Id;
             prova.MateriaId = MateriaSelecionada!.Valor!.Id;
             prova.SalaId = SalaSelecionada?.Valor?.Id;
@@ -322,6 +323,10 @@ namespace European.ViewModels
 
             if (await ExecutarAsync(() => ProvaRepositorio.SalvarAsync(prova)))
             {
+                if (prova.IsPublicada && !jaEstavaPublicada)
+                    await NotificacaoService.ParaAlunosAsync(prova.CursoId, prova.SalaId, "Nova prova",
+                        $"A prova \"{prova.Titulo}\" já está disponível na aba Provas.");
+
                 await AvisarAsync("Prova", prova.IsPublicada
                     ? "Prova salva e publicada para os alunos. As notas só aparecem para eles depois que você corrigir."
                     : "Prova salva como rascunho. Ative \"Publicar\" quando quiser liberar aos alunos.");

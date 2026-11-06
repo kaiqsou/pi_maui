@@ -38,6 +38,16 @@ namespace European
             Routing.RegisterRoute(Navegacao.Solicitacao, typeof(SolicitacaoPage));
             Routing.RegisterRoute(Navegacao.ProfessorAcesso, typeof(ProfessorAcessoPage));
             Routing.RegisterRoute(Navegacao.ContaNova, typeof(ContaNovaPage));
+
+            // Todos os perfis
+            Routing.RegisterRoute(Navegacao.Notificacoes, typeof(NotificacoesPage));
+
+            // Cada tela só abre para o perfil que pode usá-la (AcessoService.PodeAbrir)
+            Navigating += (_, e) =>
+            {
+                if (e.CanCancel && !AcessoService.PodeAbrir(e.Target.Location))
+                    e.Cancel();
+            };
         }
     }
 }

@@ -8,10 +8,11 @@ namespace European.ViewModels
     public partial class CertificadoDetalheViewModel : BaseViewModel
     {
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(EmissaoTexto))]
+        [NotifyPropertyChangedFor(nameof(EmissaoTexto), nameof(TemPeriodo))]
         public partial Certificado? Certificado { get; set; }
 
         public string EmissaoTexto => Certificado?.EmitidoEm.ToString("dd/MM/yyyy") ?? string.Empty;
+        public bool TemPeriodo => !string.IsNullOrEmpty(Certificado?.PeriodoTexto);
 
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {

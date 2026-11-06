@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using European.Data;
+using European.Enums;
 using European.Models;
 using European.Services;
 
@@ -25,6 +26,17 @@ namespace European.ViewModels
 
         public bool TemPedido => !string.IsNullOrEmpty(CursoNome);
 
+        /// <summary>Ex-aluno que trancou a matrícula: pode reabrir por aqui.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemMatriculaTrancada), nameof(AvisoTexto))]
+        private partial Matricula? MatriculaTrancada { get; set; }
+
+        public bool TemMatriculaTrancada => MatriculaTrancada != null;
+
+        public string AvisoTexto => MatriculaTrancada is { } trancada
+            ? $"Sua matrícula em {trancada.CursoNome} está trancada{(trancada.TrancadaEm is { } em ? $" desde {em:dd/MM/yyyy}" : string.Empty)}. Reabra para voltar às aulas e provas."
+            : "Seu acesso às aulas foi encerrado. Você continua podendo consultar o seu certificado.";
+
         public string PagamentoTexto => Solicitacao == null || !Solicitacao.Pago
             ? string.Empty
             : $"Pagamento confirmado {Formatos.Pagamento(Solicitacao.FormaPagamento, Solicitacao.PagamentoEm, "dd/MM/yyyy")}";
@@ -48,6 +60,9 @@ namespace European.ViewModels
                 }
 
                 CursoNome = Solicitacao == null ? string.Empty : (await CursoRepositorio.PorIdAsync(Solicitacao.CursoId))?.Nome ?? string.Empty;
+                MatriculaTrancada = SessionService.UsuarioAtual is { } usuario
+                    ? (await MatriculaRepositorio.DoAlunoAsync(usuario.Id)).FirstOrDefault(m => m.Status == StatusMatricula.Trancada)
+                    : null;
                 NotificarDadosDaSessao();
             }
             catch (Exception ex)
@@ -97,6 +112,17 @@ namespace European.ViewModels
 
         [RelayCommand]
         private Task Sair() => AcessoService.SairAsync();
+
+        [RelayCommand]
+        private async Task ReabrirMatriculaAsync()
+        {
+            var usuario = SessionService.UsuarioAtual;
+            if (usuario == null || MatriculaTrancada == null)
+                return;
+
+            if (await ExecutarAsync(() => ContaService.ReabrirMatriculaAsync(usuario, MatriculaTrancada)))
+                await AcessoService.EntrarAsync(usuario);
+        }
 
         [RelayCommand]
         private Task RefazerPagamento() => Shell.Current.GoToAsync(Navegacao.Pagamento);

@@ -40,6 +40,10 @@ namespace European.Services
             return caminho;
         }
 
+        /// <summary>
+        /// Só o que um certificado de mestrado traz: instituição, nome do aluno, curso, carga horária, período,
+        /// data de emissão, assinaturas e o código para conferir a autenticidade. A média fica no histórico, não aqui.
+        /// </summary>
         public static byte[] Gerar(Certificado c)
         {
             var conteudo = new StringBuilder();
@@ -52,30 +56,30 @@ namespace European.Services
             conteudo.Append("3 w 24 24 794 547 re S\n");
             conteudo.Append("0.8 w 34 34 774 527 re S\n");
 
-            Texto(conteudo, "EUROPEAN", Fonte.Negrito, 14, 515, azul);
-            Texto(conteudo, "CERTIFICADO DE CONCLUSÃO", Fonte.Negrito, 30, 462, escuro);
-            Texto(conteudo, "Mestrado", Fonte.Normal, 14, 438, cinza);
+            Texto(conteudo, "EUROPEAN", Fonte.Negrito, 14, 512, azul);
+            Texto(conteudo, "CERTIFICADO", Fonte.Negrito, 32, 462, escuro);
 
             Cor(conteudo, azul, preenchimento: false);
-            conteudo.Append("1 w 371 420 m 471 420 l S\n");
+            conteudo.Append("1 w 371 444 m 471 444 l S\n");
 
-            Texto(conteudo, "Certificamos que", Fonte.Normal, 14, 382, cinza);
-            Texto(conteudo, c.AlunoNome, Fonte.Negrito, 26, 344, escuro);
-            Texto(conteudo, "concluiu com aprovação todos os módulos e avaliações do curso", Fonte.Normal, 14, 306, cinza);
-            Texto(conteudo, c.CursoNome, Fonte.Negrito, 20, 274, azul);
+            Texto(conteudo, "Certificamos que", Fonte.Normal, 14, 404, cinza);
+            Texto(conteudo, c.AlunoNome, Fonte.Negrito, 26, 366, escuro);
+            Texto(conteudo, "concluiu o curso de", Fonte.Normal, 14, 330, cinza);
+            Texto(conteudo, c.CursoNome, Fonte.Negrito, 20, 298, azul);
 
-            var detalhes = c.CargaHorariaHoras > 0
-                ? $"com carga horária de {c.CargaHorariaHoras} horas e média final {c.MediaFinal.ToString("0.0", PtBr)}."
-                : $"com média final {c.MediaFinal.ToString("0.0", PtBr)}.";
-            Texto(conteudo, detalhes, Fonte.Normal, 13, 244, cinza);
+            var carga = c.CargaHorariaHoras > 0 ? $"com carga horária total de {c.CargaHorariaHoras} horas" : string.Empty;
+            var periodo = string.IsNullOrEmpty(c.PeriodoTexto) ? string.Empty : $"no período {c.PeriodoTexto}";
+            var detalhes = string.Join(", ", new[] { carga, periodo }.Where(t => t.Length > 0));
+            Texto(conteudo, detalhes.Length > 0 ? detalhes + "." : string.Empty, Fonte.Normal, 13, 266, cinza);
 
-            // assinatura e data
+            Texto(conteudo, $"Emitido em {c.EmitidoEm.ToString("dd 'de' MMMM 'de' yyyy", PtBr)}.", Fonte.Normal, 12, 222, escuro);
+
+            // assinaturas
             Cor(conteudo, cinza, preenchimento: false);
             conteudo.Append("0.8 w 120 150 m 360 150 l S\n");
             conteudo.Append("0.8 w 482 150 m 722 150 l S\n");
-            Texto(conteudo, "Coordenação Acadêmica", Fonte.Normal, 11, 134, cinza, centroX: 240);
-            Texto(conteudo, c.EmitidoEm.ToString("dd 'de' MMMM 'de' yyyy", PtBr), Fonte.Normal, 11, 158, escuro, centroX: 602);
-            Texto(conteudo, "Data de emissão", Fonte.Normal, 11, 134, cinza, centroX: 602);
+            Texto(conteudo, "Coordenação do Curso", Fonte.Normal, 11, 134, cinza, centroX: 240);
+            Texto(conteudo, "Direção Acadêmica", Fonte.Normal, 11, 134, cinza, centroX: 602);
 
             Texto(conteudo, $"Código de verificação: {c.CodigoVerificacao}", Fonte.Normal, 10, 62, cinza);
 

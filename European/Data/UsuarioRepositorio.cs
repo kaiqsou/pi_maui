@@ -23,8 +23,11 @@ namespace European.Data
         public static Task<List<Usuario>> ListarAsync(Roles role)
             => Colecao.Find(u => u.Roles == role).SortBy(u => u.Nome).ToListAsync();
 
-        public static Task<bool> ExisteCoordenacaoAsync()
-            => Colecao.Find(u => u.Roles == Roles.Coordenador || u.Roles == Roles.Administrador).AnyAsync();
+        public static Task<List<Usuario>> CoordenacaoAsync()
+            => Colecao.Find(u => u.Roles == Roles.Coordenador || u.Roles == Roles.Administrador).ToListAsync();
+
+        /// <summary>Banco recém-instalado (nenhuma conta): só então é permitido criar a primeira coordenação.</summary>
+        public static Task<bool> ExisteAlgumUsuarioAsync() => Colecao.Find(FilterDefinition<Usuario>.Empty).AnyAsync();
 
         /// <summary>Insere o usuário; retorna false se o e-mail já estiver cadastrado.</summary>
         public static Task<bool> InserirAsync(Usuario usuario)

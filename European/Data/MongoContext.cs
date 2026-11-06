@@ -1,4 +1,5 @@
 using European.Models;
+using European.Services;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -33,6 +34,7 @@ namespace European.Data
         public static IMongoCollection<Certificado> Certificados => Banco.GetCollection<Certificado>("certificados");
         public static IMongoCollection<Sala> Salas => Banco.GetCollection<Sala>("salas");
         public static IMongoCollection<SolicitacaoMatricula> Solicitacoes => Banco.GetCollection<SolicitacaoMatricula>("solicitacoes");
+        public static IMongoCollection<Notificacao> Notificacoes => Banco.GetCollection<Notificacao>("notificacoes");
 
         public static GridFSBucket Arquivos => new(Banco, new GridFSBucketOptions { BucketName = "arquivos" });
 
@@ -66,14 +68,36 @@ namespace European.Data
                 await Materiais.Indexes.CreateOneAsync(new CreateIndexModel<MaterialComplementar>(
                     Builders<MaterialComplementar>.IndexKeys.Ascending(m => m.AulaId)));
 
+                await Notificacoes.Indexes.CreateOneAsync(new CreateIndexModel<Notificacao>(
+                    Builders<Notificacao>.IndexKeys.Ascending(n => n.UsuarioId).Descending(n => n.CriadaEm)));
+
                 if (await Cursos.EstimatedDocumentCountAsync() == 0)
                     await Cursos.InsertManyAsync(CursosIniciais.Criar());
+
+                await ProtegerSenhasEmTextoAsync(Usuarios);
+                await ProtegerSenhasEmTextoAsync(Solicitacoes);
 
                 _inicializado = true;
             }
             finally
             {
                 _inicializacao.Release();
+            }
+        }
+
+        /// <summary>Versões antigas gravavam a senha em texto: troca cada uma pelo hash (o login continua funcionando).</summary>
+        private static async Task ProtegerSenhasEmTextoAsync<T>(IMongoCollection<T> colecao) where T : IEntidade
+        {
+            var senhas = await colecao.Find(FilterDefinition<T>.Empty)
+                .Project(Builders<T>.Projection.Include("_id").Include("SenhaHash"))
+                .ToListAsync();
+
+            foreach (var documento in senhas)
+            {
+                var senha = documento.GetValue("SenhaHash", BsonNull.Value);
+                if (senha.IsString && SenhaService.EhTextoPuro(senha.AsString))
+                    await colecao.UpdateOneAsync(Builders<T>.Filter.Eq("_id", documento["_id"]),
+                        Builders<T>.Update.Set("SenhaHash", SenhaService.GerarHash(senha.AsString)));
             }
         }
 

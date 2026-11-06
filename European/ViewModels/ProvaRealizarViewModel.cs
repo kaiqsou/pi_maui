@@ -189,6 +189,8 @@ namespace European.ViewModels
                     Questoes.Select(q => q.IsDissertativa ? q.Texto.Trim() : string.Empty).ToList(),
                     tempoEsgotado);
                 await ResultadoRepositorio.InserirAsync(resultado);
+                await NotificacaoService.ParaUsuarioAsync(_prova.ProfessorId, "Nova entrega",
+                    $"Uma entrega da prova \"{_prova.Titulo}\" aguarda a sua correção.");
 
                 var titulo = tempoEsgotado ? "Tempo esgotado" : "Prova enviada";
                 await AvisarAsync(titulo, "Suas respostas foram enviadas. A nota aparece em Provas › Realizadas depois que o professor corrigir.");

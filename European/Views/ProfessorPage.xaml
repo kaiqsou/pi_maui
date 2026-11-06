@@ -11,12 +11,13 @@
     <Grid RowDefinitions="Auto,*,Auto">
 
         <!-- Cabeçalho -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="20,24,20,8">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Padding="20,24,20,8">
             <VerticalStackLayout Spacing="2">
                 <Label Text="{Binding Saudacao}" Style="{StaticResource TitleLg}" />
                 <Label Text="Área do professor" Style="{StaticResource Muted}" />
             </VerticalStackLayout>
-            <Border Grid.Column="1" Style="{StaticResource BackTile}" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
+            <controls:SinoNotificacoes Grid.Column="1" BindingContext="{Binding Sino}" VerticalOptions="Center" />
+            <Border Grid.Column="2" Style="{StaticResource BackTile}" WidthRequest="44" HeightRequest="44" VerticalOptions="Center">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding AbrirPerfilCommand}" />
                 </Border.GestureRecognizers>

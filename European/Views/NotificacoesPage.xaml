@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.NotificacoesPage"
+             x:DataType="vm:NotificacoesViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <controls:Cabecalho Titulo="Notificações" Margin="20,16,20,12" />
+
+        <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Notificacoes}" SelectionMode="None">
+            <CollectionView.EmptyView>
+                <controls:EstadoVazio Icone="&#xe7f4;" Titulo="Nenhuma notificação" Texto="Os avisos de matrícula, provas, notas e certificados aparecem aqui." />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:NotificacaoItem">
+                    <Border Style="{StaticResource Card}" Margin="20,0,20,10">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <!-- ponto azul nas notificações que ainda não tinham sido vistas -->
+                            <Ellipse WidthRequest="8" HeightRequest="8" Fill="{StaticResource BrandPrimary}" VerticalOptions="Start"
+                                     Margin="0,6,0,0" IsVisible="{Binding Nova}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
+                                    <Label Grid.Column="1" Text="{Binding QuandoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                </Grid>
+                                <Label Text="{Binding Mensagem}" Style="{StaticResource BodyMd}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+
+</views:BasePage>

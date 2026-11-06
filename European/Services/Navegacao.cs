@@ -34,6 +34,7 @@ namespace European.Services
         public const string Solicitacao = "solicitacao";
         public const string ProfessorAcesso = "professoracesso";
         public const string ContaNova = "contanova";
+        public const string Notificacoes = "notificacoes";
 
         /// <summary>Abre a rota passando parâmetros (chave, valor); valores nulos são ignorados.</summary>
         public static Task IrAsync(string rota, params (string Chave, object? Valor)[] parametros)

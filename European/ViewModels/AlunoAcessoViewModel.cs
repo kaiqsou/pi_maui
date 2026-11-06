@@ -22,7 +22,8 @@ namespace European.ViewModels
         };
         public string Detalhe => $"{Matricula.ProgressoPercentual:0}% concluído · desde {Matricula.DataMatricula:dd/MM/yyyy}";
         public bool Ativa => Matricula.Status == StatusMatricula.Ativa;
-        public bool Encerrada => Matricula.Status == StatusMatricula.Cancelada;
+        /// <summary>Encerrada pela coordenação ou trancada pelo aluno: a coordenação pode reativar.</summary>
+        public bool Encerrada => Matricula.Status is StatusMatricula.Cancelada or StatusMatricula.Trancada;
     }
 
     /// <summary>Coordenação: liberar/remover o acesso de um aluno e gerenciar as matrículas dele.</summary>

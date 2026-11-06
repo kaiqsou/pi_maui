@@ -77,6 +77,11 @@
                             <Label Grid.Column="0" Text="Aulas disponíveis até" Style="{StaticResource Muted}" />
                             <Label Grid.Column="1" Text="{Binding AcessoAteTexto}" Style="{StaticResource BodyMd}" />
                         </Grid>
+
+                        <Button Text="Trancar matrícula" Style="{StaticResource GhostButton}" TextColor="{StaticResource Danger}"
+                                BorderColor="{StaticResource Danger}" Command="{Binding TrancarMatriculaCommand}" IsVisible="{Binding PodeTrancar}" />
+                        <Button Text="Reabrir matrícula" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ReabrirMatriculaCommand}" IsVisible="{Binding PodeReabrir}" />
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>

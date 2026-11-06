@@ -16,15 +16,15 @@ namespace European.Data
             => Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.AlunoId, alunoId) & SomenteFinal)
                 .SortByDescending(c => c.EmitidoEm).ToListAsync();
 
-        public static Task<bool> ExisteParaMatriculaAsync(string matriculaId)
-            => Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.MatriculaId, matriculaId) & SomenteFinal).AnyAsync();
+        public static async Task<Certificado?> DaMatriculaAsync(string matriculaId)
+            => await Colecao.Find(Builders<Certificado>.Filter.Eq(c => c.MatriculaId, matriculaId) & SomenteFinal).FirstOrDefaultAsync();
 
-        public static async Task InserirAsync(Certificado certificado)
+        /// <summary>Grava o certificado com um código de verificação único (derivado do Id, sem contador sujeito a repetição).</summary>
+        public static Task InserirAsync(Certificado certificado)
         {
             certificado.Id = MongoContext.NovoId();
-            var total = await Colecao.CountDocumentsAsync(FilterDefinition<Certificado>.Empty);
-            certificado.CodigoVerificacao = $"EURO-{DateTime.Now:yyyy}-{total + 1:0000}-{certificado.Id[^4..].ToUpperInvariant()}";
-            await Colecao.InsertOneAsync(certificado);
+            certificado.CodigoVerificacao = $"EURO-{certificado.EmitidoEm:yyyy}-{certificado.Id[^8..].ToUpperInvariant()}";
+            return Colecao.InsertOneAsync(certificado);
         }
     }
 }

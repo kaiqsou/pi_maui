@@ -11,7 +11,8 @@ namespace European.Models
 
         /// <summary>Senha definida pela coordenação; no próximo login o usuário precisa criar a própria.</summary>
         public bool SenhaProvisoria { get; set; }
-        public Roles Roles { get; set; }
+        /// <summary>Padrão Aluno: uma conta nunca vira coordenação por esquecimento.</summary>
+        public Roles Roles { get; set; } = Roles.Aluno;
         public StatusAcesso StatusAcesso { get; set; } = StatusAcesso.Pendente;
         public DateTime? DataNascimento { get; set; }
 

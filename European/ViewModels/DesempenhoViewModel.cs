@@ -132,7 +132,8 @@ namespace European.ViewModels
             Materias = materias;
 
             MediaGeral = Math.Round(ProgressoService.Media(notasGerais), 1);
-            Aprovado = notasGerais.Count > 0 && MediaGeral >= ProgressoService.NotaCortePadrao;
+            // mesma regra das matérias: a maior nota de corte entre as provas que entraram na média
+            Aprovado = notasGerais.Count > 0 && MediaGeral >= Math.Round(ProgressoService.NotaCorte(notasGerais.Select(n => n.Item2)), 1);
         });
     }
 }

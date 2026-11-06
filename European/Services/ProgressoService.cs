@@ -47,6 +47,13 @@ namespace European.Services
             return lista.Sum(n => n.Resultado.NotaNormalizada * Math.Max(0, n.Prova.Peso)) / pesos;
         }
 
+        /// <summary>Nota de corte (0 a 10) de um conjunto de provas: a maior entre elas; sem provas, a padrão.</summary>
+        public static double NotaCorte(IEnumerable<Prova> provas)
+        {
+            var lista = provas.ToList();
+            return lista.Count == 0 ? NotaCortePadrao : lista.Max(p => p.NotaCorte / Math.Max(1, p.NotaMaxima) * 10);
+        }
+
         /// <summary>Junta cada resultado à sua prova, descartando resultados de provas que não estão na lista.</summary>
         public static List<(ResultadoProva Resultado, Prova Prova)> ComProva(IEnumerable<ResultadoProva> resultados, IEnumerable<Prova> provas)
         {
@@ -70,9 +77,7 @@ namespace European.Services
             var notas = ComProva(corrigidos.Where(r => r.Corrigida), provasExigidas);
 
             var media = Math.Round(Media(notas), 1);
-            var corte = provasExigidas.Count == 0
-                ? NotaCortePadrao
-                : provasExigidas.Max(p => p.NotaCorte / Math.Max(1, p.NotaMaxima) * 10);
+            var corte = NotaCorte(provasExigidas);
             var completa = provasExigidas.All(p => notas.Any(n => n.Prova.Id == p.Id));
 
             return new AvaliacaoMateria(media, Math.Round(corte, 1), completa, completa && provasExigidas.Count > 0 && media >= corte);
@@ -117,7 +122,10 @@ namespace European.Services
                 Math.Round(Media(notas), 1));
         }
 
-        /// <summary>Recalcula o percentual da matrícula e emite o certificado final quando todos os módulos e provas foram concluídos com aprovação.</summary>
+        /// <summary>
+        /// Recalcula o percentual da matrícula e a marca como concluída quando todos os módulos e provas foram
+        /// concluídos com aprovação. O certificado não é emitido aqui: o aluno gera o dele (<see cref="EmitirCertificadoAsync"/>).
+        /// </summary>
         public static async Task AtualizarAsync(Matricula matricula)
         {
             var curso = matricula.Curso ?? await CursoRepositorio.PorIdAsync(matricula.CursoId);
@@ -127,7 +135,8 @@ namespace European.Services
             var situacao = await SituacaoAsync(matricula, curso);
             matricula.ProgressoPercentual = situacao.TotalAulas == 0 ? 0 : Math.Round(situacao.AulasConcluidas * 100.0 / situacao.TotalAulas);
 
-            if (situacao.Apto && matricula.Status == StatusMatricula.Ativa)
+            var concluiuAgora = situacao.Apto && matricula.Status == StatusMatricula.Ativa;
+            if (concluiuAgora)
             {
                 matricula.Status = StatusMatricula.Concluida;
                 matricula.DataConclusao = DateTime.Now;
@@ -135,23 +144,49 @@ namespace European.Services
 
             await MatriculaRepositorio.AtualizarAsync(matricula);
 
-            if (matricula.Status == StatusMatricula.Concluida && !await CertificadoRepositorio.ExisteParaMatriculaAsync(matricula.Id))
+            if (concluiuAgora)
+                await NotificacaoService.ParaUsuarioAsync(matricula.AlunoId, "Curso concluído",
+                    $"Você concluiu {curso.Nome}. Gere o seu certificado na aba Certificado.");
+        }
+
+        /// <summary>
+        /// Emite o certificado final a pedido do aluno. Devolve o certificado (o já existente, se houver) ou null
+        /// quando ainda faltam requisitos ou a matrícula está trancada/encerrada.
+        /// </summary>
+        public static async Task<Certificado?> EmitirCertificadoAsync(Matricula matricula)
+        {
+            if (await CertificadoRepositorio.DaMatriculaAsync(matricula.Id) is { } existente)
+                return existente;
+
+            if (matricula.Status is StatusMatricula.Trancada or StatusMatricula.Cancelada)
+                return null;
+
+            var curso = matricula.Curso ?? await CursoRepositorio.PorIdAsync(matricula.CursoId);
+            var situacao = curso == null ? null : await SituacaoAsync(matricula, curso);
+            if (curso == null || situacao?.Apto != true)
+                return null;
+
+            await AtualizarAsync(matricula);
+            var aluno = await UsuarioRepositorio.PorIdAsync(matricula.AlunoId);
+            var certificado = new Certificado
             {
-                var aluno = await UsuarioRepositorio.PorIdAsync(matricula.AlunoId);
-                await CertificadoRepositorio.InserirAsync(new Certificado
-                {
-                    MatriculaId = matricula.Id,
-                    CursoId = curso.Id,
-                    AlunoId = matricula.AlunoId,
-                    Titulo = curso.Nome,
-                    AlunoNome = aluno?.Nome ?? string.Empty,
-                    CursoNome = curso.Nome,
-                    CargaHorariaHoras = curso.CargaHorariaHoras,
-                    MediaFinal = situacao.MediaFinal,
-                    // a validade do acesso às aulas (Matricula.AcessoAte) conta a partir desta data
-                    EmitidoEm = matricula.DataConclusao ?? DateTime.Now
-                });
-            }
+                MatriculaId = matricula.Id,
+                CursoId = curso.Id,
+                AlunoId = matricula.AlunoId,
+                Titulo = curso.Nome,
+                AlunoNome = aluno?.Nome ?? string.Empty,
+                CursoNome = curso.Nome,
+                CargaHorariaHoras = curso.CargaHorariaHoras,
+                MediaFinal = situacao.MediaFinal,
+                DataInicio = matricula.DataMatricula,
+                DataConclusao = matricula.DataConclusao,
+                EmitidoEm = DateTime.Now
+            };
+            await CertificadoRepositorio.InserirAsync(certificado);
+
+            await NotificacaoService.ParaCoordenacaoAsync("Certificado emitido",
+                $"{certificado.AlunoNome} gerou o certificado de {curso.Nome} (código {certificado.CodigoVerificacao}).");
+            return certificado;
         }
     }
 }

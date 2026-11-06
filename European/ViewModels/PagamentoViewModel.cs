@@ -135,6 +135,8 @@ namespace European.ViewModels
                 await Task.Delay(1200); // simula o processamento
                 var agora = DateTime.Now;
                 await SolicitacaoRepositorio.RegistrarPagamentoAsync(solicitacao.Id, Forma, agora);
+                await NotificacaoService.ParaCoordenacaoAsync("Solicitação de matrícula",
+                    $"{solicitacao.Nome} fez o pagamento e aguarda a liberação em {CursoNome}.");
                 solicitacao.FormaPagamento = Forma;
                 solicitacao.PagamentoEm = agora;
                 solicitacao.PendenciaMotivo = null;

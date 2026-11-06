@@ -48,6 +48,9 @@ namespace European.ViewModels
         public bool MostrarProvas => Aba == "provas";
         public bool MostrarSalas => Aba == "salas";
 
+        /// <summary>Notificações não lidas (sino no cabeçalho).</summary>
+        public Sino Sino { get; } = new();
+
         [ObservableProperty]
         public partial string Saudacao { get; private set; } = string.Empty;
 
@@ -62,6 +65,7 @@ namespace European.ViewModels
                 return;
 
             Saudacao = Formatos.Saudacao(professor.Nome);
+            await Sino.AtualizarAsync();
 
             var cursos = await CursoRepositorio.DoProfessorAsync(professor.Id);
             var ativosPorCurso = await MatriculaRepositorio.AtivasPorCursoAsync();

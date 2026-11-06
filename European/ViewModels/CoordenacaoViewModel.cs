@@ -32,6 +32,9 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial string Busca { get; set; } = string.Empty;
 
+        /// <summary>Notificações não lidas (sino no cabeçalho).</summary>
+        public Sino Sino { get; } = new();
+
         [ObservableProperty]
         public partial string Saudacao { get; private set; } = string.Empty;
 
@@ -51,6 +54,7 @@ namespace European.ViewModels
         public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
             Saudacao = Formatos.Saudacao(SessionService.UsuarioAtual?.Nome);
+            await Sino.AtualizarAsync();
 
             var cursos = await CursoRepositorio.ListarAsync();
             var ativosPorCurso = await MatriculaRepositorio.AtivasPorCursoAsync();

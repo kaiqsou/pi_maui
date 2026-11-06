@@ -137,6 +137,11 @@ namespace European.ViewModels
 
             if (ok)
             {
+                var novos = alterados.Where(c => c.Atribuido).Select(c => c.Nome).ToList();
+                if (novos.Count > 0)
+                    await NotificacaoService.ParaUsuarioAsync(Professor.Id, "Novo curso",
+                        $"A coordenação atribuiu a você: {string.Join(", ", novos)}.");
+
                 await AvisarAsync("Professor", alterados.Count == 0 ? "Nenhuma alteração nos cursos." : "Cursos do professor atualizados.");
                 await CarregarAsync(Professor.Id);
             }

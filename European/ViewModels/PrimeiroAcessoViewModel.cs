@@ -7,7 +7,7 @@ using European.Services;
 
 namespace European.ViewModels
 {
-    /// <summary>Cria a primeira conta da coordenação (só é permitido enquanto não existe nenhuma).</summary>
+    /// <summary>Cria a primeira conta da coordenação. Só é permitido com o banco vazio (nenhuma conta cadastrada).</summary>
     public partial class PrimeiroAcessoViewModel : BaseViewModel
     {
         [ObservableProperty]
@@ -43,10 +43,10 @@ namespace European.ViewModels
             {
                 await MongoContext.InicializarAsync();
 
-                // a conta inicial da coordenação só pode ser criada enquanto não houver nenhuma
-                if (await UsuarioRepositorio.ExisteCoordenacaoAsync())
+                // com qualquer conta já criada, ninguém mais consegue se promover a coordenação por esta tela
+                if (await UsuarioRepositorio.ExisteAlgumUsuarioAsync())
                 {
-                    Mensagem = "A coordenação já foi configurada. Faça login.";
+                    Mensagem = "O aplicativo já foi configurado. Faça login.";
                     return;
                 }
 

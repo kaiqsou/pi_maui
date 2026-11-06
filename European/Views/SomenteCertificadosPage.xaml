@@ -18,11 +18,14 @@
         </Grid>
 
         <Border Grid.Row="1" Style="{StaticResource Card}" Margin="20,16,20,0" BackgroundColor="{StaticResource BrandContainerSoft}" Stroke="Transparent">
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                <Label Text="&#xe88e;" Style="{StaticResource IconPrimary}" VerticalOptions="Start" />
-                <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}"
-                       Text="Seu acesso às aulas foi encerrado. Você continua podendo consultar o seu certificado." />
-            </Grid>
+            <VerticalStackLayout Spacing="12">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Label Text="&#xe88e;" Style="{StaticResource IconPrimary}" VerticalOptions="Start" />
+                    <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{StaticResource OnSurface}" Text="{Binding AvisoTexto}" />
+                </Grid>
+                <Button Text="Reabrir matrícula" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding ReabrirMatriculaCommand}" IsVisible="{Binding TemMatriculaTrancada}" />
+            </VerticalStackLayout>
         </Border>
 
         <views:CertificadosAba Grid.Row="2" x:Name="Certificados" />

@@ -31,6 +31,25 @@ namespace European.Services
             return SenhaService.EhValida(senha, out var erro) ? null : erro;
         }
 
+        /// <summary>Login conferido com um hash antigo (SHA-256 sem salt): grava a senha no formato atual.</summary>
+        public static async Task AtualizarHashAntigoAsync(Usuario usuario, string senha)
+        {
+            if (!SenhaService.PrecisaAtualizar(usuario.SenhaHash))
+                return;
+
+            usuario.SenhaHash = SenhaService.GerarHash(senha);
+            await UsuarioRepositorio.AtualizarSenhaAsync(usuario.Id, usuario.SenhaHash, usuario.SenhaProvisoria);
+        }
+
+        public static async Task AtualizarHashAntigoAsync(SolicitacaoMatricula solicitacao, string senha)
+        {
+            if (!SenhaService.PrecisaAtualizar(solicitacao.SenhaHash))
+                return;
+
+            solicitacao.SenhaHash = SenhaService.GerarHash(senha);
+            await SolicitacaoRepositorio.AtualizarSenhaAsync(solicitacao.Id, solicitacao.SenhaHash);
+        }
+
         /// <summary>Senha provisória fácil de ditar: 5 letras e 3 números, sem caracteres ambíguos (l, o, 0, 1).</summary>
         public static string GerarSenhaProvisoria()
         {
@@ -73,7 +92,40 @@ namespace European.Services
                 return false;
 
             await SolicitacaoRepositorio.ExcluirAsync(solicitacao.Id);
+            await NotificacaoService.ParaUsuarioAsync(aluno.Id, "Bem-vindo(a)!", "Sua matrícula foi liberada. As aulas já estão disponíveis.");
             return true;
+        }
+
+        /// <summary>
+        /// O próprio aluno tranca a matrícula ativa: deixa de acessar aulas e provas até reabrir (o progresso fica guardado).
+        /// A coordenação é avisada, com o motivo se ele informar.
+        /// </summary>
+        public static async Task TrancarMatriculaAsync(Usuario aluno, Matricula matricula, string? motivo)
+        {
+            if (matricula.Status != StatusMatricula.Ativa)
+                throw new InvalidOperationException("Só uma matrícula ativa pode ser trancada.");
+
+            matricula.Status = StatusMatricula.Trancada;
+            matricula.TrancadaEm = DateTime.Now;
+            await MatriculaRepositorio.AtualizarAsync(matricula);
+
+            var detalhe = string.IsNullOrWhiteSpace(motivo) ? string.Empty : $" Motivo: {motivo.Trim()}";
+            await NotificacaoService.ParaCoordenacaoAsync("Matrícula trancada",
+                $"{aluno.Nome} trancou a matrícula em {matricula.CursoNome}.{detalhe}");
+        }
+
+        /// <summary>O próprio aluno reabre a matrícula que trancou e volta a acessar o curso.</summary>
+        public static async Task ReabrirMatriculaAsync(Usuario aluno, Matricula matricula)
+        {
+            if (matricula.Status != StatusMatricula.Trancada)
+                throw new InvalidOperationException("Só uma matrícula trancada pode ser reaberta.");
+
+            matricula.Status = StatusMatricula.Ativa;
+            matricula.TrancadaEm = null;
+            await MatriculaRepositorio.AtualizarAsync(matricula);
+
+            await NotificacaoService.ParaCoordenacaoAsync("Matrícula reaberta",
+                $"{aluno.Nome} reabriu a matrícula em {matricula.CursoNome}.");
         }
 
         /// <summary>Dá ao aluno acesso ao curso (reativa a matrícula antiga, se houver) e libera a conta.</summary>
@@ -92,6 +144,7 @@ namespace European.Services
             }
 
             await LiberarContaAsync(aluno);
+            await NotificacaoService.ParaUsuarioAsync(aluno.Id, "Acesso liberado", "A coordenação liberou o seu acesso a um novo curso.");
         }
 
         /// <summary>Encerra ou reativa uma matrícula; reativar também libera a conta do aluno.</summary>
@@ -102,6 +155,12 @@ namespace European.Services
 
             if (status == StatusMatricula.Ativa)
                 await LiberarContaAsync(aluno);
+
+            await NotificacaoService.ParaUsuarioAsync(aluno.Id,
+                status == StatusMatricula.Ativa ? "Matrícula reativada" : "Matrícula encerrada",
+                status == StatusMatricula.Ativa
+                    ? $"A coordenação reativou a sua matrícula em {matricula.CursoNome}."
+                    : $"A coordenação encerrou o seu acesso a {matricula.CursoNome}. O progresso fica guardado.");
         }
 
         /// <summary>Remove o acesso do aluno ao app, encerrando as matrículas ativas (o progresso fica guardado).</summary>
