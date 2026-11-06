@@ -63,10 +63,26 @@ namespace European.ViewModels
 
         private static Usuario? Usuario => SessionService.UsuarioAtual;
 
-        public bool PodeEditarEstrutura => Usuario?.IsCoordenacao == true;
+        public bool IsCoordenacao => Usuario?.IsCoordenacao == true;
         public bool IsProfessorDoCurso => Usuario?.Roles == Roles.Professor && Curso?.ProfessorIds.Contains(Usuario.Id) == true;
-        public bool PodeEditarAulas => PodeEditarEstrutura || IsProfessorDoCurso;
-        public bool PodeCriarProvas => IsProfessorDoCurso;
+
+        /// <summary>A tela abre só para visualizar; o botão "Editar" liga os menus de edição.</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PodeEditarEstrutura), nameof(PodeEditarAulas), nameof(PodeCriarProvas),
+            nameof(PodeGerenciarCurso), nameof(TemOpcoesModulo), nameof(BotaoEditarTexto))]
+        public partial bool Editando { get; private set; }
+
+        /// <summary>Coordenação ou professor do curso: vê o botão "Editar".</summary>
+        public bool PodeEditar => IsCoordenacao || IsProfessorDoCurso;
+        public string BotaoEditarTexto => Editando ? "Concluir" : "Editar";
+
+        /// <summary>Módulos, matérias e aulas: coordenação e professores do curso, no modo de edição.</summary>
+        public bool PodeEditarEstrutura => Editando && PodeEditar;
+        public bool PodeEditarAulas => Editando && PodeEditar;
+        public bool PodeCriarProvas => Editando && IsProfessorDoCurso;
+
+        /// <summary>Editar dados do curso e excluir curso, módulos e matérias: só a coordenação.</summary>
+        public bool PodeGerenciarCurso => Editando && IsCoordenacao;
 
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
@@ -106,9 +122,11 @@ namespace European.ViewModels
                 }).ToList()
             }).ToList();
 
+            OnPropertyChanged(nameof(PodeEditar));
             OnPropertyChanged(nameof(PodeEditarEstrutura));
             OnPropertyChanged(nameof(PodeEditarAulas));
             OnPropertyChanged(nameof(PodeCriarProvas));
+            OnPropertyChanged(nameof(PodeGerenciarCurso));
             Paginas.Reiniciar(_modulos.Count, Paginas.Indice);
         });
 
@@ -126,6 +144,9 @@ namespace European.ViewModels
 
 
         [RelayCommand]
+        private void AlternarEdicao() => Editando = !Editando;
+
+        [RelayCommand]
         private Task NovoModulo()
             => Curso == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ModuloEdit, ("Curso", Curso));
 
@@ -136,7 +157,7 @@ namespace European.ViewModels
         [RelayCommand]
         private async Task OpcoesCursoAsync()
         {
-            if (Curso == null || !PodeEditarEstrutura)
+            if (Curso == null || !PodeGerenciarCurso)
                 return;
 
             switch (await EscolherOpcaoAsync(Curso.Nome, "Excluir curso", "Editar curso"))
@@ -159,7 +180,7 @@ namespace European.ViewModels
             if (modulo == null || Curso == null || !PodeEditarEstrutura)
                 return;
 
-            switch (await EscolherOpcaoAsync(modulo.Titulo, "Excluir módulo", "Nova matéria", "Editar módulo"))
+            switch (await EscolherOpcaoAsync(modulo.Titulo, IsCoordenacao ? "Excluir módulo" : null, "Nova matéria", "Editar módulo"))
             {
                 case "Nova matéria":
                     await Navegacao.IrAsync(Navegacao.MateriaEdit, ("Modulo", modulo));
@@ -188,7 +209,7 @@ namespace European.ViewModels
             if (opcoes.Count == 0)
                 return;
 
-            switch (await EscolherOpcaoAsync(materia.Nome, PodeEditarEstrutura ? "Excluir matéria" : null, opcoes.ToArray()))
+            switch (await EscolherOpcaoAsync(materia.Nome, PodeGerenciarCurso ? "Excluir matéria" : null, opcoes.ToArray()))
             {
                 case "Nova aula":
                     await Navegacao.IrAsync(Navegacao.AulaEdit, ("Materia", materia));
@@ -206,15 +227,24 @@ namespace European.ViewModels
             }
         }
 
+        /// <summary>Visualizando: abre a aula (vídeo e materiais). Editando: menu da aula.</summary>
         [RelayCommand]
         private async Task OpcoesAulaAsync(Aula? aula)
         {
-            if (aula == null || Curso == null || !PodeEditarAulas)
+            if (aula == null || Curso == null)
                 return;
 
-            switch (await EscolherOpcaoAsync(aula.Titulo, "Excluir aula", "Editar aula"))
+            if (!PodeEditarAulas)
+            {
+                await Navegacao.IrAsync(Navegacao.Aula, ("Aula", aula));
+                return;
+            }
+
+            switch (await EscolherOpcaoAsync(aula.Titulo, "Excluir aula", "Editar aula", "Adicionar material"))
             {
                 case "Editar aula":
+                case "Adicionar material":
+                    // os materiais ficam na tela da aula, abaixo dos dados
                     await Navegacao.IrAsync(Navegacao.AulaEdit, ("Materia", aula.Materia), ("Aula", aula));
                     break;
                 case "Excluir aula":

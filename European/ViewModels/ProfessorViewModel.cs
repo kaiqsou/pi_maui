@@ -136,6 +136,6 @@ namespace European.ViewModels
 
         [RelayCommand]
         private Task AbrirSala(SalaResumo? item)
-            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.SalaEdit, ("Sala", item.Sala));
+            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.Sala, ("Sala", item.Sala));
     }
 }

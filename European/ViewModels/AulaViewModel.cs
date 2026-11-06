@@ -20,7 +20,9 @@ namespace European.ViewModels
         [NotifyPropertyChangedFor(nameof(DuracaoFormatada), nameof(MateriaNome))]
         public partial Aula? Aula { get; private set; }
 
+        /// <summary>Sem matrícula = pré-visualização do professor ou da coordenação (não registra progresso).</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(PodeConcluir))]
         public partial Matricula? Matricula { get; private set; }
 
         public ObservableCollection<MaterialComplementar> Materiais { get; } = new();
@@ -44,7 +46,7 @@ namespace European.ViewModels
         [NotifyPropertyChangedFor(nameof(ConcluirTexto), nameof(PodeConcluir))]
         public partial bool Concluida { get; private set; }
 
-        public bool PodeConcluir => !Concluida;
+        public bool PodeConcluir => !Concluida && Matricula != null;
         public string ConcluirTexto => Concluida ? "Aula concluída" : "Marcar como concluída";
 
         [ObservableProperty]

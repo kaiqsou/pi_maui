@@ -22,7 +22,7 @@ namespace European.Services
         {
             // aluno
             [Nome(Navegacao.Aluno)] = Aluno,
-            [Navegacao.Aula] = Aluno,
+            [Navegacao.Aula] = () => Aluno() || Professor() || Coordenacao(), // professor e coordenação: pré-visualização
             [Navegacao.ProvaRealizar] = Aluno,
             [Navegacao.Certificado] = Aluno,
             [Nome(Navegacao.SomenteCertificados)] = Aluno,
@@ -31,18 +31,20 @@ namespace European.Services
             [Nome(Navegacao.Professor)] = Professor,
             [Navegacao.ProvaEdit] = Professor,
             [Navegacao.Correcao] = Professor,
+            [Navegacao.Sala] = Professor,
             [Navegacao.SalaEdit] = Professor,
             [Navegacao.ProvaResultados] = () => Professor() || Coordenacao(),
 
             // conteúdo do curso: coordenação e professores
             [Navegacao.Curso] = () => Professor() || Coordenacao(),
             [Navegacao.AulaEdit] = () => Professor() || Coordenacao(),
+            [Navegacao.ModuloEdit] = () => Professor() || Coordenacao(),
+            [Navegacao.MateriaEdit] = () => Professor() || Coordenacao(),
 
             // coordenação
             [Nome(Navegacao.Coordenacao)] = Coordenacao,
             [Navegacao.CursoEdit] = Coordenacao,
-            [Navegacao.ModuloEdit] = Coordenacao,
-            [Navegacao.MateriaEdit] = Coordenacao,
+
             [Navegacao.AlunoAcesso] = Coordenacao,
             [Navegacao.Solicitacao] = Coordenacao,
             [Navegacao.ProfessorAcesso] = Coordenacao,

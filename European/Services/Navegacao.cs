@@ -29,6 +29,7 @@ namespace European.Services
         public const string ProvaEdit = "provaedit";
         public const string ProvaResultados = "provaresultados";
         public const string Correcao = "correcao";
+        public const string Sala = "sala";
         public const string SalaEdit = "salaedit";
         public const string AlunoAcesso = "alunoacesso";
         public const string Solicitacao = "solicitacao";

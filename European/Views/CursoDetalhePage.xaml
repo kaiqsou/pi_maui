@@ -20,7 +20,11 @@
         <!-- Curso -->
         <VerticalStackLayout Grid.Row="0" Padding="20,16,20,12" Spacing="10">
             <controls:Cabecalho Titulo="{Binding Curso.Nome}">
-                <Button Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do curso" Command="{Binding OpcoesCursoCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
+                <HorizontalStackLayout Spacing="4">
+                    <Button Text="{Binding BotaoEditarTexto}" Style="{StaticResource SoftButton}" VerticalOptions="Center"
+                            Command="{Binding AlternarEdicaoCommand}" IsVisible="{Binding PodeEditar}" />
+                    <Button Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do curso" Command="{Binding OpcoesCursoCommand}" IsVisible="{Binding PodeGerenciarCurso}" />
+                </HorizontalStackLayout>
             </controls:Cabecalho>
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                 <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{StaticResource OnSurfaceVariant}" />
@@ -63,7 +67,7 @@
                                                 IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
                                     </Grid>
 
-                                    <!-- aulas: toque abre editar/excluir -->
+                                    <!-- aulas: toque abre a aula (visualizando) ou o menu de edição (editando) -->
                                     <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding Aulas}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:Aula">
