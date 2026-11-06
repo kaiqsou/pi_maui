@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+		Popula o MongoDB com dados de demonstração (cursos, aulas, provas, turmas, usuários...).
+		Uso (na pasta pi_maui): dotnet run, com a opção project apontando para Seed
+		ATENÇÃO: apaga o banco "european" antes de gravar.
+	-->
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>European.Seed</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MongoDB.Driver" Version="3.13.0" />
+	</ItemGroup>
+
+	<!-- Reaproveita os modelos e o mapeamento do app, para gravar exatamente o formato que ele lê. -->
+	<ItemGroup>
+		<Compile Include="..\European\Models\*.cs" Link="App\Models\%(Filename).cs" />
+		<Compile Include="..\European\Enums\*.cs" Link="App\Enums\%(Filename).cs" />
+		<Compile Include="..\European\Data\MongoContext.cs" Link="App\Data\MongoContext.cs" />
+		<Compile Include="..\European\Data\CursosIniciais.cs" Link="App\Data\CursosIniciais.cs" />
+		<Compile Include="..\European\Data\ColecaoExtensions.cs" Link="App\Data\ColecaoExtensions.cs" />
+		<Compile Include="..\European\Services\SenhaService.cs" Link="App\Services\SenhaService.cs" />
+	</ItemGroup>
+
+</Project>

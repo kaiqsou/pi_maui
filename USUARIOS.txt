@@ -1,0 +1,28 @@
+USUARIOS DE DEMONSTRACAO
+Senha de todas as contas: Senha123
+
+COORDENADOR
+kaique@european.com
+
+PROFESSORES
+helena.duarte@european.com        - Direito Penal Economico
+ricardo.albuquerque@european.com  - Direito Penal Economico
+camila.rezende@european.com       - Harmonizacao Orofacial
+marcelo.tavares@european.com      - Harmonizacao Orofacial
+fernanda.lopes@european.com       - Ciencias da Educacao
+
+ALUNOS
+ana.souza@european.com        - Direito - concluido, com certificado
+bruno.carvalho@european.com   - Direito - 90%, prova aguardando correcao
+carolina.mendes@european.com  - Direito - 30%
+diego.fernandes@european.com  - Direito - matricula trancada
+eduarda.lima@european.com     - Harmonizacao - 62%
+felipe.rocha@european.com     - Harmonizacao - 25%, abaixo da media
+gabriela.nunes@european.com   - Harmonizacao e Educacao (2 cursos)
+henrique.alves@european.com   - Educacao - 62%, prova aguardando correcao
+isabela.martins@european.com  - Educacao - 0%, acabou de entrar
+joao.costa@european.com       - Educacao - 38%, abaixo da media
+
+SOLICITACOES PENDENTES (ainda nao fazem login como aluno)
+larissa.gomes@european.com    - Direito - pago
+mateus.ribeiro@european.com   - Educacao - nao pago
