@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:models="clr-namespace:European.Models"
+             x:Class="European.Views.AulaDetalhePage"
+             x:DataType="vm:AulaViewModel"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False">
+
+    <!-- Voltar e o vídeo ficam fixos no topo; o restante (detalhes, aulas e materiais) rola por baixo. -->
+    <!-- A margem lateral fica dentro do conteúdo para a barra de rolagem ficar na borda, sem cobrir os cards. -->
+    <Grid RowDefinitions="Auto,*" Padding="0,16,0,0" RowSpacing="16">
+        <VerticalStackLayout Grid.Row="0" Spacing="16" Padding="20,0">
+
+            <controls:Cabecalho Titulo="{Binding Title}" />
+
+            <Border StrokeThickness="0" StrokeShape="RoundRectangle 16" HeightRequest="220">
+                <controls:PlayerYouTube x:Name="VideoPlayer" Source="{Binding VideoSource}" HeightRequest="220"
+                                        DuracaoCommand="{Binding RegistrarDuracaoCommand}"
+                                        PosicaoCommand="{Binding RegistrarPosicaoCommand}" />
+            </Border>
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+        <VerticalStackLayout Padding="20,0,20,28" Spacing="16">
+
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Label Grid.Column="0" Text="&#xea19;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
+                <Label Grid.Column="1" Text="{Binding MateriaNome}" Style="{StaticResource Muted}" VerticalOptions="Center" />
+                <Label Grid.Column="2" Text="{Binding DuracaoFormatada}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+            </Grid>
+
+            <Label Text="{Binding Aula.Descricao}" Style="{StaticResource BodyMd}" />
+
+            <VerticalStackLayout Spacing="4">
+                <ProgressBar Progress="{Binding PercentualAssistido, Converter={StaticResource PercentToProgress}}" />
+                <Label Text="{Binding ProgressoTexto}" Style="{StaticResource BodySm}" />
+            </VerticalStackLayout>
+
+            <Button Text="{Binding ConcluirTexto}" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding ConcluirCommand}" IsEnabled="{Binding PodeConcluir}" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,8,0,0">
+                <controls:BotaoSegmento Grid.Column="0" Text="Aulas" Command="{Binding SelecionarAbaCommand}" CommandParameter="aulas"
+                        Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarAulas}" />
+                <controls:BotaoSegmento Grid.Column="1" Text="Materiais" Command="{Binding SelecionarAbaCommand}" CommandParameter="materiais"
+                        Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarMateriais}" />
+            </Grid>
+
+            <!-- Lista compacta: só título e duração; o ícone à direita indica concluída ou bloqueada. -->
+            <VerticalStackLayout Spacing="6" IsVisible="{Binding MostrarAulas}"
+                                 BindableLayout.ItemsSource="{Binding AulasDoModulo}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AulaItem">
+                        <Border Style="{StaticResource Card}" Padding="12,8" MinimumHeightRequest="48"
+                                StrokeShape="RoundRectangle 12" BackgroundColor="{DynamicResource SurfaceCard}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelecionada}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="{DynamicResource BrandContainerSoft}" />
+                                    <Setter Property="Stroke" Value="{DynamicResource BrandPrimary}" />
+                                    <Setter Property="StrokeThickness" Value="1.5" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
+                                    <Setter Property="Opacity" Value="0.55" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AulaViewModel}}, Path=AbrirAulaCommand, x:DataType=vm:AulaViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="24,*,Auto,20" ColumnSpacing="10">
+                                <Label Grid.Column="0" Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="18" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="{Binding Aula.Titulo}" FontFamily="TextoNegrito" FontSize="14"
+                                       TextColor="{DynamicResource OnSurface}" MaxLines="2" LineBreakMode="TailTruncation"
+                                       VerticalOptions="Center" />
+                                <Label Grid.Column="2" Text="{Binding Duracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                <Label Grid.Column="3" Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18"
+                                       TextColor="{DynamicResource Success}" VerticalOptions="Center"
+                                       IsVisible="{Binding Concluida}" />
+                                <Label Grid.Column="3" Text="&#xe897;" Style="{StaticResource Icon}" FontSize="18"
+                                       TextColor="{DynamicResource Danger}" VerticalOptions="Center"
+                                       IsVisible="{Binding Bloqueada}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding MostrarMateriais}"
+                                 BindableLayout.ItemsSource="{Binding Materiais}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:MaterialComplementar">
+                        <Border Style="{StaticResource Card}" Padding="14">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AulaViewModel}}, Path=AbrirMaterialCommand, x:DataType=vm:AulaViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12">
+                                <Label Grid.Column="0" Text="&#xe873;" Style="{StaticResource IconPrimary}" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" />
+                                    <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" LineBreakMode="TailTruncation" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="&#xf090;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <Label Text="O professor ainda não anexou materiais a esta aula." Style="{StaticResource Muted}"
+                   HorizontalOptions="Center">
+                <Label.IsVisible>
+                    <MultiBinding Converter="{StaticResource TodosVerdadeiros}">
+                        <Binding Path="MostrarMateriais" />
+                        <Binding Path="PossuiMateriais" Converter="{StaticResource InverseBool}" />
+                    </MultiBinding>
+                </Label.IsVisible>
+            </Label>
+
+        </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</views:BasePage>

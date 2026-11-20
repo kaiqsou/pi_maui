@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.AulasAba"
+             x:DataType="vm:AulasViewModel"
+             BackgroundColor="{DynamicResource Surface}">
+
+    <!-- A margem lateral fica dentro de cada parte para a barra de rolagem ficar na borda, sem cobrir os cards. -->
+    <Grid RowDefinitions="Auto,*,Auto" Padding="0,24,0,0" RowSpacing="16">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="2" Padding="20,0">
+            <Label Text="Aulas" Style="{StaticResource TitleLg}" />
+            <Label Text="{Binding CursoNome}" Style="{StaticResource Muted}" />
+            <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleMd}" Margin="0,12,0,0" />
+        </VerticalStackLayout>
+
+        <!-- Cabeçalho e paginação ficam fixos; só a lista de aulas do módulo rola. -->
+        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+            <VerticalStackLayout Spacing="10" Padding="20,0,20,16">
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding AulasPagina}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AulaItem">
+                            <VerticalStackLayout Spacing="8">
+
+                                <VerticalStackLayout IsVisible="{Binding MostrarCabecalho}" Padding="0,6,0,0" Spacing="4">
+                                    <Label Text="{Binding Cabecalho}" Style="{StaticResource TitleSm}" TextColor="{DynamicResource BrandPrimary}" />
+                                    <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
+                                </VerticalStackLayout>
+
+                                <!-- Ícone à esquerda mostra o status (assistir / concluída / bloqueada); duração alinhada à direita. -->
+                                <Border Padding="12" StrokeShape="RoundRectangle 14">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                                            <Style.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
+                                                    <Setter Property="Opacity" Value="0.55" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AulasViewModel}}, Path=AbrirAulaCommand, x:DataType=vm:AulasViewModel}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12">
+
+                                        <Border Grid.Column="0" WidthRequest="40" HeightRequest="40" VerticalOptions="Center"
+                                                BackgroundColor="{DynamicResource BrandContainerSoft}" Stroke="Transparent"
+                                                StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                                            <Border.Triggers>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Concluida}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource SuccessSoft}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Border" Binding="{Binding Bloqueada}" Value="True">
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource DangerSoft}" />
+                                                </DataTrigger>
+                                            </Border.Triggers>
+                                            <Grid>
+                                                <Label Text="&#xe037;" Style="{StaticResource IconPrimary}" FontSize="22"
+                                                       HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding PodeAssistir}" />
+                                                <Label Text="&#xe876;" Style="{StaticResource Icon}" FontSize="20" TextColor="{DynamicResource Success}"
+                                                       HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding Concluida}" />
+                                                <Label Text="&#xe897;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Danger}"
+                                                       HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding Bloqueada}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                            <Label Text="{Binding Aula.Titulo}" FontFamily="TextoNegrito" FontSize="15"
+                                                   TextColor="{DynamicResource OnSurface}" MaxLines="2" LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding Descricao}" Style="{StaticResource BodySm}"
+                                                   MaxLines="1" LineBreakMode="TailTruncation" IsVisible="{Binding TemDescricao}" />
+                                        </VerticalStackLayout>
+
+                                        <Label Grid.Column="2" Text="{Binding Duracao}" Style="{StaticResource BodySm}"
+                                               VerticalOptions="Center" HorizontalOptions="End" />
+                                    </Grid>
+                                </Border>
+
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <controls:EstadoVazio Icone="&#xe1c4;" Titulo="{Binding MensagemSemAulas}" Texto="As aulas aparecerão aqui assim que forem publicadas." IsVisible="{Binding SemAulas}" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <controls:BarraPaginacao Grid.Row="2" Padding="20,0,20,16" BindingContext="{Binding Paginas}" />
+
+    </Grid>
+
+</ContentView>

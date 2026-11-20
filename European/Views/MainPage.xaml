@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="European"
+             Shell.NavBarIsVisible="False">
+
+    <!-- Área do aluno: o conteúdo da aba escolhida (InicioAba, AulasAba...) é colocado em HostAba pelo code-behind -->
+    <Grid RowDefinitions="*,Auto">
+
+        <ContentView Grid.Row="0" x:Name="HostAba" />
+
+        <controls:BarraAbas Grid.Row="1">
+            <controls:AbaBotao Icone="&#xe871;" Texto="Início" Ativa="{Binding MostrarInicio}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="inicio" />
+            <controls:AbaBotao Icone="&#xe1c4;" Texto="Aulas" Ativa="{Binding MostrarAulas}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="aulas" />
+            <controls:AbaBotao Icone="&#xe862;" Texto="Provas" Ativa="{Binding MostrarProvas}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="provas" />
+            <controls:AbaBotao Icone="&#xe26b;" Texto="Desempenho" Ativa="{Binding MostrarDesempenho}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="desempenho" />
+            <controls:AbaBotao Icone="&#xea3f;" Texto="Certificados" Ativa="{Binding MostrarCertificados}"
+                               Command="{Binding SelecionarAbaCommand}" CommandParameter="certificados" />
+        </controls:BarraAbas>
+
+    </Grid>
+
+</views:BasePage>

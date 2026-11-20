@@ -1,0 +1,129 @@
+using European.Data;
+using European.Enums;
+using European.Models;
+
+namespace European.Services
+{
+    /// <summary>Decide para qual área do app cada usuário vai, conforme o papel e o acesso liberado pela coordenação.</summary>
+    public static class AcessoService
+    {
+
+        public sealed record Resultado(string? Rota, string? Mensagem = null);
+
+        private static Usuario? Usuario => SessionService.UsuarioAtual;
+        private static bool Logado() => Usuario != null;
+        private static bool Aluno() => Usuario?.Roles == Roles.Aluno;
+        private static bool Professor() => Usuario is { Roles: Roles.Professor, AcessoLiberado: true };
+        private static bool Coordenacao() => Usuario is { IsCoordenacao: true, AcessoLiberado: true };
+        private static bool Candidato() => SessionService.SolicitacaoAtual != null;
+
+        /// <summary>Quem pode abrir cada tela. Telas fora da lista (login, cadastro, detalhes do curso) são livres.</summary>
+        private static readonly Dictionary<string, Func<bool>> Permissoes = new()
+        {
+            // aluno
+            [Nome(Navegacao.Aluno)] = Aluno,
+            [Navegacao.Aula] = () => Aluno() || Professor() || Coordenacao(), // professor e coordenação: pré-visualização
+            [Navegacao.ProvaRealizar] = Aluno,
+            [Navegacao.Certificado] = Aluno,
+            [Nome(Navegacao.SomenteCertificados)] = Aluno,
+
+            // professor
+            [Nome(Navegacao.Professor)] = Professor,
+            [Navegacao.ProvaEdit] = Professor,
+            [Navegacao.Correcao] = Professor,
+            [Navegacao.Sala] = Professor,
+            [Navegacao.SalaEdit] = Professor,
+            [Navegacao.ProvaResultados] = () => Professor() || Coordenacao(),
+
+            // conteúdo do curso: coordenação e professores
+            [Navegacao.Curso] = () => Professor() || Coordenacao(),
+            [Navegacao.AulaEdit] = () => Professor() || Coordenacao(),
+            [Navegacao.ModuloEdit] = () => Professor() || Coordenacao(),
+            [Navegacao.MateriaEdit] = () => Professor() || Coordenacao(),
+
+            // coordenação
+            [Nome(Navegacao.Coordenacao)] = Coordenacao,
+            [Navegacao.CursoEdit] = Coordenacao,
+
+            [Navegacao.AlunoAcesso] = Coordenacao,
+            [Navegacao.Solicitacao] = Coordenacao,
+            [Navegacao.ProfessorAcesso] = Coordenacao,
+            [Navegacao.ContaNova] = Coordenacao,
+
+            // qualquer conta logada
+            [Navegacao.Perfil] = Logado,
+            [Navegacao.Notificacoes] = Logado,
+            [Nome(Navegacao.NovaSenha)] = Logado,
+            [Nome(Navegacao.Aguardando)] = () => Logado() || Candidato(),
+            [Nome(Navegacao.Pagamento)] = Candidato,
+        };
+
+        /// <summary>Confere todas as telas do destino (ex.: "//coordenacao/alunoacesso") contra o perfil logado.</summary>
+        public static bool PodeAbrir(Uri destino)
+            => destino.OriginalString.Split('?')[0]
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(tela => !Permissoes.TryGetValue(tela, out var pode) || pode());
+
+        private static string Nome(string rota) => rota.TrimStart('/');
+
+        public static async Task<Resultado> RotaInicialAsync(Usuario usuario)
+        {
+            if (usuario.IsCoordenacao)
+            {
+                return usuario.AcessoLiberado
+                    ? new Resultado(Navegacao.Coordenacao)
+                    : new Resultado(null, "Seu acesso à coordenação está desativado.");
+            }
+
+            if (usuario.Roles == Roles.Professor)
+            {
+                return usuario.AcessoLiberado
+                    ? new Resultado(Navegacao.Professor)
+                    : new Resultado(null, "Seu acesso de professor foi removido pela coordenação.");
+            }
+
+            var matriculas = await MatriculaRepositorio.DoAlunoAsync(usuario.Id);
+
+            // Após concluir o curso, o aluno ainda reassiste as aulas até o fim da validade do acesso.
+            if (usuario.AcessoLiberado && matriculas.Any(m => m.AcessoAulasVigente))
+                return new Resultado(Navegacao.Aluno);
+
+            // Quem já foi aluno (matrícula encerrada, ou concluída com a validade esgotada) só consulta o próprio certificado.
+            if (matriculas.Count > 0 || (await CertificadoRepositorio.DoAlunoAsync(usuario.Id)).Count > 0)
+                return new Resultado(Navegacao.SomenteCertificados);
+
+            return new Resultado(Navegacao.Aguardando);
+        }
+
+        /// <summary>Candidato (solicitação ainda não liberada): paga primeiro, depois aguarda a coordenação.</summary>
+        public static string RotaCandidato(SolicitacaoMatricula solicitacao)
+            => solicitacao.Pago ? Navegacao.Aguardando : Navegacao.Pagamento;
+
+        public static async Task EntrarAsync(Usuario usuario)
+        {
+            var resultado = await RotaInicialAsync(usuario);
+            if (resultado.Rota == null)
+            {
+                await Shell.Current.DisplayAlertAsync("Acesso", resultado.Mensagem, "OK");
+                return;
+            }
+
+            SessionService.Entrar(usuario);
+
+            // conta criada (ou senha redefinida) pela coordenação: primeiro troca a senha provisória
+            await Shell.Current.GoToAsync(usuario.SenhaProvisoria ? Navegacao.NovaSenha : resultado.Rota);
+        }
+
+        public static async Task EntrarCandidatoAsync(SolicitacaoMatricula solicitacao)
+        {
+            SessionService.EntrarCandidato(solicitacao);
+            await Shell.Current.GoToAsync(RotaCandidato(solicitacao));
+        }
+
+        public static async Task SairAsync()
+        {
+            SessionService.Sair();
+            await Shell.Current.GoToAsync(Navegacao.Login);
+        }
+    }
+}

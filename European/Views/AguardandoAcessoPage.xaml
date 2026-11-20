@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.AguardandoAcessoPage"
+             x:DataType="vm:AcessoRestritoViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,60,28,28" Spacing="18">
+
+            <!-- Aguardando -->
+            <VerticalStackLayout Spacing="18" IsVisible="{Binding SemPendencia}">
+                <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
+                        BackgroundColor="{DynamicResource WarningSoft}">
+                    <Label Text="&#xe88b;" Style="{StaticResource Icon}" FontSize="36" TextColor="{DynamicResource Warning}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Aguardando liberação" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
+                <Label Text="Seu cadastro foi recebido. Assim que a coordenação liberar o seu acesso ao curso, as aulas e provas aparecerão aqui."
+                       Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <!-- Não liberado: pendência informada pela coordenação -->
+            <VerticalStackLayout Spacing="18" IsVisible="{Binding TemPendencia}">
+                <Border Style="{StaticResource IconTile}" WidthRequest="72" HeightRequest="72" HorizontalOptions="Center"
+                        BackgroundColor="{DynamicResource DangerSoft}">
+                    <Label Text="&#xe000;" Style="{StaticResource Icon}" FontSize="36" TextColor="{DynamicResource Danger}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Text="Cadastro com pendência" Style="{StaticResource TitleLg}" HorizontalOptions="Center" />
+                <Label Text="A coordenação ainda não liberou o seu acesso. Resolva a pendência abaixo para continuar."
+                       Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+                <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource DangerSoft}" Stroke="Transparent">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Motivo" Style="{StaticResource BodySm}" TextColor="{DynamicResource Danger}" FontFamily="TextoNegrito" />
+                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodyMd}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Button Text="Refazer pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding RefazerPagamentoCommand}"
+                        IsVisible="{Binding PodeRefazerPagamento}" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource Card}">
+                <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                    <Border Style="{StaticResource IconTile}" BackgroundColor="{DynamicResource BrandPrimary}">
+                        <Label Text="{Binding Iniciais}" FontFamily="TextoNegrito" FontSize="16" TextColor="{DynamicResource BrandOnPrimaryContainer}"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
+                        <Label Text="{Binding Email}" Style="{StaticResource BodySm}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Pedido de matrícula: curso escolhido e pagamento -->
+            <Border Style="{StaticResource Card}" IsVisible="{Binding TemPedido}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe80c;" Style="{StaticResource IconPrimary}" FontSize="20" />
+                        <Label Grid.Column="1" Text="{Binding CursoNome}" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="20" TextColor="{DynamicResource Success}" />
+                        <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Informe este e-mail à coordenação do seu curso." Style="{StaticResource BodySm}" HorizontalOptions="Center"
+                   IsVisible="{Binding TemPedido, Converter={StaticResource InverseBool}}" />
+
+            <Button Text="Verificar novamente" Style="{StaticResource PrimaryButton}" Command="{Binding VerificarCommand}" />
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+            <Button Text="Sair" Style="{StaticResource GhostButton}" Command="{Binding SairCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</views:BasePage>

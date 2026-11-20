@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             x:Class="European.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,60,28,28" Spacing="18">
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Border WidthRequest="72" HeightRequest="72" HorizontalOptions="Start"
+                        BackgroundColor="{DynamicResource BrandPrimary}"
+                        StrokeThickness="0" StrokeShape="RoundRectangle 20">
+                    <Label Text="&#xe80c;" FontFamily="MaterialIcons" FontSize="38"
+                           TextColor="{DynamicResource BrandOnPrimaryContainer}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <controls:BotaoTema Grid.Column="1" VerticalOptions="Start" />
+            </Grid>
+
+            <VerticalStackLayout Spacing="10">
+                <Label Text="European" Style="{StaticResource TitleLg}" FontSize="34" />
+                <BoxView Style="{StaticResource LinhaDourada}" />
+            </VerticalStackLayout>
+            <Label Text="Plataforma de aprendizagem para mestrado. Acesse sua conta para continuar."
+                   Style="{StaticResource Muted}" />
+
+            <VerticalStackLayout Spacing="8" Margin="0,12,0,0">
+                <Label Text="E-mail" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <Entry Text="{Binding Email}" Placeholder="seu@email.com" Keyboard="Email" IsSpellCheckEnabled="False" />
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Senha" Style="{StaticResource BodySm}" />
+                <Border Style="{StaticResource Campo}">
+                    <controls:CampoSenha Text="{Binding Senha}" Placeholder="••••••" />
+                </Border>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
+
+            <Button Text="Entrar" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding LoginCommand}" Margin="0,8,0,0" IsEnabled="{Binding IsNotBusy}" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+            <Button Text="Criar conta" Style="{StaticResource GhostButton}"
+                    Command="{Binding IrParaCadastroCommand}" />
+
+            <Label Text="Novos alunos podem criar a conta e aguardar a liberação da coordenação."
+                   Style="{StaticResource BodySm}" HorizontalTextAlignment="Center" />
+
+            <Border Style="{StaticResource Card}" Margin="0,8,0,0" IsVisible="{Binding PrecisaConfigurar}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="44,*" ColumnSpacing="12">
+                        <Border Grid.Column="0" WidthRequest="44" HeightRequest="44"
+                                BackgroundColor="{DynamicResource WarningSoft}" StrokeThickness="0" StrokeShape="RoundRectangle 12">
+                            <Label Text="&#xe8b8;" Style="{StaticResource Icon}" TextColor="{DynamicResource Warning}"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                        </Border>
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Primeiro acesso" Style="{StaticResource TitleSm}" />
+                            <Label Text="Nenhuma conta de coordenação existe ainda. Crie a primeira para começar."
+                                   Style="{StaticResource BodySm}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Button Text="Configurar coordenação" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding IrParaPrimeiroAcessoCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</views:BasePage>

@@ -1,0 +1,22 @@
+﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:European"
+             xmlns:conv="clr-namespace:European.Converters"
+             xmlns:estilos="clr-namespace:European.Resources.Styles"
+             x:Class="European.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- cores do tema (claro por padrão; o TemaService troca pelo escuro) -->
+                <estilos:CoresClaras />
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <ResourceDictionary Source="Resources/Styles/AppTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:InverseBoolConverter x:Key="InverseBool" />
+            <conv:PercentToProgressConverter x:Key="PercentToProgress" />
+            <conv:TodosVerdadeirosConverter x:Key="TodosVerdadeiros" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

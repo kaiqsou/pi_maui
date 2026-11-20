@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:European.Controls"
+             xmlns:views="clr-namespace:European.Views"
+             xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:models="clr-namespace:European.Models"
+             x:Class="European.Views.CursoDetalhePage"
+             x:DataType="vm:CursoDetalheViewModel"
+             x:Name="Pagina"
+             Title="{Binding Title}"
+             Shell.NavBarIsVisible="False">
+
+    <!--
+        Topo fixo (curso + módulo da página), só as matérias do módulo rolam, e a paginação (< >) fica fixa embaixo.
+        As ações ficam nos menus "⋮" e no toque das aulas, para não encher a tela de botões.
+    -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+
+        <!-- Curso -->
+        <VerticalStackLayout Grid.Row="0" Padding="20,16,20,12" Spacing="10">
+            <controls:Cabecalho Titulo="{Binding Curso.Nome}">
+                <HorizontalStackLayout Spacing="4">
+                    <Button Text="{Binding BotaoEditarTexto}" Style="{StaticResource SoftButton}" VerticalOptions="Center"
+                            Command="{Binding AlternarEdicaoCommand}" IsVisible="{Binding PodeEditar}" />
+                    <Button Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do curso" Command="{Binding OpcoesCursoCommand}" IsVisible="{Binding PodeGerenciarCurso}" />
+                </HorizontalStackLayout>
+            </controls:Cabecalho>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                <Label Text="&#xe7fb;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
+                <Label Grid.Column="1" Text="{Binding ProfessoresTexto}" Style="{StaticResource BodySm}" MaxLines="1"
+                       LineBreakMode="TailTruncation" VerticalOptions="Center" />
+            </Grid>
+        </VerticalStackLayout>
+
+        <!-- Módulo da página atual -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Padding="20,4,20,10">
+            <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleSm}" MaxLines="2" LineBreakMode="TailTruncation"
+                   VerticalOptions="Center" IsVisible="{Binding TemModulos}" />
+            <Label Text="Módulos" Style="{StaticResource TitleSm}" VerticalOptions="Center" IsVisible="{Binding SemModulos}" />
+            <Button Grid.Column="1" Text="Novo módulo" Style="{StaticResource SoftButton}" VerticalOptions="Center"
+                    Command="{Binding NovoModuloCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
+            <Button Grid.Column="2" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do módulo"
+                    Command="{Binding OpcoesModuloCommand}" IsVisible="{Binding TemOpcoesModulo}" />
+        </Grid>
+
+        <!-- Matérias do módulo: única parte que rola -->
+        <ScrollView Grid.Row="2" VerticalScrollBarVisibility="Default">
+            <VerticalStackLayout Padding="20,0,20,16" Spacing="10">
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ModuloAtual.Materias}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MateriaNode">
+                            <Border Style="{StaticResource Card}" Padding="14" StrokeShape="RoundRectangle 14">
+                                <VerticalStackLayout Spacing="8">
+
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                                            <Label Text="{Binding Materia.Nome}" Style="{StaticResource TitleSm}" FontSize="15" />
+                                            <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <Button Grid.Column="1" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções da matéria"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=OpcoesMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                CommandParameter="{Binding .}"
+                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
+                                    </Grid>
+
+                                    <!-- aulas: toque abre a aula (visualizando) ou o menu de edição (editando) -->
+                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding Aulas}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:Aula">
+                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="0,6">
+                                                    <Grid.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=OpcoesAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Grid.GestureRecognizers>
+                                                    <Label Text="&#xe1c4;" Style="{StaticResource IconPrimary}" FontSize="18" VerticalOptions="Center" />
+                                                    <Label Grid.Column="1" Text="{Binding Titulo}" Style="{StaticResource BodyMd}" MaxLines="2"
+                                                           LineBreakMode="TailTruncation" VerticalOptions="Center" />
+                                                    <Label Grid.Column="2" Text="{Binding DuracaoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <!-- provas: toque abre a edição (só as do próprio professor) -->
+                                    <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding Provas}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ProvaNode">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Padding="0,6">
+                                                    <Grid.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=AbrirProvaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Grid.GestureRecognizers>
+                                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Warning}" VerticalOptions="Center" />
+                                                    <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                                                        <Label Text="{Binding Titulo}" Style="{StaticResource BodyMd}" />
+                                                        <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <Label Text="Nenhuma aula ainda." Style="{StaticResource BodySm}" IsVisible="{Binding SemConteudo}" />
+
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <!-- estados vazios -->
+                <VerticalStackLayout Spacing="6" Padding="0,40,0,0" HorizontalOptions="Center" IsVisible="{Binding ModuloSemMaterias}">
+                    <Label Text="&#xea19;" Style="{StaticResource Icon}" FontSize="44" TextColor="{DynamicResource Outline}" HorizontalOptions="Center" />
+                    <Label Text="Nenhuma matéria neste módulo" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
+                    <Label Text="Use o menu ⋮ do módulo para adicionar." Style="{StaticResource Muted}" HorizontalOptions="Center"
+                           IsVisible="{Binding PodeEditarEstrutura}" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="6" Padding="0,40,0,0" HorizontalOptions="Center" IsVisible="{Binding SemModulos}">
+                    <Label Text="&#xe80c;" Style="{StaticResource Icon}" FontSize="44" TextColor="{DynamicResource Outline}" HorizontalOptions="Center" />
+                    <Label Text="Nenhum módulo ainda" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    <controls:BarraPaginacao Grid.Row="3" Padding="20,8,20,16" BindingContext="{Binding Paginas}" />
+
+    </Grid>
+
+</views:BasePage>

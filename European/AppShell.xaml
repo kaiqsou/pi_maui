@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="European.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:European.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.NavBarIsVisible="False"
+    Title="European">
+
+    <FlyoutItem Route="login">
+        <ShellContent ContentTemplate="{DataTemplate views:LoginPage}" />
+    </FlyoutItem>
+
+    <!-- Áreas por perfil (ver AcessoService.RotaInicialAsync) -->
+    <FlyoutItem Route="coordenacao">
+        <ShellContent ContentTemplate="{DataTemplate views:CoordenacaoPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="professor">
+        <ShellContent ContentTemplate="{DataTemplate views:ProfessorPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="main">
+        <ShellContent ContentTemplate="{DataTemplate views:MainPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="certificados">
+        <ShellContent ContentTemplate="{DataTemplate views:SomenteCertificadosPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="novasenha">
+        <ShellContent ContentTemplate="{DataTemplate views:NovaSenhaPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="pagamento">
+        <ShellContent ContentTemplate="{DataTemplate views:PagamentoPage}" />
+    </FlyoutItem>
+
+    <FlyoutItem Route="aguardando">
+        <ShellContent ContentTemplate="{DataTemplate views:AguardandoAcessoPage}" />
+    </FlyoutItem>
+
+</Shell>
