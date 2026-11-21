@@ -63,8 +63,20 @@ namespace European.ViewModels
         public string PendentesTexto => $"Pendentes ({TotalPendentes})";
 
         public ObservableCollection<CursoResumo> Cursos { get; } = new();
+
+        /// <summary>Cursos mostrados aos poucos (5 por vez).</summary>
+        public ListaIncremental<CursoResumo> CursosLista => _cursosLista ??= new(5, Cursos);
+        private ListaIncremental<CursoResumo>? _cursosLista;
         public ObservableCollection<PessoaItem> Alunos { get; } = new();
+
+        /// <summary>Alunos mostrados aos poucos (15 por vez).</summary>
+        public ListaIncremental<PessoaItem> AlunosLista => _alunosLista ??= new(15, Alunos);
+        private ListaIncremental<PessoaItem>? _alunosLista;
         public ObservableCollection<PessoaItem> Professores { get; } = new();
+
+        /// <summary>Professores mostrados aos poucos (15 por vez).</summary>
+        public ListaIncremental<PessoaItem> ProfessoresLista => _professoresLista ??= new(15, Professores);
+        private ListaIncremental<PessoaItem>? _professoresLista;
 
         partial void OnFiltroAlunosChanged(string value) => AplicarFiltroAlunos();
         partial void OnBuscaChanged(string value) => AplicarFiltroAlunos();
@@ -99,11 +111,7 @@ namespace European.ViewModels
 
             TotalPendentes = alunos.Count(a => a.StatusAcesso == StatusAcesso.Pendente) + solicitacoes.Count;
 
-            // na primeira carga, com pendências, a lista já abre filtrada nelas
-            if (TotalPendentes > 0 && FiltroAlunos == "todos" && Alunos.Count == 0)
-                FiltroAlunos = "pendentes";
-            else
-                AplicarFiltroAlunos();
+            AplicarFiltroAlunos();
 
             var professores = await UsuarioRepositorio.ListarAsync(Roles.Professor);
             _todosProfessores = professores.Select(professor =>
@@ -164,12 +172,9 @@ namespace European.ViewModels
 
         private PessoaItem ItemSolicitacao(SolicitacaoMatricula solicitacao, IReadOnlyDictionary<string, string> nomesCursos)
         {
-            var (status, destaque) = solicitacao switch
-            {
-                { TemPendencia: true } => ("Com pendência", false),
-                { Pago: false } => ("Aguardando pagamento", false),
-                _ => ("Solicitação", true)
-            };
+            // só as que estão em análise pedem ação da coordenação agora
+            var status = SolicitacaoService.StatusTexto(solicitacao);
+            var destaque = solicitacao.Status == StatusSolicitacao.EmAnalise;
 
             return new PessoaItem
             {

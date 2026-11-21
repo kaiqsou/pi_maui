@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:views="clr-namespace:European.Views"
              xmlns:vm="clr-namespace:European.ViewModels"
+             xmlns:controls="clr-namespace:European.Controls"
              x:Class="European.Views.PagamentoPage"
              x:DataType="vm:PagamentoViewModel"
              Shell.NavBarIsVisible="False">
@@ -12,7 +13,7 @@
 
             <VerticalStackLayout Spacing="2">
                 <Label Text="Pagamento" Style="{StaticResource TitleLg}" />
-                <Label Text="Conclua o pagamento para enviar sua matrícula à coordenação." Style="{StaticResource Muted}" />
+                <Label Text="Documentos recebidos. Conclua o pagamento para enviar sua matrícula à coordenação." Style="{StaticResource Muted}" />
             </VerticalStackLayout>
 
             <!-- Resumo do pedido -->
@@ -91,11 +92,10 @@
             <!-- Pix -->
             <Border Style="{StaticResource Card}" IsVisible="{Binding IsPix}">
                 <VerticalStackLayout Spacing="14">
-                    <Border WidthRequest="160" HeightRequest="160" HorizontalOptions="Center"
-                            BackgroundColor="{DynamicResource Surface}" Stroke="{DynamicResource Outline}"
-                            StrokeThickness="1" StrokeShape="RoundRectangle 16">
-                        <Label Text="&#xef6b;" Style="{StaticResource Icon}" FontSize="120" TextColor="{DynamicResource OnSurface}"
-                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Border WidthRequest="200" HeightRequest="200" HorizontalOptions="Center" Padding="0"
+                            BackgroundColor="White" Stroke="{DynamicResource Outline}"
+                            StrokeThickness="1" StrokeShape="RoundRectangle 12">
+                        <controls:QrCodeView Texto="{Binding CodigoPix}" />
                     </Border>
                     <Label Text="Escaneie o QR Code no app do seu banco ou use o código Pix copia e cola."
                            Style="{StaticResource BodySm}" HorizontalTextAlignment="Center" />
@@ -138,7 +138,7 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="4">
                             <Label Text="CVV" Style="{StaticResource BodySm}" />
                             <Border Style="{StaticResource Campo}">
-                                <Entry Text="{Binding Cvv}" Placeholder="123" Keyboard="Numeric" MaxLength="4" IsPassword="True" />
+                                <controls:CaixaSenha Text="{Binding Cvv}" Placeholder="123" Keyboard="Numeric" MaxLength="4" IsPassword="True" />
                             </Border>
                         </VerticalStackLayout>
                     </Grid>
@@ -160,9 +160,10 @@
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" HorizontalOptions="Center">
                 <Label Text="&#xe897;" Style="{StaticResource Icon}" FontSize="14" TextColor="{DynamicResource OnSurfaceVariant}" />
-                <Label Grid.Column="1" Text="Ambiente de demonstração: nenhum valor é cobrado." Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="Pagamento protegido. Se a matrícula não for liberada, o valor é reembolsado." Style="{StaticResource BodySm}" VerticalOptions="Center" />
             </Grid>
 
+            <Button Text="Voltar aos documentos" Style="{StaticResource GhostButton}" Command="{Binding VoltarDocumentosCommand}" />
             <Button Text="Sair" Style="{StaticResource GhostButton}" Command="{Binding SairCommand}" />
 
         </VerticalStackLayout>

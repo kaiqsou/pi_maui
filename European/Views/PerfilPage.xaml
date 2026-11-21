@@ -65,15 +65,9 @@
                             <ProgressBar Progress="{Binding Progresso, Converter={StaticResource PercentToProgress}}" />
                         </VerticalStackLayout>
 
-                        <BoxView HeightRequest="1" Color="{DynamicResource Outline}" />
-
                         <Grid ColumnDefinitions="*,Auto">
                             <Label Grid.Column="0" Text="Matriculado em" Style="{StaticResource Muted}" />
                             <Label Grid.Column="1" Text="{Binding MatriculadoEmTexto}" Style="{StaticResource BodyMd}" />
-                        </Grid>
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" IsVisible="{Binding TemTurma}">
-                            <Label Grid.Column="0" Text="Turma" Style="{StaticResource Muted}" />
-                            <Label Grid.Column="1" Text="{Binding TurmaTexto}" Style="{StaticResource BodyMd}" HorizontalTextAlignment="End" />
                         </Grid>
                         <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding TemAcessoAte}">
                             <Label Grid.Column="0" Text="Aulas disponíveis até" Style="{StaticResource Muted}" />

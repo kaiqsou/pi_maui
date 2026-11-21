@@ -27,6 +27,12 @@ namespace European.ViewModels
     {
         private Prova? _prova;
 
+        /// <summary>Quantas notas aparecem de início (as mais recentes), para a lista não virar uma página enorme.</summary>
+        private const int NotasVisiveis = 3;
+
+        /// <summary>Todas as notas da prova (depois da correção); Resultados mostra só as últimas, ou todas se pedido.</summary>
+        private List<ResultadoAlunoItem> _notas = new();
+
         public ObservableCollection<ResultadoAlunoItem> Resultados { get; } = new();
 
         [ObservableProperty]
@@ -35,13 +41,21 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial bool ModoCego { get; private set; }
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(VerTodasTexto))]
+        public partial bool MostrarTodas { get; private set; }
+
+        /// <summary>Há mais notas além das 3 mais recentes (botão "Ver todas").</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(VerTodasTexto))]
+        public partial bool TemMaisNotas { get; private set; }
+
+        public string VerTodasTexto => MostrarTodas ? "Mostrar só as últimas" : $"Ver todas as notas ({_notas.Count})";
+
         // ---- Dados essenciais da prova ----
 
         [ObservableProperty]
         public partial string MateriaTexto { get; private set; } = string.Empty;
-
-        [ObservableProperty]
-        public partial string TurmaTexto { get; private set; } = string.Empty;
 
         [ObservableProperty]
         public partial string RegrasTexto { get; private set; } = string.Empty;
@@ -55,7 +69,7 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial bool Publicada { get; private set; }
 
-        /// <summary>Só o professor que criou a prova vê o botão Editar.</summary>
+        /// <summary>Os professores do curso veem o botão Editar.</summary>
         [ObservableProperty]
         public partial bool PodeEditar { get; private set; }
 
@@ -79,6 +93,8 @@ namespace European.ViewModels
             ModoCego = pendentes > 0;
 
             Resultados.Clear();
+            _notas = new();
+            TemMaisNotas = false;
             if (ModoCego)
             {
                 var anonimos = ProvaService.OrdemAnonima(resultados);
@@ -100,39 +116,57 @@ namespace European.ViewModels
                 return;
             }
 
+            // notas das entregas mais recentes primeiro; de início só as 3 últimas aparecem
             var alunos = (await UsuarioRepositorio.PorIdsAsync(resultados.Select(r => r.AlunoId))).ToDictionary(u => u.Id);
-            foreach (var r in resultados.OrderByDescending(r => r.NotaObtida))
+            _notas = resultados.OrderByDescending(r => r.DataRealizacao).Select(r =>
             {
                 var aluno = alunos.GetValueOrDefault(r.AlunoId);
-                Resultados.Add(new ResultadoAlunoItem
+                return new ResultadoAlunoItem
                 {
                     Resultado = r,
                     Nome = aluno?.Nome ?? "Aluno removido",
                     Iniciais = aluno?.Iniciais ?? "?",
                     Detalhe = $"Entregue em {r.DataRealizacao:dd/MM/yyyy HH:mm}" + (r.TempoEsgotado ? " · tempo esgotado" : string.Empty),
                     Aprovado = r.NotaObtida >= _prova.NotaCorte
-                });
-            }
+                };
+            }).ToList();
+            TemMaisNotas = _notas.Count > NotasVisiveis;
+            ExibirNotas();
 
             Resumo = resultados.Count == 0
                 ? "Nenhum aluno fez esta prova ainda."
                 : $"Todas corrigidas · {resultados.Count} entrega(s) · média {resultados.Average(r => r.NotaObtida):0.0} · " +
-                  $"{Resultados.Count(r => r.Aprovado)} aprovado(s)";
+                  $"{_notas.Count(r => r.Aprovado)} aprovado(s)";
         });
+
+        private void ExibirNotas()
+        {
+            Resultados.Clear();
+            foreach (var item in MostrarTodas ? _notas : _notas.Take(NotasVisiveis))
+                Resultados.Add(item);
+            OnPropertyChanged(nameof(VerTodasTexto));
+        }
+
+        [RelayCommand]
+        private void AlternarTodas()
+        {
+            MostrarTodas = !MostrarTodas;
+            ExibirNotas();
+        }
 
         private async Task CarregarDadosDaProvaAsync(Prova prova)
         {
             var curso = await CursoRepositorio.PorIdAsync(prova.CursoId);
             var materia = curso?.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId);
-            var sala = prova.SalaId == null ? null : await SalaRepositorio.PorIdAsync(prova.SalaId);
 
             MateriaTexto = $"{materia?.Nome ?? "Matéria removida"} · {curso?.Nome ?? "Curso removido"}";
-            TurmaTexto = sala == null ? "Todos os alunos do curso" : $"Turma {sala.Nome}";
             RegrasTexto = $"{prova.Questoes.Count} questão(ões) · {prova.DuracaoTexto} · nota máxima {prova.NotaMaxima:0.#} · corte {prova.NotaCorte:0.#}";
-            PrazoTexto = prova.Prazo == null ? "Sem prazo" : $"Prazo: {prova.PrazoTexto}";
+            PrazoTexto = $"Prazo: {prova.PrazoDiasTexto} para cada aluno, a partir da liberação";
             Publicada = prova.IsPublicada;
-            StatusTexto = !prova.IsPublicada ? "Rascunho" : prova.Expirada ? "Encerrada" : "Publicada";
-            PodeEditar = prova.ProfessorId == SessionService.UsuarioAtual?.Id;
+            StatusTexto = prova.IsPublicada ? "Publicada" : "Rascunho";
+            // a prova é do curso: qualquer professor dele pode editar
+            var usuario = SessionService.UsuarioAtual?.Id;
+            PodeEditar = usuario != null && (prova.ProfessorId == usuario || curso?.ProfessorIds.Contains(usuario) == true);
         }
 
         [RelayCommand]

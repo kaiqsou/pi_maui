@@ -48,5 +48,9 @@ namespace European.Data
         public static Task InserirAsync(Matricula matricula) => Colecao.InserirAsync(matricula);
 
         public static Task AtualizarAsync(Matricula matricula) => Colecao.AtualizarAsync(matricula);
+
+        /// <summary>Grava só o calendário de provas (não sobrescreve status/progresso alterados em outro lugar).</summary>
+        public static Task AtualizarAgendaAsync(Matricula matricula)
+            => Colecao.UpdateOneAsync(m => m.Id == matricula.Id, Builders<Matricula>.Update.Set(m => m.AgendaProvas, matricula.AgendaProvas));
     }
 }

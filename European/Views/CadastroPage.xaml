@@ -66,7 +66,7 @@
                 <Label Text="Toque em um curso para escolher. Use &quot;Ver detalhes&quot; para saber mais antes de comprar."
                        Style="{StaticResource Muted}" />
 
-                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding CursosPagina}">
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding CursosLista.Visiveis}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:CursoCadastroItem">
                             <Border Style="{StaticResource Card}" Padding="14" StrokeShape="RoundRectangle 14">
@@ -115,11 +115,12 @@
                 <Label Text="Nenhum curso com inscrições abertas no momento." Style="{StaticResource Muted}"
                        IsVisible="{Binding SemCursos}" />
 
-                <controls:BarraPaginacao BindingContext="{Binding Paginas}" />
+                <Button Text="{Binding CursosLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                        Command="{Binding CursosLista.CarregarMaisCommand}" IsVisible="{Binding CursosLista.TemMais}" />
 
                 <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" Style="{StaticResource MensagemErro}" />
 
-                <Button Text="Continuar para o pagamento" Style="{StaticResource PrimaryButton}" Command="{Binding CadastroCommand}"
+                <Button Text="Continuar para os documentos" Style="{StaticResource PrimaryButton}" Command="{Binding CadastroCommand}"
                         IsEnabled="{Binding IsNotBusy}" />
                 <Button Text="Voltar" Style="{StaticResource GhostButton}" Command="{Binding VoltarEtapaCommand}" />
             </VerticalStackLayout>

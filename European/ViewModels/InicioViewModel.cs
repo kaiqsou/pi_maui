@@ -59,7 +59,10 @@ namespace European.ViewModels
 
         /// <summary>"Parou em 03:25 de 07:08" quando a aula foi assistida pela metade; senão, só a duração.</summary>
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemUltimaDuracao))]
         public partial string UltimaDuracao { get; private set; } = string.Empty;
+
+        public bool TemUltimaDuracao => !string.IsNullOrEmpty(UltimaDuracao);
 
         /// <summary>De 0 a 100, quanto da aula atual já foi assistido.</summary>
         [ObservableProperty]
@@ -191,14 +194,14 @@ namespace European.ViewModels
 
         private async Task CarregarProvasPendentesAsync(string alunoId, List<Matricula> matriculas)
         {
-            var provas = await ProvaService.VisiveisParaAlunoAsync(alunoId, matriculas);
+            var agenda = await ProvaService.AgendaAsync(matriculas);
             var respondidas = (await ResultadoRepositorio.DoAlunoAsync(alunoId)).Select(r => r.ProvaId).ToHashSet();
 
-            // VisiveisParaAlunoAsync já ordena pelo prazo mais próximo
-            var pendentes = provas.Where(p => !respondidas.Contains(p.Id) && !p.Expirada).ToList();
+            // abertas e ainda não feitas, pelo prazo mais próximo
+            var pendentes = agenda.Where(p => p.Aberta && !respondidas.Contains(p.Prova.Id)).OrderBy(p => p.PrazoAte).ToList();
             TotalProvasPendentes = pendentes.Count;
             ProvasPendentes = new ObservableCollection<ProvaItem>(
-                pendentes.Take(MaxProvasPendentes).Select(p => new ProvaItem { Prova = p }));
+                pendentes.Take(MaxProvasPendentes).Select(p => new ProvaItem { Agendada = p }));
         }
 
         [RelayCommand]

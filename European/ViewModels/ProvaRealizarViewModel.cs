@@ -157,7 +157,7 @@ namespace European.ViewModels
                 return;
             }
 
-            if (await ConfirmarAsync("Se sair agora, a prova será enviada com as respostas marcadas até aqui.", "Enviar e sair"))
+            if (await ConfirmarAsync("Deseja sair? A prova será enviada.", "Sair"))
                 await EnviarAsync(confirmar: false, tempoEsgotado: false);
         }
 
@@ -171,8 +171,8 @@ namespace European.ViewModels
             {
                 var emBranco = Questoes.Count(q => q.EmBranco);
                 var mensagem = emBranco > 0
-                    ? $"Ainda há {emBranco} questão(ões) sem resposta. Deseja enviar mesmo assim?"
-                    : "Deseja enviar a prova? Não será possível alterar as respostas.";
+                    ? $"{emBranco} questão(ões) sem resposta. Enviar mesmo assim?"
+                    : "Deseja enviar a prova?";
 
                 if (!await ConfirmarAsync(mensagem, "Enviar"))
                     return;
@@ -189,11 +189,12 @@ namespace European.ViewModels
                     Questoes.Select(q => q.IsDissertativa ? q.Texto.Trim() : string.Empty).ToList(),
                     tempoEsgotado);
                 await ResultadoRepositorio.InserirAsync(resultado);
-                await NotificacaoService.ParaUsuarioAsync(_prova.ProfessorId, "Nova entrega",
-                    $"Uma entrega da prova \"{_prova.Titulo}\" aguarda a sua correção.");
+                // a prova é do curso: todos os professores dele podem corrigir
+                await NotificacaoService.ParaProfessoresDoCursoAsync(_prova.CursoId, "Nova entrega",
+                    $"Uma entrega da prova \"{_prova.Titulo}\" aguarda correção.");
 
                 var titulo = tempoEsgotado ? "Tempo esgotado" : "Prova enviada";
-                await AvisarAsync(titulo, "Suas respostas foram enviadas. A nota aparece em Provas › Realizadas depois que o professor corrigir.");
+                await AvisarAsync(titulo, "Suas respostas foram enviadas.");
             });
 
             if (!ok)

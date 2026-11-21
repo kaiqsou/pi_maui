@@ -24,6 +24,7 @@ namespace European.Services
             [Nome(Navegacao.Aluno)] = Aluno,
             [Navegacao.Aula] = () => Aluno() || Professor() || Coordenacao(), // professor e coordenação: pré-visualização
             [Navegacao.ProvaRealizar] = Aluno,
+            [Navegacao.ProvaRevisao] = Aluno,
             [Navegacao.Certificado] = Aluno,
             [Nome(Navegacao.SomenteCertificados)] = Aluno,
 
@@ -31,8 +32,6 @@ namespace European.Services
             [Nome(Navegacao.Professor)] = Professor,
             [Navegacao.ProvaEdit] = Professor,
             [Navegacao.Correcao] = Professor,
-            [Navegacao.Sala] = Professor,
-            [Navegacao.SalaEdit] = Professor,
             [Navegacao.ProvaResultados] = () => Professor() || Coordenacao(),
 
             // conteúdo do curso: coordenação e professores
@@ -56,6 +55,7 @@ namespace European.Services
             [Nome(Navegacao.NovaSenha)] = Logado,
             [Nome(Navegacao.Aguardando)] = () => Logado() || Candidato(),
             [Nome(Navegacao.Pagamento)] = Candidato,
+            [Nome(Navegacao.Documentos)] = Candidato,
         };
 
         /// <summary>Confere todas as telas do destino (ex.: "//coordenacao/alunoacesso") contra o perfil logado.</summary>
@@ -95,9 +95,16 @@ namespace European.Services
             return new Resultado(Navegacao.Aguardando);
         }
 
-        /// <summary>Candidato (solicitação ainda não liberada): paga primeiro, depois aguarda a coordenação.</summary>
-        public static string RotaCandidato(SolicitacaoMatricula solicitacao)
-            => solicitacao.Pago ? Navegacao.Aguardando : Navegacao.Pagamento;
+        /// <summary>
+        /// Candidato (solicitação ainda não liberada): envia os documentos, paga e aguarda a coordenação. Devolvida e
+        /// cancelada também ficam na tela de espera, que mostra o motivo (e o reembolso).
+        /// </summary>
+        public static string RotaCandidato(SolicitacaoMatricula solicitacao) => solicitacao.Status switch
+        {
+            StatusSolicitacao.Documentos => Navegacao.Documentos,
+            StatusSolicitacao.Pagamento => Navegacao.Pagamento,
+            _ => Navegacao.Aguardando
+        };
 
         public static async Task EntrarAsync(Usuario usuario)
         {

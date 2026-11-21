@@ -12,7 +12,6 @@ namespace European.ViewModels
     public partial class ProvaEditViewModel : BaseViewModel
     {
         private Prova? _prova;
-        private List<Sala> _salasDoProfessor = new();
         private int _indiceQuestao;
         private int _entregas;
 
@@ -56,12 +55,6 @@ namespace European.ViewModels
         public partial MateriaOpcao? MateriaSelecionada { get; set; }
 
         [ObservableProperty]
-        public partial List<SalaOpcao> Salas { get; private set; } = new();
-
-        [ObservableProperty]
-        public partial SalaOpcao? SalaSelecionada { get; set; }
-
-        [ObservableProperty]
         public partial string Titulo { get; set; } = string.Empty;
 
         [ObservableProperty]
@@ -81,46 +74,12 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial string Peso { get; set; } = "1";
 
+        /// <summary>Dias que o aluno tem para fazer a prova depois que ela é liberada para ele.</summary>
         [ObservableProperty]
-        public partial bool TemPrazo { get; set; }
-
-        [ObservableProperty]
-        public partial DateTime PrazoData { get; set; } = DateTime.Today.AddDays(7);
+        public partial string PrazoDias { get; set; } = Prova.PrazoDiasPadrao.ToString();
 
         [ObservableProperty]
         public partial bool IsPublicada { get; set; }
-
-        private TimeSpan _prazoHora = new(23, 59, 0);
-
-        public TimeSpan PrazoHora
-        {
-            get => _prazoHora;
-            set
-            {
-                // minutos de 5 em 5, como na lista de seleção
-                if (SetProperty(ref _prazoHora, new TimeSpan(value.Hours, value.Minutes / 5 * 5, 0)))
-                {
-                    OnPropertyChanged(nameof(HoraPrazo));
-                    OnPropertyChanged(nameof(MinutoPrazo));
-                }
-            }
-        }
-
-        // Hora e minuto do prazo em duas listas simples (o TimePicker do Windows aparece cortado)
-        public List<string> Horas { get; } = Enumerable.Range(0, 24).Select(h => h.ToString("00")).ToList();
-        public List<string> Minutos { get; } = Enumerable.Range(0, 12).Select(m => (m * 5).ToString("00")).ToList();
-
-        public string HoraPrazo
-        {
-            get => PrazoHora.Hours.ToString("00");
-            set { if (int.TryParse(value, out var h)) PrazoHora = new TimeSpan(h, PrazoHora.Minutes, 0); }
-        }
-
-        public string MinutoPrazo
-        {
-            get => PrazoHora.Minutes.ToString("00");
-            set { if (int.TryParse(value, out var m)) PrazoHora = new TimeSpan(PrazoHora.Hours, m, 0); }
-        }
 
         // ---- Etapa 3: questões ----
 
@@ -136,7 +95,7 @@ namespace European.ViewModels
         public bool TemEntregas => _entregas > 0;
         public string EntregasTexto => $"{_entregas} aluno(s) já fizeram esta prova. Alterar questões não recalcula as notas já lançadas.";
 
-        partial void OnCursoSelecionadoChanged(Curso? value) => AtualizarOpcoesDoCurso(null, null);
+        partial void OnCursoSelecionadoChanged(Curso? value) => AtualizarOpcoesDoCurso(null);
 
         protected override async Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
@@ -152,13 +111,12 @@ namespace European.ViewModels
             await ExecutarAsync(async () =>
             {
                 var cursos = await CursoRepositorio.DoProfessorAsync(professor.Id);
-                _salasDoProfessor = await SalaRepositorio.DoProfessorAsync(professor.Id);
                 _entregas = prova == null ? 0 : (await ResultadoRepositorio.DaProvaAsync(prova.Id)).Count;
 
                 Cursos = cursos;
                 var cursoId = prova?.CursoId ?? materia?.Modulo?.Curso?.Id;
                 CursoSelecionado = cursos.FirstOrDefault(c => c.Id == cursoId) ?? cursos.FirstOrDefault();
-                AtualizarOpcoesDoCurso(prova?.MateriaId ?? materia?.Id, prova?.SalaId);
+                AtualizarOpcoesDoCurso(prova?.MateriaId ?? materia?.Id);
 
                 Titulo = prova?.Titulo ?? (materia == null ? string.Empty : $"Avaliação — {materia.Nome}");
                 Instrucoes = prova?.Instrucoes ?? string.Empty;
@@ -166,9 +124,7 @@ namespace European.ViewModels
                 NotaMaxima = Formatos.Numero(prova?.NotaMaxima ?? 10);
                 NotaCorte = Formatos.Numero(prova?.NotaCorte ?? 6);
                 Peso = Formatos.Numero(prova?.Peso ?? 1);
-                TemPrazo = prova?.Prazo != null;
-                PrazoData = prova?.Prazo?.Date ?? DateTime.Today.AddDays(7);
-                PrazoHora = prova?.Prazo?.TimeOfDay ?? new TimeSpan(23, 59, 0);
+                PrazoDias = (prova?.PrazoDias ?? Prova.PrazoDiasPadrao).ToString();
                 IsPublicada = prova?.IsPublicada ?? false;
 
                 Questoes.Clear();
@@ -187,7 +143,7 @@ namespace European.ViewModels
             });
         }
 
-        private void AtualizarOpcoesDoCurso(string? materiaId, string? salaId)
+        private void AtualizarOpcoesDoCurso(string? materiaId)
         {
             var curso = CursoSelecionado;
             Materias = curso == null
@@ -196,13 +152,6 @@ namespace European.ViewModels
                     .SelectMany(m => m.Materias.OrderBy(x => x.Ordem).Select(x => new MateriaOpcao { Valor = x, Texto = $"M{m.Ordem} · {x.Nome}" }))
                     .ToList();
             MateriaSelecionada = Materias.FirstOrDefault(m => m.Valor!.Id == materiaId) ?? Materias.FirstOrDefault();
-
-            var salas = new List<SalaOpcao> { new() { Texto = "Todos os alunos do curso" } };
-            salas.AddRange(_salasDoProfessor
-                .Where(s => s.CursoId == null || s.CursoId == curso?.Id)
-                .Select(s => new SalaOpcao { Valor = s, Texto = $"Sala: {s.Nome} ({s.AlunoIds.Count} alunos)" }));
-            Salas = salas;
-            SalaSelecionada = Salas.FirstOrDefault(s => s.Valor?.Id == salaId) ?? Salas[0];
         }
 
         // ---- Navegação entre etapas e questões ----
@@ -307,28 +256,35 @@ namespace European.ViewModels
             }
 
             var prova = _prova ?? new Prova { ProfessorId = professor.Id };
-            var jaEstavaPublicada = prova.IsPublicada;
-            prova.CursoId = CursoSelecionado!.Id;
+
+            // prova nova (ou que mudou de curso) entra no fim da ordem do curso; as provas antigas sem posição
+            // ganham a posição em que já apareciam, para a nova não passar na frente delas
+            if (string.IsNullOrEmpty(prova.Id) || prova.CursoId != CursoSelecionado!.Id)
+            {
+                var doCurso = ProvaService.OrdenarDoCurso(await ProvaRepositorio.DosCursosAsync(new[] { CursoSelecionado!.Id }), CursoSelecionado)
+                    .Where(p => p.Id != prova.Id)
+                    .ToList();
+                if (doCurso.Any(p => p.Ordem == 0))
+                    await ProvaRepositorio.SalvarOrdemAsync(doCurso);
+                prova.Ordem = doCurso.Count + 1;
+            }
+
+            prova.CursoId = CursoSelecionado.Id;
             prova.MateriaId = MateriaSelecionada!.Valor!.Id;
-            prova.SalaId = SalaSelecionada?.Valor?.Id;
             prova.Titulo = Titulo.Trim();
             prova.Instrucoes = Instrucoes.Trim();
             prova.DuracaoMinutos = (int)Math.Max(0, Formatos.LerNumero(DuracaoMinutos, 0));
             prova.NotaMaxima = Formatos.LerNumero(NotaMaxima, 10);
             prova.NotaCorte = Formatos.LerNumero(NotaCorte, 6);
             prova.Peso = Formatos.LerNumero(Peso, 1);
-            prova.Prazo = TemPrazo ? PrazoData.Date + PrazoHora : null;
+            prova.PrazoDias = (int)Formatos.LerNumero(PrazoDias, Prova.PrazoDiasPadrao);
             prova.IsPublicada = IsPublicada;
             prova.Questoes = Questoes.Select(q => q.ParaQuestao()).ToList();
 
             if (await ExecutarAsync(() => ProvaRepositorio.SalvarAsync(prova)))
             {
-                if (prova.IsPublicada && !jaEstavaPublicada)
-                    await NotificacaoService.ParaAlunosAsync(prova.CursoId, prova.SalaId, "Nova prova",
-                        $"A prova \"{prova.Titulo}\" já está disponível na aba Provas.");
-
                 await AvisarAsync("Prova", prova.IsPublicada
-                    ? "Prova salva e publicada para os alunos. As notas só aparecem para eles depois que você corrigir."
+                    ? "Prova salva e publicada. Ela entra no calendário de cada aluno do curso, na ordem das matérias; as notas só aparecem para eles depois que você corrigir."
                     : "Prova salva como rascunho. Ative \"Publicar\" quando quiser liberar aos alunos.");
                 await VoltarAsync();
             }
@@ -351,6 +307,8 @@ namespace European.ViewModels
                 return "A nota máxima deve ser maior que zero.";
             if (Formatos.LerNumero(NotaCorte, 0) > Formatos.LerNumero(NotaMaxima, 10))
                 return "A nota de corte não pode ser maior que a nota máxima.";
+            if (Formatos.LerNumero(PrazoDias, 0) < 1)
+                return "O prazo para o aluno fazer a prova deve ser de pelo menos 1 dia.";
             return null;
         }
 

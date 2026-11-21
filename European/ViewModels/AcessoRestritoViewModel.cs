@@ -40,15 +40,42 @@ namespace European.ViewModels
             ? $"Sua matrícula em {trancada.CursoNome} está trancada{(trancada.TrancadaEm is { } em ? $" desde {em:dd/MM/yyyy}" : string.Empty)}. Reabra para voltar às aulas e provas."
             : "Seu acesso às aulas foi encerrado. Você continua podendo consultar o seu certificado.";
 
-        public string PagamentoTexto => Solicitacao == null || !Solicitacao.Pago
-            ? string.Empty
-            : $"Pagamento confirmado {Formatos.Pagamento(Solicitacao.FormaPagamento, Solicitacao.PagamentoEm, "dd/MM/yyyy")}";
+        public bool Pago => Solicitacao?.Pago == true;
 
-        /// <summary>Pendência registrada pela coordenação ao não liberar a matrícula.</summary>
+        public string PagamentoTexto => Solicitacao is not { Pago: true } s
+            ? string.Empty
+            : $"Pagamento confirmado {Formatos.Pagamento(s.FormaPagamento, s.PagamentoEm, "dd/MM/yyyy")}" +
+              (s.TransacaoId is { } id ? $" · comprovante {id}" : string.Empty);
+
+        /// <summary>Devolvida pela coordenação: o candidato corrige os documentos e reenvia.</summary>
         public bool TemPendencia => Solicitacao?.TemPendencia == true;
-        public bool SemPendencia => !TemPendencia;
         public string PendenciaTexto => Solicitacao?.PendenciaMotivo ?? string.Empty;
-        public bool PodeRefazerPagamento => TemPendencia;
+
+        /// <summary>Cancelada (pela coordenação ou desistência), com o reembolso se houve pagamento.</summary>
+        public bool Cancelada => Solicitacao?.Cancelada == true;
+        public string CanceladaTexto => Solicitacao?.CanceladaMotivo ?? string.Empty;
+        public string ReembolsoTexto => Solicitacao is { Reembolsada: true } s
+            ? $"Reembolso de {Formatos.Moeda(s.ValorPago ?? 0)} feito em {s.ReembolsadaEm:dd/MM/yyyy} {ReembolsoComo(s)} (código {s.ReembolsoId})."
+            : string.Empty;
+        public bool TemReembolso => !string.IsNullOrEmpty(ReembolsoTexto);
+
+        /// <summary>Aguardando a análise (nem devolvida nem cancelada), ou conta de usuário pendente/ex-aluno.</summary>
+        public bool MostrarAguardando => !TemPendencia && !Cancelada;
+        /// <summary>Desistência só depois que a solicitação chegou à análise (em análise ou devolvida para correção).</summary>
+        public bool PodeDesistir => Solicitacao?.Status is StatusSolicitacao.EmAnalise or StatusSolicitacao.Devolvida;
+
+        public string AguardandoTitulo => Solicitacao != null ? "Matrícula em análise" : "Aguardando liberação";
+        public string AguardandoTexto => Solicitacao != null
+            ? "Recebemos seus documentos e o pagamento. A coordenação está conferindo tudo; assim que liberar, as aulas e provas aparecerão aqui."
+            : "Assim que a coordenação liberar o seu acesso ao curso, as aulas e provas aparecerão aqui.";
+
+        private static string ReembolsoComo(SolicitacaoMatricula s) => s.FormaPagamento switch
+        {
+            FormaPagamento.Pix => "via Pix na conta de origem",
+            FormaPagamento.CartaoCredito => "como estorno no cartão de crédito",
+            FormaPagamento.CartaoDebito => "como estorno no cartão de débito",
+            _ => string.Empty
+        };
 
         /// <summary>Relê a solicitação: a coordenação pode ter registrado uma pendência ou liberado a matrícula.</summary>
         public override async Task AoAparecerAsync()
@@ -81,11 +108,18 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(Nome));
             OnPropertyChanged(nameof(Email));
             OnPropertyChanged(nameof(Iniciais));
+            OnPropertyChanged(nameof(Pago));
             OnPropertyChanged(nameof(PagamentoTexto));
             OnPropertyChanged(nameof(TemPendencia));
-            OnPropertyChanged(nameof(SemPendencia));
             OnPropertyChanged(nameof(PendenciaTexto));
-            OnPropertyChanged(nameof(PodeRefazerPagamento));
+            OnPropertyChanged(nameof(Cancelada));
+            OnPropertyChanged(nameof(CanceladaTexto));
+            OnPropertyChanged(nameof(ReembolsoTexto));
+            OnPropertyChanged(nameof(TemReembolso));
+            OnPropertyChanged(nameof(MostrarAguardando));
+            OnPropertyChanged(nameof(PodeDesistir));
+            OnPropertyChanged(nameof(AguardandoTitulo));
+            OnPropertyChanged(nameof(AguardandoTexto));
         }
 
         /// <summary>
@@ -98,8 +132,10 @@ namespace European.ViewModels
             var solicitacao = await SolicitacaoRepositorio.PorIdAsync(atual.Id);
             if (solicitacao != null)
             {
+                // ainda enviando documentos ou pagando: a etapa certa é outra tela
                 SessionService.EntrarCandidato(solicitacao);
-                return null;
+                var etapa = AcessoService.RotaCandidato(solicitacao);
+                return etapa == Navegacao.Aguardando ? null : etapa;
             }
 
             var usuario = await UsuarioRepositorio.PorEmailAsync(atual.Email);
@@ -128,8 +164,25 @@ namespace European.ViewModels
                 await AcessoService.EntrarAsync(usuario);
         }
 
+        /// <summary>Devolvida: abre os documentos para trocar os recusados e reenviar.</summary>
         [RelayCommand]
-        private Task RefazerPagamento() => Shell.Current.GoToAsync(Navegacao.Pagamento);
+        private Task CorrigirDocumentos() => Shell.Current.GoToAsync(Navegacao.Documentos);
+
+        [RelayCommand]
+        private async Task DesistirAsync()
+        {
+            if (Solicitacao is { } solicitacao && await Candidatura.DesistirAsync(solicitacao))
+                NotificarDadosDaSessao();
+        }
+
+        /// <summary>Cancelada: começa um cadastro novo (o pedido cancelado é substituído).</summary>
+        [RelayCommand]
+        private async Task NovoCadastroAsync()
+        {
+            SessionService.Sair();
+            await Shell.Current.GoToAsync(Navegacao.Login);
+            await Navegacao.IrAsync(Navegacao.Cadastro);
+        }
 
         [RelayCommand]
         private async Task VerificarAsync()
@@ -153,9 +206,9 @@ namespace European.ViewModels
                     }
 
                     NotificarDadosDaSessao();
-                    await AvisarAsync("Acesso", TemPendencia
-                        ? "Sua matrícula tem uma pendência. Veja o motivo na tela."
-                        : "Sua matrícula ainda não foi liberada pela coordenação.");
+                    await AvisarAsync("Acesso", Cancelada ? "Sua solicitação foi cancelada."
+                        : TemPendencia ? "A coordenação pediu correções. Veja o motivo na tela."
+                        : "Sua matrícula ainda está em análise.");
                     return;
                 }
 

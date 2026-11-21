@@ -17,6 +17,7 @@ namespace European
             // Aluno
             Routing.RegisterRoute(Navegacao.Aula, typeof(AulaDetalhePage));
             Routing.RegisterRoute(Navegacao.ProvaRealizar, typeof(ProvaRealizarPage));
+            Routing.RegisterRoute(Navegacao.ProvaRevisao, typeof(ProvaRevisaoPage));
             Routing.RegisterRoute(Navegacao.Certificado, typeof(CertificadoDetalhePage));
 
             // Conteúdo (coordenação e professor)
@@ -30,8 +31,6 @@ namespace European
             Routing.RegisterRoute(Navegacao.ProvaEdit, typeof(ProvaEditPage));
             Routing.RegisterRoute(Navegacao.ProvaResultados, typeof(ProvaResultadosPage));
             Routing.RegisterRoute(Navegacao.Correcao, typeof(CorrecaoPage));
-            Routing.RegisterRoute(Navegacao.Sala, typeof(SalaDetalhePage));
-            Routing.RegisterRoute(Navegacao.SalaEdit, typeof(SalaEditPage));
 
             // Coordenação
             Routing.RegisterRoute(Navegacao.AlunoAcesso, typeof(AlunoAcessoPage));

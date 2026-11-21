@@ -1,0 +1,15 @@
+DADOS DO EUROPEAN
+Senha de todas as contas: Senha123
+
+COORDENADOR
+kaique@european.com
+
+PROFESSORES
+helena.duarte@european.com    - Direito Penal Economico
+camila.rezende@european.com   - Harmonizacao Orofacial
+fernanda.lopes@european.com   - Ciencias da Educacao
+
+ALUNOS
+ana.souza@european.com        - Direito - 60%, prova 1 corrigida (com comentario), prova 2 aguardando correcao, prova 3 aberta
+bruno.carvalho@european.com   - Harmonizacao - 38%, prova 1 corrigida (abaixo da media), prova 2 aberta
+carolina.mendes@european.com  - Educacao - 12%, acabou de entrar, prova 1 aberta

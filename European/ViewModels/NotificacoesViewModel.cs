@@ -36,6 +36,10 @@ namespace European.ViewModels
 
         public ObservableCollection<NotificacaoItem> Notificacoes { get; } = new();
 
+        /// <summary>Notificacoes mostrados aos poucos (15 por vez).</summary>
+        public ListaIncremental<NotificacaoItem> NotificacoesLista => _notificacoesLista ??= new(15, Notificacoes);
+        private ListaIncremental<NotificacaoItem>? _notificacoesLista;
+
         [ObservableProperty]
         public partial bool SemNotificacoes { get; private set; }
 

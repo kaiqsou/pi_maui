@@ -16,9 +16,13 @@ namespace European.Models
         public StatusAcesso StatusAcesso { get; set; } = StatusAcesso.Pendente;
         public DateTime? DataNascimento { get; set; }
 
-        /// <summary>Pagamento (simulado) feito na solicitação de matrícula, copiado ao liberar o acesso.</summary>
+        /// <summary>Pagamento feito na solicitação de matrícula, copiado ao liberar o acesso.</summary>
         public FormaPagamento? FormaPagamento { get; set; }
         public DateTime? PagamentoEm { get; set; }
+        public decimal? ValorPago { get; set; }
+
+        /// <summary>Código da transação do pagamento, copiado da solicitação ao liberar o acesso.</summary>
+        public string? TransacaoId { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;

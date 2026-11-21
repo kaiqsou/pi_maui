@@ -28,11 +28,11 @@
         <!-- Cursos -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarCursos}">
             <Label Text="Meus cursos" Style="{StaticResource TitleSm}" Margin="20,0" />
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Cursos}" SelectionMode="None">
-                <CollectionView.EmptyView>
-                    <controls:EstadoVazio Icone="&#xe80c;" Titulo="Nenhum curso atribuído" Texto="A coordenação precisa vincular você a um curso." />
-                </CollectionView.EmptyView>
-                <CollectionView.ItemTemplate>
+            <Grid Grid.Row="1">
+                <ScrollView VerticalScrollBarVisibility="Default">
+                    <VerticalStackLayout Padding="0,0,0,16">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding CursosLista.Visiveis}">
+                            <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:CursoResumo">
                         <ContentView Padding="20,0,20,12">
                             <Border Style="{StaticResource Card}">
@@ -54,21 +54,40 @@
                             </Border>
                         </ContentView>
                     </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <ContentView IsVisible="{Binding CursosLista.Vazia}">
+                    <controls:EstadoVazio Icone="&#xe80c;" Titulo="Nenhum curso atribuído" Texto="A coordenação precisa vincular você a um curso." />
+                        </ContentView>
+                        <ContentView Padding="20,0,20,0" IsVisible="{Binding CursosLista.TemMais}">
+                            <Button Text="{Binding CursosLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                                    Command="{Binding CursosLista.CarregarMaisCommand}" />
+                        </ContentView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
         </Grid>
 
         <!-- Provas -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarProvas}">
+        <Grid Grid.Row="1" RowDefinitions="Auto,Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarProvas}">
             <Grid ColumnDefinitions="*,Auto" Margin="20,0">
-                <Label Text="Minhas provas" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
+                <Label Text="Provas do curso" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
                 <Button Grid.Column="1" Text="Nova prova" Style="{StaticResource SoftButton}" Command="{Binding NovaProvaCommand}" VerticalOptions="Center" />
             </Grid>
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Provas}" SelectionMode="None">
-                <CollectionView.EmptyView>
-                    <controls:EstadoVazio Icone="&#xe862;" Titulo="Nenhuma prova criada" Texto="Use Nova prova para montar a primeira avaliação." />
-                </CollectionView.EmptyView>
-                <CollectionView.ItemTemplate>
+            <!-- curso (quando o professor leciona mais de um) e a explicação da ordem -->
+            <VerticalStackLayout Grid.Row="1" Spacing="8" Margin="20,0">
+                <Border Style="{StaticResource Campo}" IsVisible="{Binding TemVariosCursos}">
+                    <Picker ItemsSource="{Binding CursosDasProvas}" SelectedItem="{Binding CursoDasProvas}" Title="Curso"
+                            ItemDisplayBinding="{Binding Texto, x:DataType=vm:CursoOpcao}" />
+                </Border>
+                <Label Text="As provas são liberadas para o aluno nesta ordem, de cima para baixo. Use as setas para mudar; a nova ordem vale para as provas que o aluno ainda não recebeu."
+                       Style="{StaticResource BodySm}" />
+            </VerticalStackLayout>
+            <Grid Grid.Row="2">
+                <ScrollView VerticalScrollBarVisibility="Default">
+                    <VerticalStackLayout Padding="0,0,0,16">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding ProvasLista.Visiveis}">
+                            <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:ProvaResumo">
                     <ContentView Padding="20,0,20,12">
                         <Border Style="{StaticResource Card}" Padding="14,12">
@@ -76,14 +95,14 @@
                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirProvaCommand, x:DataType=vm:ProfessorViewModel}"
                                                       CommandParameter="{Binding .}" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="12">
+                            <Grid ColumnDefinitions="36,*,Auto,Auto" ColumnSpacing="12">
                                 <Border Style="{StaticResource IconTile}" WidthRequest="36" HeightRequest="36" VerticalOptions="Center"
                                         BackgroundColor="{DynamicResource WarningSoft}">
-                                    <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Warning}"
+                                    <Label Text="{Binding PosicaoTexto}" FontFamily="TextoNegrito" FontSize="14" TextColor="{DynamicResource Warning}"
                                            HorizontalOptions="Center" VerticalOptions="Center" />
                                 </Border>
                                 <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" FontSize="15" MaxLines="1" LineBreakMode="TailTruncation" />
+                                    <Label Text="{Binding Titulo}" Style="{StaticResource TitleSm}" FontSize="15" MaxLines="2" LineBreakMode="TailTruncation" />
                                     <Label Text="{Binding Origem}" Style="{StaticResource BodySm}" MaxLines="1" LineBreakMode="TailTruncation" />
                                     <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
                                 </VerticalStackLayout>
@@ -101,47 +120,41 @@
                                         <Label Text="{Binding ACorrigirTexto}" FontFamily="TextoNegrito" FontSize="11" TextColor="{DynamicResource Warning}" />
                                     </Border>
                                 </VerticalStackLayout>
+                                <!-- setas de ordem (área de toque própria, não abre a prova) -->
+                                <VerticalStackLayout Grid.Column="3" Spacing="2" VerticalOptions="Center">
+                                    <ContentView WidthRequest="32" HeightRequest="32" IsVisible="{Binding PodeSubir}"
+                                                 SemanticProperties.Description="Mover para cima">
+                                        <ContentView.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=SubirCommand, x:DataType=vm:ProfessorViewModel}"
+                                                                  CommandParameter="{Binding .}" />
+                                        </ContentView.GestureRecognizers>
+                                        <Label Text="&#xe316;" Style="{StaticResource IconPrimary}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </ContentView>
+                                    <ContentView WidthRequest="32" HeightRequest="32" IsVisible="{Binding PodeDescer}"
+                                                 SemanticProperties.Description="Mover para baixo">
+                                        <ContentView.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=DescerCommand, x:DataType=vm:ProfessorViewModel}"
+                                                                  CommandParameter="{Binding .}" />
+                                        </ContentView.GestureRecognizers>
+                                        <Label Text="&#xe313;" Style="{StaticResource IconPrimary}" FontSize="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </ContentView>
+                                </VerticalStackLayout>
                             </Grid>
                         </Border>
                     </ContentView>
                 </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
-
-        <!-- Salas -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*" RowSpacing="12" Padding="0,8,0,0" IsVisible="{Binding MostrarSalas}">
-            <Grid ColumnDefinitions="*,Auto" Margin="20,0">
-                <Label Text="Minhas salas" Style="{StaticResource TitleSm}" VerticalOptions="Center" />
-                <Button Grid.Column="1" Text="Nova sala" Style="{StaticResource SoftButton}" Command="{Binding NovaSalaCommand}" VerticalOptions="Center" />
-            </Grid>
-            <CollectionView Grid.Row="1" ItemsSource="{Binding Salas}" SelectionMode="None">
-                <CollectionView.EmptyView>
-                    <controls:EstadoVazio Icone="&#xe7ef;" Titulo="Nenhuma sala criada" Texto="Crie uma sala e adicione alunos dos seus cursos." />
-                </CollectionView.EmptyView>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:SalaResumo">
-                        <ContentView Padding="20,0,20,12">
-                            <Border Style="{StaticResource Card}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfessorViewModel}}, Path=AbrirSalaCommand, x:DataType=vm:ProfessorViewModel}"
-                                                          CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="12">
-                                    <Border Style="{StaticResource IconTile}">
-                                        <Label Text="&#xe7ef;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
-                                    </Border>
-                                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                        <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" />
-                                        <Label Text="{Binding Detalhe}" Style="{StaticResource BodySm}" />
-                                    </VerticalStackLayout>
-                                    <Label Grid.Column="2" Text="&#xe5cc;" Style="{StaticResource Icon}" TextColor="{DynamicResource OnSurfaceVariant}" VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <ContentView IsVisible="{Binding ProvasLista.Vazia}">
+                    <controls:EstadoVazio Icone="&#xe862;" Titulo="Nenhuma prova neste curso" Texto="Use Nova prova para montar a primeira avaliação." />
                         </ContentView>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                        <ContentView Padding="20,0,20,0" IsVisible="{Binding ProvasLista.TemMais}">
+                            <Button Text="{Binding ProvasLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                                    Command="{Binding ProvasLista.CarregarMaisCommand}" />
+                        </ContentView>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
         </Grid>
 
         <ActivityIndicator Grid.Row="1" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
@@ -153,8 +166,6 @@
                                Command="{Binding SelecionarAbaCommand}" CommandParameter="cursos" />
             <controls:AbaBotao Icone="&#xe862;" Texto="Provas" Ativa="{Binding MostrarProvas}"
                                Command="{Binding SelecionarAbaCommand}" CommandParameter="provas" />
-            <controls:AbaBotao Icone="&#xe7ef;" Texto="Salas" Ativa="{Binding MostrarSalas}"
-                               Command="{Binding SelecionarAbaCommand}" CommandParameter="salas" />
         </controls:BarraAbas>
 
     </Grid>

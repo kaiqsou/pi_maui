@@ -20,8 +20,11 @@
             <controls:BotaoSegmento Grid.Column="1" Text="Realizadas" Command="{Binding SelecionarAbaCommand}" CommandParameter="realizadas" Style="{StaticResource GhostButton}" HeightRequest="42" Ativo="{Binding MostrarRealizadas}" />
         </Grid>
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Disponiveis}" SelectionMode="None" IsVisible="{Binding MostrarDisponiveis}">
-            <CollectionView.ItemTemplate>
+        <Grid Grid.Row="2" IsVisible="{Binding MostrarDisponiveis}">
+            <ScrollView VerticalScrollBarVisibility="Default">
+                <VerticalStackLayout Padding="0,0,0,16">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding DisponiveisLista.Visiveis}">
+                        <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="vm:ProvaItem">
                     <ContentView Padding="20,0,20,12">
                         <Border Style="{StaticResource Card}">
@@ -48,19 +51,34 @@
                                     <Label Grid.Column="1" Text="{Binding Prazo}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                                     <Label Grid.Column="2" Text="{Binding ResumoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                                 </Grid>
-                                <Label Text="Prazo encerrado" Style="{StaticResource BodySm}" TextColor="{DynamicResource Danger}" IsVisible="{Binding Expirada}" />
+                                <Label Text="Prazo encerrado sem entrega · conta como nota 0" Style="{StaticResource BodySm}" TextColor="{DynamicResource Danger}" IsVisible="{Binding Expirada}" />
                             </VerticalStackLayout>
                         </Border>
                     </ContentView>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <ContentView Padding="20,0,20,0" IsVisible="{Binding DisponiveisLista.TemMais}">
+                        <Button Text="{Binding DisponiveisLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                                Command="{Binding DisponiveisLista.CarregarMaisCommand}" />
+                    </ContentView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Realizadas}" SelectionMode="None" IsVisible="{Binding MostrarRealizadas}">
-            <CollectionView.ItemTemplate>
+        <Grid Grid.Row="2" IsVisible="{Binding MostrarRealizadas}">
+            <ScrollView VerticalScrollBarVisibility="Default">
+                <VerticalStackLayout Padding="0,0,0,16">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding RealizadasLista.Visiveis}">
+                        <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="vm:ResultadoItem">
                     <ContentView Padding="20,0,20,12">
                         <Border Style="{StaticResource Card}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProvasViewModel}}, Path=RevisarCommand, x:DataType=vm:ProvasViewModel}"
+                                    CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                 <VerticalStackLayout Grid.Column="0" Spacing="2">
                                     <Label Text="{Binding ProvaTitulo}" Style="{StaticResource TitleSm}" />
@@ -73,8 +91,8 @@
                                         </Label.Triggers>
                                     </Label>
                                     <Label Text="{Binding Data}" Style="{StaticResource BodySm}" />
-                                    <Label Text="{Binding ComentariosTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}"
-                                           Margin="0,6,0,0" IsVisible="{Binding TemComentarios}" />
+                                    <Label Text="Toque para ver a correção" Style="{StaticResource BodySm}" FontFamily="TextoNegrito"
+                                           TextColor="{DynamicResource BrandPrimary}" Margin="0,6,0,0" IsVisible="{Binding PodeRever}" />
                                 </VerticalStackLayout>
                                 <Border Grid.Column="1" Style="{StaticResource Pill}" VerticalOptions="Center">
                                     <Label Text="{Binding NotaTexto}" FontFamily="TextoNegrito" FontSize="15" TextColor="{DynamicResource BrandPrimary}" />
@@ -83,14 +101,21 @@
                         </Border>
                     </ContentView>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                    <ContentView Padding="20,0,20,0" IsVisible="{Binding RealizadasLista.TemMais}">
+                        <Button Text="{Binding RealizadasLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                                Command="{Binding RealizadasLista.CarregarMaisCommand}" />
+                    </ContentView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </Grid>
 
         <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center" Margin="20,0"
                              IsVisible="{Binding MostrarVazioDisponiveis}">
             <Label Text="&#xe862;" Style="{StaticResource Icon}" FontSize="48" TextColor="{DynamicResource Outline}" HorizontalOptions="Center" />
             <Label Text="Nenhuma prova disponível" Style="{StaticResource TitleSm}" HorizontalOptions="Center" />
-            <Label Text="No momento não há avaliações abertas. Volte em breve." Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
+            <Label Text="{Binding VazioDisponiveisTexto}" Style="{StaticResource Muted}" HorizontalTextAlignment="Center" />
         </VerticalStackLayout>
 
         <VerticalStackLayout Grid.Row="2" Spacing="8" VerticalOptions="Center" HorizontalOptions="Center" Margin="20,0"

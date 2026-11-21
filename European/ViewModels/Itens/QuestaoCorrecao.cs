@@ -29,7 +29,12 @@ namespace European.ViewModels
         public partial string Nota { get; set; } = string.Empty;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemComentario))]
         public partial string Comentario { get; set; } = string.Empty;
+
+        /// <summary>Para o aluno, na revisão da prova corrigida.</summary>
+        public bool TemComentario => !string.IsNullOrWhiteSpace(Comentario);
+        public string NotaQuestaoTexto => string.IsNullOrEmpty(Nota) ? "Sem nota" : $"{Nota} de 10";
 
         /// <summary>Avisa a tela para recalcular a nota total enquanto o professor digita.</summary>
         public event Action? NotaAlterada;

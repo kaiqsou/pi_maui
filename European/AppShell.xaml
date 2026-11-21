@@ -33,6 +33,10 @@
         <ShellContent ContentTemplate="{DataTemplate views:NovaSenhaPage}" />
     </FlyoutItem>
 
+    <FlyoutItem Route="documentos">
+        <ShellContent ContentTemplate="{DataTemplate views:DocumentosPage}" />
+    </FlyoutItem>
+
     <FlyoutItem Route="pagamento">
         <ShellContent ContentTemplate="{DataTemplate views:PagamentoPage}" />
     </FlyoutItem>

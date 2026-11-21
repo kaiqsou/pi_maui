@@ -12,5 +12,8 @@ namespace European.Models
         public string Mensagem { get; set; } = string.Empty;
         public DateTime CriadaEm { get; set; } = DateTime.Now;
         public bool Lida { get; set; }
+
+        /// <summary>Identifica avisos automáticos (ex.: lembrete de prazo) para não serem enviados duas vezes.</summary>
+        public string? Chave { get; set; }
     }
 }

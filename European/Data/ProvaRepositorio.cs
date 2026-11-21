@@ -19,6 +19,17 @@ namespace European.Data
 
         public static Task SalvarAsync(Prova prova) => Colecao.SalvarAsync(prova);
 
+        /// <summary>Grava a nova ordem das provas de um curso (1, 2, 3... na ordem da lista).</summary>
+        public static Task SalvarOrdemAsync(IReadOnlyList<Prova> provas)
+        {
+            if (provas.Count == 0)
+                return Task.CompletedTask;
+
+            var atualizacoes = provas.Select((p, i) => new UpdateOneModel<Prova>(
+                Builders<Prova>.Filter.Eq(x => x.Id, p.Id), Builders<Prova>.Update.Set(x => x.Ordem, i + 1)));
+            return Colecao.BulkWriteAsync(atualizacoes);
+        }
+
         public static async Task ExcluirAsync(string provaId)
         {
             await MongoContext.Resultados.DeleteManyAsync(r => r.ProvaId == provaId);

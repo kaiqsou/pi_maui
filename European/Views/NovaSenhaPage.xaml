@@ -36,7 +36,7 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Confirmar nova senha" Style="{StaticResource BodySm}" />
                 <Border Style="{StaticResource Campo}">
-                    <controls:CampoSenha Text="{Binding Confirmacao}" ReturnCommand="{Binding SalvarCommand}" />
+                    <controls:CampoSenha Text="{Binding Confirmacao}" ReturnCommand="{Binding SalvarCommand}" Placeholder="Confirme a sua senha"/>
                 </Border>
             </VerticalStackLayout>
 

@@ -15,7 +15,7 @@
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="20,4,20,28" Spacing="16">
 
-            <!-- Candidato -->
+            <!-- Candidato e etapa -->
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="52,*" ColumnSpacing="12">
@@ -32,13 +32,21 @@
                     <Border Style="{StaticResource Painel}" Padding="12,10">
                         <VerticalStackLayout Spacing="2">
                             <Label Text="{Binding StatusTexto}" Style="{StaticResource TitleSm}" FontSize="14" />
-                            <Label Text="Ainda não é usuário: a conta só é criada ao liberar a matrícula." Style="{StaticResource BodySm}" />
+                            <Label Text="{Binding EtapaTexto}" Style="{StaticResource BodySm}" />
                         </VerticalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource DangerSoft}" Stroke="Transparent" Padding="12,10"
+                            IsVisible="{Binding TemPendencia}">
+                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
+                    </Border>
+                    <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource DangerSoft}" Stroke="Transparent" Padding="12,10"
+                            IsVisible="{Binding Cancelada}">
+                        <Label Text="{Binding CanceladaTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
                     </Border>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Pedido -->
+            <!-- Curso e pagamento -->
             <Border Style="{StaticResource Card}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
@@ -53,25 +61,173 @@
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
-                        <Label Grid.Column="1" Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                            <Label Text="{Binding PagamentoTexto}" Style="{StaticResource BodySm}" />
+                            <Label Text="{Binding TransacaoTexto}" Style="{StaticResource BodySm}" IsVisible="{Binding Pago}" />
+                        </VerticalStackLayout>
                     </Grid>
-                    <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource DangerSoft}" Stroke="Transparent" Padding="12,10"
-                            IsVisible="{Binding TemPendencia}">
-                        <Label Text="{Binding PendenciaTexto}" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" />
-                    </Border>
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Documentos: toque na foto para ampliar; PDF abre no leitor -->
+            <Label Text="Documentos" Style="{StaticResource TitleSm}" />
+            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Documentos}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DocumentoAnaliseItem">
+                        <Border Style="{StaticResource Card}" Padding="12">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding Recusado}" Value="True">
+                                    <Setter Property="Stroke" Value="{DynamicResource Danger}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto" RowSpacing="10">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Nome}" Style="{StaticResource TitleSm}" FontSize="14" />
+                                    <Label Text="{Binding StatusTexto}" Style="{StaticResource BodySm}">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Recusado}" Value="True">
+                                                <Setter Property="TextColor" Value="{DynamicResource Danger}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="Label" Binding="{Binding Aprovado}" Value="True">
+                                                <Setter Property="TextColor" Value="{DynamicResource Success}" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+                                    <Label Text="{Binding Observacao}" Style="{StaticResource BodySm}" IsVisible="{Binding TemObservacao}" />
+                                </VerticalStackLayout>
+                                <!-- certo aprova / X recusa; o escolhido fica preenchido -->
+                                <HorizontalStackLayout Grid.Column="1" Spacing="8" VerticalOptions="Center" IsVisible="{Binding Enviado}">
+                                    <Border WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 20" StrokeThickness="1.5"
+                                            Stroke="{DynamicResource Success}" BackgroundColor="Transparent"
+                                            SemanticProperties.Description="Aprovar documento">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Aprovado}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource Success}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SolicitacaoViewModel}}, Path=AprovarDocumentoCommand, x:DataType=vm:SolicitacaoViewModel}"
+                                                                  CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="&#xe5ca;" Style="{StaticResource Icon}" FontSize="22" TextColor="{DynamicResource Success}"
+                                               HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding Aprovado}" Value="True">
+                                                    <Setter Property="TextColor" Value="{DynamicResource Surface}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Border>
+                                    <Border WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 20" StrokeThickness="1.5"
+                                            Stroke="{DynamicResource Danger}" BackgroundColor="Transparent"
+                                            SemanticProperties.Description="Recusar documento">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="Border" Binding="{Binding Recusado}" Value="True">
+                                                <Setter Property="BackgroundColor" Value="{DynamicResource Danger}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SolicitacaoViewModel}}, Path=RecusarDocumentoCommand, x:DataType=vm:SolicitacaoViewModel}"
+                                                                  CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="&#xe5cd;" Style="{StaticResource Icon}" FontSize="22" TextColor="{DynamicResource Danger}"
+                                               HorizontalOptions="Center" VerticalOptions="Center">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label" Binding="{Binding Recusado}" Value="True">
+                                                    <Setter Property="TextColor" Value="{DynamicResource Surface}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
+                                    </Border>
+                                </HorizontalStackLayout>
+
+                                <!-- arquivos: toque na foto para ampliar; PDF abre no leitor de PDF -->
+                                <FlexLayout Grid.Row="1" Grid.ColumnSpan="2" Wrap="Wrap" BindableLayout.ItemsSource="{Binding Arquivos}" IsVisible="{Binding Enviado}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:ArquivoItem">
+                                            <Border WidthRequest="84" HeightRequest="84" Margin="0,0,8,8" StrokeShape="RoundRectangle 10" Stroke="Transparent"
+                                                    BackgroundColor="{DynamicResource BrandContainerSoft}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:SolicitacaoViewModel}}, Path=AbrirArquivoCommand, x:DataType=vm:SolicitacaoViewModel}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <Grid>
+                                                    <Image Source="{Binding Caminho}" Aspect="AspectFill" IsVisible="{Binding TemMiniatura}" />
+                                                    <VerticalStackLayout Spacing="0" VerticalOptions="Center" IsVisible="{Binding IsPdf}">
+                                                        <Label Text="&#xe415;" Style="{StaticResource IconPrimary}" FontSize="30" HorizontalOptions="Center" />
+                                                        <Label Text="Abrir PDF" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" HorizontalOptions="Center" />
+                                                    </VerticalStackLayout>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </FlexLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+
             <Button Text="Liberar matrícula" Style="{StaticResource PrimaryButton}" Command="{Binding LiberarCommand}"
                     IsEnabled="{Binding PodeLiberar}" />
-            <Label Text="Só é possível liberar depois que o pagamento for feito." Style="{StaticResource BodySm}" HorizontalOptions="Center"
-                   IsVisible="{Binding Pago, Converter={StaticResource InverseBool}}" />
-            <Button Text="Não liberar" Style="{StaticResource GhostButton}" Command="{Binding NaoLiberarCommand}"
+            <Label Text="Para liberar: pagamento feito e todos os documentos aprovados." Style="{StaticResource BodySm}"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center"
+                   IsVisible="{Binding PodeLiberar, Converter={StaticResource InverseBool}}" />
+            <Button Text="Devolver para correção" Style="{StaticResource GhostButton}" Command="{Binding DevolverCommand}"
+                    IsVisible="{Binding PodeDevolver}" />
+            <Button Text="{Binding CancelarTexto}" Style="{StaticResource GhostButton}" Command="{Binding CancelarCommand}"
                     TextColor="{DynamicResource Danger}" BorderColor="{DynamicResource Danger}"
-                    IsEnabled="{Binding IsNotBusy}" />
+                    IsVisible="{Binding PodeCancelar}" />
 
         </VerticalStackLayout>
     </ScrollView>
+
+        <!-- Visualizador da foto: girar, ampliar com + / -, pinça ou toque duplo; arrastar para ver as partes -->
+        <Grid Grid.RowSpan="2" RowDefinitions="Auto,*" IsVisible="{Binding MostrarVisualizador}" BackgroundColor="Black">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" Padding="16,12">
+                <Label Text="{Binding TituloVisualizador}" Style="{StaticResource TitleSm}" TextColor="White" VerticalOptions="Center"
+                       LineBreakMode="TailTruncation" />
+                <Border Grid.Column="1" Style="{StaticResource BackTile}" WidthRequest="40" HeightRequest="40" SemanticProperties.Description="Girar">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GirarCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe41a;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource BackTile}" WidthRequest="40" HeightRequest="40" SemanticProperties.Description="Diminuir">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding DiminuirZoomCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe900;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Label Grid.Column="3" Text="{Binding ZoomTexto}" TextColor="White" FontFamily="TextoNegrito" FontSize="13"
+                       VerticalOptions="Center" WidthRequest="44" HorizontalTextAlignment="Center" />
+                <Border Grid.Column="4" Style="{StaticResource BackTile}" WidthRequest="40" HeightRequest="40" SemanticProperties.Description="Ampliar">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding AumentarZoomCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe8ff;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+                <Border Grid.Column="5" Style="{StaticResource BackTile}" WidthRequest="40" HeightRequest="40" SemanticProperties.Description="Fechar">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding FecharVisualizadorCommand}" />
+                    </Border.GestureRecognizers>
+                    <Label Text="&#xe5cd;" Style="{StaticResource IconPrimary}" HorizontalOptions="Center" VerticalOptions="Center" />
+                </Border>
+            </Grid>
+            <ScrollView x:Name="AreaFoto" Grid.Row="1" Orientation="Both" SizeChanged="AoMudarAreaFoto">
+                <!-- a área rolável tem o tamanho da foto já girada; a foto é montada sem girar e girada no lugar -->
+                <AbsoluteLayout WidthRequest="{Binding LarguraConteudo}" HeightRequest="{Binding AlturaConteudo}">
+                    <AbsoluteLayout.GestureRecognizers>
+                        <TapGestureRecognizer NumberOfTapsRequired="2" Command="{Binding AlternarZoomCommand}" />
+                        <PinchGestureRecognizer PinchUpdated="AoPincar" />
+                    </AbsoluteLayout.GestureRecognizers>
+                    <Image Source="{Binding ImagemAmpliada}" Aspect="AspectFit" Rotation="{Binding Rotacao}"
+                           AbsoluteLayout.LayoutBounds="{Binding LimitesImagem}" />
+                </AbsoluteLayout>
+            </ScrollView>
+        </Grid>
     </Grid>
 
 </views:BasePage>

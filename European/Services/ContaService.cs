@@ -67,8 +67,20 @@ namespace European.Services
                 return false;
 
             if (cursoId != null)
-                await MatriculaRepositorio.InserirAsync(NovaMatricula(usuario.Id, cursoId));
+            {
+                await InserirMatriculaAsync(usuario.Id, cursoId);
+                await AvisarProfessoresAsync(usuario, cursoId);
+            }
             return true;
+        }
+
+        /// <summary>Os professores do curso ficam sabendo do aluno novo (as provas do curso entram no calendário dele).</summary>
+        private static async Task AvisarProfessoresAsync(Usuario aluno, string cursoId)
+        {
+            var curso = await CursoRepositorio.PorIdAsync(cursoId);
+            await NotificacaoService.ParaProfessoresDoCursoAsync(cursoId, "Novo aluno no curso",
+                $"{aluno.Nome} ({aluno.Email}) entrou em {curso?.Nome ?? "um curso seu"}. " +
+                "As provas publicadas do curso já foram liberadas para ele, uma de cada vez; as entregas chegam para a sua correção.");
         }
 
         /// <summary>
@@ -85,14 +97,16 @@ namespace European.Services
                 Roles = Roles.Aluno,
                 StatusAcesso = StatusAcesso.Liberado,
                 FormaPagamento = solicitacao.FormaPagamento,
-                PagamentoEm = solicitacao.PagamentoEm
+                PagamentoEm = solicitacao.PagamentoEm,
+                ValorPago = solicitacao.ValorPago,
+                TransacaoId = solicitacao.TransacaoId
             };
 
             if (!await CriarContaAsync(aluno, solicitacao.CursoId))
                 return false;
 
             await SolicitacaoRepositorio.ExcluirAsync(solicitacao.Id);
-            await NotificacaoService.ParaUsuarioAsync(aluno.Id, "Bem-vindo(a)!", "Sua matrícula foi liberada. As aulas já estão disponíveis.");
+            await NotificacaoService.ParaUsuarioAsync(aluno.Id, "Bem-vindo(a)!", "Sua matrícula foi liberada. As aulas já estão disponíveis e a primeira prova também: cada prova tem um prazo, e quando ele termina a próxima é liberada.");
             return true;
         }
 
@@ -134,7 +148,8 @@ namespace European.Services
             var existente = await MatriculaRepositorio.PorAlunoECursoAsync(aluno.Id, cursoId);
             if (existente == null)
             {
-                await MatriculaRepositorio.InserirAsync(NovaMatricula(aluno.Id, cursoId));
+                await InserirMatriculaAsync(aluno.Id, cursoId);
+                await AvisarProfessoresAsync(aluno, cursoId);
             }
             else
             {
@@ -213,6 +228,25 @@ namespace European.Services
 
             aluno.StatusAcesso = StatusAcesso.Liberado;
             await UsuarioRepositorio.AtualizarAsync(aluno);
+        }
+
+        /// <summary>
+        /// Cria a matrícula ativa e já monta o calendário de provas: a primeira prova do curso abre agora, junto com
+        /// a liberação do acesso, e o prazo dela conta a partir daqui.
+        /// </summary>
+        private static async Task InserirMatriculaAsync(string alunoId, string cursoId)
+        {
+            var matricula = NovaMatricula(alunoId, cursoId);
+            await MatriculaRepositorio.InserirAsync(matricula);
+            try
+            {
+                await ProvaService.AgendaAsync(matricula);
+            }
+            catch (Exception ex)
+            {
+                // sem o calendário agora, ele é montado na primeira vez que o aluno abrir o app
+                CrashLogger.Registrar(nameof(ContaService), ex);
+            }
         }
 
         private static Matricula NovaMatricula(string alunoId, string cursoId) => new()
