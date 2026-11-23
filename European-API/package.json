@@ -1,0 +1,16 @@
+{
+  "name": "european-api",
+  "version": "1.0.0",
+  "description": "API (Express + MongoDB) do app European (pi_maui): o app MAUI busca e grava os dados por HTTP",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongodb": "^6.12.0"
+  }
+}

@@ -41,7 +41,7 @@ namespace European.ViewModels
 
             await ExecutarAsync(async () =>
             {
-                await MongoContext.InicializarAsync();
+                await ApiContext.InicializarAsync();
 
                 // com qualquer conta já criada, ninguém mais consegue se promover a coordenação por esta tela
                 if (await UsuarioRepositorio.ExisteAlgumUsuarioAsync())

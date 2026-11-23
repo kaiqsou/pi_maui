@@ -105,7 +105,7 @@ namespace European.ViewModels
             var progresso = _progressos.FirstOrDefault(p => p.AulaId == aulaId);
             if (progresso == null)
             {
-                progresso = new ProgressoAula { Id = MongoContext.NovoId(), MatriculaId = Matricula?.Id ?? string.Empty, AulaId = aulaId };
+                progresso = new ProgressoAula { Id = Ids.Novo(), MatriculaId = Matricula?.Id ?? string.Empty, AulaId = aulaId };
                 _progressos.Add(progresso);
             }
 

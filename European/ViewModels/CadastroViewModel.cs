@@ -99,7 +99,7 @@ namespace European.ViewModels
 
             try
             {
-                await MongoContext.InicializarAsync();
+                await ApiContext.InicializarAsync();
                 var cursos = (await CursoRepositorio.ListarAsync()).Where(c => c.IsPublicado).ToList();
                 Cursos = cursos.Select(c => new CursoCadastroItem { Curso = c }).ToList();
                 _cursosCarregados = true;
@@ -146,7 +146,7 @@ namespace European.ViewModels
             var disponivel = false;
             if (!await ExecutarAsync(async () =>
                 {
-                    await MongoContext.InicializarAsync();
+                    await ApiContext.InicializarAsync();
                     // um pedido cancelado não impede um cadastro novo (ele é substituído)
                     disponivel = await UsuarioRepositorio.PorEmailAsync(Email) == null
                                  && await SolicitacaoRepositorio.PorEmailAsync(Email) is null or { Cancelada: true };

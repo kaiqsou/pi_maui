@@ -1,6 +1,4 @@
 using European.Models;
-using MongoDB.Bson;
-using MongoDB.Driver;
 
 namespace European.Data
 {
@@ -11,23 +9,23 @@ namespace European.Data
     /// </summary>
     public static class CursoRepositorio
     {
-        private static IMongoCollection<Curso> Colecao => MongoContext.Cursos;
-
         public static async Task<List<Curso>> ListarAsync()
-            => Vincular(await Colecao.Find(FilterDefinition<Curso>.Empty).ToListAsync());
+            => Vincular(await Api.GetAsync<List<Curso>>("cursos"));
 
         public static async Task<List<Curso>> PorIdsAsync(IEnumerable<string> ids)
-            => Vincular(await Colecao.PorIdsAsync(ids));
+            => Vincular(await Api.PorIdsAsync<Curso>("cursos/ids", ids));
 
         public static async Task<List<Curso>> DoProfessorAsync(string professorId)
-            => Vincular(await Colecao.Find(c => c.ProfessorIds.Contains(professorId)).ToListAsync());
+            => Vincular(await Api.GetAsync<List<Curso>>($"cursos/professor/{Api.Esc(professorId)}"));
 
         public static async Task<Curso?> PorIdAsync(string id)
-            => (await Colecao.PorIdAsync(id))?.Vincular();
+            => (await Api.GetOuNullAsync<Curso>($"cursos/{Api.Esc(id)}"))?.Vincular();
 
+        /// <summary>Cria ou substitui o curso inteiro.</summary>
         public static async Task SalvarAsync(Curso curso)
         {
-            await Colecao.SalvarAsync(curso);
+            ApiContext.PrepararSalvar(curso);
+            await Api.PutAsync($"cursos/{Api.Esc(curso.Id)}", curso);
             curso.Vincular();
         }
 
@@ -71,29 +69,11 @@ namespace European.Data
         }
 
         /// <summary>Grava a duração real do vídeo detectada pelo player, sem reescrever o documento inteiro.</summary>
-        public static async Task AtualizarDuracaoAulaAsync(string cursoId, string aulaId, int segundos)
-        {
-            var update = Builders<Curso>.Update.Set("Modulos.$[].Materias.$[].Aulas.$[a].DuracaoSegundos", segundos);
-            var opcoes = new UpdateOptions
-            {
-                ArrayFilters = new[] { new BsonDocumentArrayFilterDefinition<BsonDocument>(new BsonDocument("a._id", aulaId)) }
-            };
-            await Colecao.UpdateOneAsync(c => c.Id == cursoId, update, opcoes);
-        }
+        public static Task AtualizarDuracaoAulaAsync(string cursoId, string aulaId, int segundos)
+            => Api.PatchAsync($"cursos/{Api.Esc(cursoId)}/aulas/{Api.Esc(aulaId)}/duracao", new { segundos });
 
-        /// <summary>Exclui o curso e tudo que depende dele. Certificados já emitidos são mantidos.</summary>
-        public static async Task ExcluirAsync(string cursoId)
-        {
-            var matriculaIds = await MongoContext.Matriculas.Find(m => m.CursoId == cursoId).Project(m => m.Id).ToListAsync();
-            var provaIds = await MongoContext.Provas.Find(p => p.CursoId == cursoId).Project(p => p.Id).ToListAsync();
-
-            await MongoContext.Progressos.DeleteManyAsync(Builders<ProgressoAula>.Filter.In(p => p.MatriculaId, matriculaIds));
-            await MongoContext.Matriculas.DeleteManyAsync(m => m.CursoId == cursoId);
-            await MongoContext.Resultados.DeleteManyAsync(Builders<ResultadoProva>.Filter.In(r => r.ProvaId, provaIds));
-            await MongoContext.Provas.DeleteManyAsync(p => p.CursoId == cursoId);
-            await MaterialRepositorio.ExcluirDoCursoAsync(cursoId);
-            await Colecao.DeleteOneAsync(c => c.Id == cursoId);
-        }
+        /// <summary>Exclui o curso e tudo que depende dele (a API apaga matrículas, provas, materiais...). Certificados já emitidos são mantidos.</summary>
+        public static Task ExcluirAsync(string cursoId) => Api.DeleteAsync($"cursos/{Api.Esc(cursoId)}");
 
         /// <summary>Exclui o módulo com suas matérias, aulas, materiais e provas.</summary>
         public static async Task ExcluirModuloAsync(string cursoId, Modulo modulo)
@@ -142,7 +122,7 @@ namespace European.Data
             var item = id == null ? null : itens.FirstOrDefault(i => i.Id == id);
             if (item == null)
             {
-                item = new T { Id = MongoContext.NovoId(), Ordem = itens.Count + 1 };
+                item = new T { Id = Ids.Novo(), Ordem = itens.Count + 1 };
                 itens.Add(item);
             }
 

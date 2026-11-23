@@ -8,7 +8,7 @@ namespace European.ViewModels
     /// <summary>Login de usuários e de candidatos (quem pediu matrícula e ainda não foi liberado).</summary>
     public partial class LoginViewModel : BaseViewModel
     {
-        public const string SemConexao = "Sem conexão com o banco de dados. Verifique se o MongoDB está em execução.";
+        public const string SemConexao = "Sem conexão com o servidor. Verifique se a API do European está em execução.";
 
         public LoginViewModel()
         {
@@ -35,7 +35,7 @@ namespace European.ViewModels
         {
             try
             {
-                await MongoContext.InicializarAsync();
+                await ApiContext.InicializarAsync();
                 PrecisaConfigurar = !await UsuarioRepositorio.ExisteAlgumUsuarioAsync();
                 if (Mensagem == SemConexao)
                     Mensagem = string.Empty;
@@ -64,7 +64,7 @@ namespace European.ViewModels
 
             await ExecutarAsync(async () =>
             {
-                await MongoContext.InicializarAsync();
+                await ApiContext.InicializarAsync();
                 var usuario = await UsuarioRepositorio.PorEmailAsync(Email);
 
                 if (usuario != null && SenhaService.Verificar(Senha, usuario.SenhaHash))

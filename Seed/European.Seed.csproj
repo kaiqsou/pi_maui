@@ -18,13 +18,16 @@
 		<PackageReference Include="MongoDB.Driver" Version="3.13.0" />
 	</ItemGroup>
 
-	<!-- Reaproveita os modelos e o mapeamento do app, para gravar exatamente o formato que ele lê. -->
+	<!--
+		Reaproveita os modelos do app, para gravar exatamente o formato que a API devolve para ele.
+		O app não acessa mais o MongoDB (fala com a API em European-API); só o Seed continua gravando direto
+		no banco, por isso o MongoContext e o ColecaoExtensions agora ficam aqui (pasta Data).
+	-->
 	<ItemGroup>
 		<Compile Include="..\European\Models\*.cs" Link="App\Models\%(Filename).cs" />
 		<Compile Include="..\European\Enums\*.cs" Link="App\Enums\%(Filename).cs" />
-		<Compile Include="..\European\Data\MongoContext.cs" Link="App\Data\MongoContext.cs" />
+		<Compile Include="..\European\Data\Ids.cs" Link="App\Data\Ids.cs" />
 		<Compile Include="..\European\Data\CursosIniciais.cs" Link="App\Data\CursosIniciais.cs" />
-		<Compile Include="..\European\Data\ColecaoExtensions.cs" Link="App\Data\ColecaoExtensions.cs" />
 		<Compile Include="..\European\Services\SenhaService.cs" Link="App\Services\SenhaService.cs" />
 	</ItemGroup>
 

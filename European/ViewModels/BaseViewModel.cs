@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using European.Data;
 using European.Models;
 using European.Services;
-using MongoDB.Driver;
 
 namespace European.ViewModels
 {
@@ -53,8 +53,8 @@ namespace European.ViewModels
             catch (Exception ex)
             {
                 CrashLogger.Registrar(GetType().Name, ex);
-                var mensagem = ex is TimeoutException or MongoConnectionException
-                    ? "Não foi possível conectar ao banco de dados. Verifique se o MongoDB está em execução."
+                var mensagem = ex is TimeoutException or ApiIndisponivelException
+                    ? LoginViewModel.SemConexao
                     : $"Ocorreu um erro: {ex.Message}";
 
                 if (Shell.Current != null)

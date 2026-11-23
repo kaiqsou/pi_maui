@@ -1,17 +1,14 @@
 using European.Enums;
 using European.Models;
-using MongoDB.Driver;
 
 namespace European.Data
 {
     public static class MatriculaRepositorio
     {
-        private static IMongoCollection<Matricula> Colecao => MongoContext.Matriculas;
-
-        /// <summary>Matrículas do aluno, com o curso já carregado.</summary>
+        /// <summary>Matrículas do aluno (mais recentes primeiro), com o curso já carregado.</summary>
         public static async Task<List<Matricula>> DoAlunoAsync(string alunoId)
         {
-            var matriculas = await Colecao.Find(m => m.AlunoId == alunoId).SortByDescending(m => m.DataMatricula).ToListAsync();
+            var matriculas = await Api.GetAsync<List<Matricula>>($"matriculas/aluno/{Api.Esc(alunoId)}");
             var cursos = (await CursoRepositorio.PorIdsAsync(matriculas.Select(m => m.CursoId))).ToDictionary(c => c.Id);
 
             foreach (var matricula in matriculas)
@@ -31,26 +28,32 @@ namespace European.Data
                 .ToList();
 
         public static Task<List<Matricula>> DosAlunosAsync(IEnumerable<string> alunoIds)
-            => Colecao.OndeEmAsync(m => m.AlunoId, alunoIds);
+            => Api.PorIdsAsync<Matricula>("matriculas/alunos", alunoIds);
 
         public static Task<List<Matricula>> DoCursoAsync(string cursoId)
-            => Colecao.Find(m => m.CursoId == cursoId).ToListAsync();
+            => Api.GetAsync<List<Matricula>>($"matriculas/curso/{Api.Esc(cursoId)}");
 
-        public static async Task<Dictionary<string, int>> AtivasPorCursoAsync()
+        /// <summary>Quantidade de matrículas ativas por curso.</summary>
+        public static Task<Dictionary<string, int>> AtivasPorCursoAsync()
+            => Api.GetAsync<Dictionary<string, int>>("matriculas/ativas-por-curso");
+
+        public static Task<Matricula?> PorAlunoECursoAsync(string alunoId, string cursoId)
+            => Api.GetOuNullAsync<Matricula>($"matriculas/aluno/{Api.Esc(alunoId)}/curso/{Api.Esc(cursoId)}");
+
+        public static Task InserirAsync(Matricula matricula)
         {
-            var ativas = await Colecao.Find(m => m.Status == StatusMatricula.Ativa).Project(m => m.CursoId).ToListAsync();
-            return ativas.GroupBy(id => id).ToDictionary(g => g.Key, g => g.Count());
+            ApiContext.PrepararInsercao(matricula);
+            return Api.PostAsync("matriculas", matricula);
         }
 
-        public static async Task<Matricula?> PorAlunoECursoAsync(string alunoId, string cursoId)
-            => await Colecao.Find(m => m.AlunoId == alunoId && m.CursoId == cursoId).FirstOrDefaultAsync();
-
-        public static Task InserirAsync(Matricula matricula) => Colecao.InserirAsync(matricula);
-
-        public static Task AtualizarAsync(Matricula matricula) => Colecao.AtualizarAsync(matricula);
+        public static Task AtualizarAsync(Matricula matricula)
+        {
+            ApiContext.PrepararAtualizar(matricula);
+            return Api.PutAsync($"matriculas/{Api.Esc(matricula.Id)}", matricula);
+        }
 
         /// <summary>Grava só o calendário de provas (não sobrescreve status/progresso alterados em outro lugar).</summary>
         public static Task AtualizarAgendaAsync(Matricula matricula)
-            => Colecao.UpdateOneAsync(m => m.Id == matricula.Id, Builders<Matricula>.Update.Set(m => m.AgendaProvas, matricula.AgendaProvas));
+            => Api.PatchAsync($"matriculas/{Api.Esc(matricula.Id)}/agenda", new { matricula.AgendaProvas });
     }
 }

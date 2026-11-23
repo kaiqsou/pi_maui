@@ -1,56 +1,42 @@
 using European.Models;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.GridFS;
 
 namespace European.Data
 {
-    /// <summary>Materiais complementares das aulas. Arquivos enviados ficam no GridFS do próprio MongoDB.</summary>
+    /// <summary>Materiais complementares das aulas. Arquivos enviados ficam no GridFS, através da API.</summary>
     public static class MaterialRepositorio
     {
-        private static IMongoCollection<MaterialComplementar> Colecao => MongoContext.Materiais;
-
         public static Task<List<MaterialComplementar>> DaAulaAsync(string aulaId)
-            => Colecao.Find(m => m.AulaId == aulaId).SortBy(m => m.Ordem).ToListAsync();
+            => Api.GetAsync<List<MaterialComplementar>>($"materiais/aula/{Api.Esc(aulaId)}");
 
+        /// <summary>Envia o arquivo (se houver) e grava o material no fim da lista da aula.</summary>
         public static async Task InserirAsync(MaterialComplementar material, Stream? arquivo = null)
         {
-            material.Id = MongoContext.NovoId();
-            material.Ordem = (int)await Colecao.CountDocumentsAsync(m => m.AulaId == material.AulaId) + 1;
-
             if (arquivo != null && !string.IsNullOrEmpty(material.NomeArquivo))
             {
-                var id = await MongoContext.Arquivos.UploadFromStreamAsync(material.NomeArquivo, arquivo, new GridFSUploadOptions
+                material.ArquivoId = await Api.EnviarArquivoAsync(material.NomeArquivo, arquivo, new Dictionary<string, string>
                 {
-                    Metadata = new BsonDocument { { "aulaId", material.AulaId }, { "cursoId", material.CursoId } }
+                    ["aulaId"] = material.AulaId,
+                    ["cursoId"] = material.CursoId
                 });
-                material.ArquivoId = id.ToString();
             }
 
-            await Colecao.InsertOneAsync(material);
+            var gravado = await Api.PostAsync<MaterialComplementar>("materiais", material);
+            material.Id = gravado.Id;
+            material.Ordem = gravado.Ordem;
         }
 
-        public static async Task ExcluirAsync(MaterialComplementar material)
+        /// <summary>Exclui o material e o arquivo dele.</summary>
+        public static Task ExcluirAsync(MaterialComplementar material) => Api.DeleteAsync($"materiais/{Api.Esc(material.Id)}");
+
+        public static Task ExcluirDasAulasAsync(IEnumerable<string> aulaIds)
         {
-            await ExcluirArquivoAsync(material.ArquivoId);
-            await Colecao.ExcluirAsync(material.Id);
+            var ids = aulaIds.Distinct().ToList();
+            return ids.Count == 0 ? Task.CompletedTask : Api.PostAsync("materiais/excluir-aulas", new { ids });
         }
 
-        public static async Task ExcluirDasAulasAsync(IEnumerable<string> aulaIds)
-        {
-            var materiais = await Colecao.OndeEmAsync(m => m.AulaId, aulaIds);
-            foreach (var material in materiais)
-                await ExcluirAsync(material);
-        }
+        public static Task ExcluirDoCursoAsync(string cursoId) => Api.DeleteAsync($"materiais/curso/{Api.Esc(cursoId)}");
 
-        public static async Task ExcluirDoCursoAsync(string cursoId)
-        {
-            var materiais = await Colecao.Find(m => m.CursoId == cursoId).ToListAsync();
-            foreach (var material in materiais)
-                await ExcluirAsync(material);
-        }
-
-        /// <summary>Baixa o arquivo do GridFS para a pasta de cache e devolve o caminho local.</summary>
+        /// <summary>Baixa o arquivo para a pasta de cache e devolve o caminho local.</summary>
         public static async Task<string> BaixarAsync(MaterialComplementar material)
         {
             if (string.IsNullOrEmpty(material.ArquivoId))
@@ -61,24 +47,9 @@ namespace European.Data
 
             var caminho = Path.Combine(pasta, Path.GetFileName(material.NomeArquivo ?? "material"));
             await using (var destino = File.Create(caminho))
-                await MongoContext.Arquivos.DownloadToStreamAsync(ObjectId.Parse(material.ArquivoId), destino);
+                await Api.BaixarArquivoAsync(material.ArquivoId, destino);
 
             return caminho;
-        }
-
-        private static async Task ExcluirArquivoAsync(string? arquivoId)
-        {
-            if (string.IsNullOrEmpty(arquivoId) || !ObjectId.TryParse(arquivoId, out var id))
-                return;
-
-            try
-            {
-                await MongoContext.Arquivos.DeleteAsync(id);
-            }
-            catch (GridFSFileNotFoundException)
-            {
-                // já removido
-            }
         }
     }
 }

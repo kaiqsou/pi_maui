@@ -1,24 +1,21 @@
 using European.Models;
-using MongoDB.Driver;
 
 namespace European.Data
 {
     public static class ProgressoRepositorio
     {
-        private static IMongoCollection<ProgressoAula> Colecao => MongoContext.Progressos;
-
         public static Task<List<ProgressoAula>> DaMatriculaAsync(string matriculaId)
-            => Colecao.Find(p => p.MatriculaId == matriculaId).ToListAsync();
+            => Api.GetAsync<List<ProgressoAula>>($"progressos/matricula/{Api.Esc(matriculaId)}");
 
         /// <summary>Progresso já gravado da aula, ou um novo (ainda não salvo).</summary>
         public static async Task<ProgressoAula> ObterOuCriarAsync(string matriculaId, string aulaId)
-            => await Colecao.Find(p => p.MatriculaId == matriculaId && p.AulaId == aulaId).FirstOrDefaultAsync()
-               ?? new ProgressoAula { Id = MongoContext.NovoId(), MatriculaId = matriculaId, AulaId = aulaId };
+            => await Api.GetOuNullAsync<ProgressoAula>($"progressos/matricula/{Api.Esc(matriculaId)}/aula/{Api.Esc(aulaId)}")
+               ?? new ProgressoAula { Id = Ids.Novo(), MatriculaId = matriculaId, AulaId = aulaId };
 
-        public static async Task SalvarAsync(ProgressoAula progresso)
+        public static Task SalvarAsync(ProgressoAula progresso)
         {
             progresso.AtualizadoEm = DateTime.Now;
-            await Colecao.ReplaceOneAsync(p => p.Id == progresso.Id, progresso, new ReplaceOptions { IsUpsert = true });
+            return Api.PutAsync($"progressos/{Api.Esc(progresso.Id)}", progresso);
         }
     }
 }

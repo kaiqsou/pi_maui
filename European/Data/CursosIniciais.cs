@@ -94,7 +94,7 @@ namespace European.Data
         {
             var curso = new Curso
             {
-                Id = MongoContext.NovoId(),
+                Id = Ids.Novo(),
                 Nome = nome,
                 Descricao = descricao,
                 Categoria = categoria,
@@ -104,9 +104,9 @@ namespace European.Data
 
             for (var i = 0; i < grade.Length; i++)
             {
-                var modulo = new Modulo { Id = MongoContext.NovoId(), Titulo = grade[i].Titulo, Ordem = i + 1 };
+                var modulo = new Modulo { Id = Ids.Novo(), Titulo = grade[i].Titulo, Ordem = i + 1 };
                 for (var j = 0; j < grade[i].Materias.Length; j++)
-                    modulo.Materias.Add(new Materia { Id = MongoContext.NovoId(), Nome = grade[i].Materias[j], Ordem = j + 1 });
+                    modulo.Materias.Add(new Materia { Id = Ids.Novo(), Nome = grade[i].Materias[j], Ordem = j + 1 });
 
                 curso.Modulos.Add(modulo);
             }

@@ -1,72 +1,54 @@
 using European.Enums;
 using European.Models;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.GridFS;
 
 namespace European.Data
 {
     /// <summary>Pedidos de matrícula ainda não liberados (o candidato ainda não é usuário) e as fotos dos documentos.</summary>
     public static class SolicitacaoRepositorio
     {
-        private static IMongoCollection<SolicitacaoMatricula> Colecao => MongoContext.Solicitacoes;
-
         /// <summary>Solicitações em andamento (as canceladas ficam só para o candidato ver o reembolso).</summary>
-        public static Task<List<SolicitacaoMatricula>> ListarAsync()
-            => Colecao.Find(s => s.Status != StatusSolicitacao.Cancelada).SortBy(s => s.CriadaEm).ToListAsync();
+        public static Task<List<SolicitacaoMatricula>> ListarAsync() => Api.GetAsync<List<SolicitacaoMatricula>>("solicitacoes");
 
-        public static Task<SolicitacaoMatricula?> PorIdAsync(string id) => Colecao.PorIdAsync(id);
+        public static Task<SolicitacaoMatricula?> PorIdAsync(string id)
+            => Api.GetOuNullAsync<SolicitacaoMatricula>($"solicitacoes/{Api.Esc(id)}");
 
-        public static async Task<SolicitacaoMatricula?> PorEmailAsync(string email)
-        {
-            var normalizado = UsuarioRepositorio.NormalizarEmail(email);
-            return await Colecao.Find(s => s.Email == normalizado).FirstOrDefaultAsync();
-        }
+        public static Task<SolicitacaoMatricula?> PorEmailAsync(string email)
+            => Api.GetOuNullAsync<SolicitacaoMatricula>($"solicitacoes/email/{Api.Esc(UsuarioRepositorio.NormalizarEmail(email))}");
 
         /// <summary>
         /// Grava o pedido; retorna false se o e-mail já tem conta ou outro pedido em andamento.
-        /// Um pedido cancelado do mesmo e-mail é apagado: o candidato pode se cadastrar de novo.
+        /// Um pedido cancelado do mesmo e-mail é apagado (pela API): o candidato pode se cadastrar de novo.
         /// </summary>
-        public static async Task<bool> InserirAsync(SolicitacaoMatricula solicitacao)
+        public static Task<bool> InserirAsync(SolicitacaoMatricula solicitacao)
         {
-            solicitacao.Id = MongoContext.NovoId();
+            solicitacao.Id = Ids.Novo();
             solicitacao.Email = UsuarioRepositorio.NormalizarEmail(solicitacao.Email);
             solicitacao.Nome = solicitacao.Nome.Trim();
             solicitacao.CriadaEm = DateTime.Now;
             solicitacao.Status = StatusSolicitacao.Documentos;
 
-            if (await UsuarioRepositorio.PorEmailAsync(solicitacao.Email) != null)
-                return false;
-
-            await Colecao.DeleteManyAsync(s => s.Email == solicitacao.Email && s.Status == StatusSolicitacao.Cancelada);
-            return await Colecao.TentarInserirAsync(solicitacao);
+            return Api.InserirAsync("solicitacoes", solicitacao);
         }
 
         /// <summary>Grava a solicitação inteira (status, documentos, pagamento, devolução...).</summary>
-        public static Task AtualizarAsync(SolicitacaoMatricula solicitacao) => Colecao.AtualizarAsync(solicitacao);
+        public static Task AtualizarAsync(SolicitacaoMatricula solicitacao)
+            => Api.PutAsync($"solicitacoes/{Api.Esc(solicitacao.Id)}", solicitacao);
 
         public static Task AtualizarSenhaAsync(string id, string senhaHash)
-            => Colecao.UpdateOneAsync(s => s.Id == id, Builders<SolicitacaoMatricula>.Update.Set(s => s.SenhaHash, senhaHash));
+            => Api.PatchAsync($"solicitacoes/{Api.Esc(id)}/senha", new { SenhaHash = senhaHash });
 
         /// <summary>Apaga a solicitação e as fotos dos documentos (ao liberar, a conta do aluno já foi criada).</summary>
-        public static async Task ExcluirAsync(string id)
-        {
-            if (await PorIdAsync(id) is { } solicitacao)
-                await ExcluirArquivosAsync(solicitacao.Documentos.SelectMany(d => d.Arquivos));
-            await Colecao.ExcluirAsync(id);
-        }
+        public static Task ExcluirAsync(string id) => Api.DeleteAsync($"solicitacoes/{Api.Esc(id)}");
 
-        // ---- Arquivos dos documentos (GridFS) ----
+        // ---- Arquivos dos documentos (GridFS, pela API) ----
 
-        /// <summary>Guarda o arquivo (foto ou PDF) no GridFS e devolve o id.</summary>
-        public static async Task<string> EnviarArquivoAsync(string solicitacaoId, string tipo, string nomeArquivo, Stream conteudo)
-        {
-            var id = await MongoContext.Arquivos.UploadFromStreamAsync(nomeArquivo, conteudo, new GridFSUploadOptions
+        /// <summary>Guarda o arquivo (foto ou PDF) e devolve o id.</summary>
+        public static Task<string> EnviarArquivoAsync(string solicitacaoId, string tipo, string nomeArquivo, Stream conteudo)
+            => Api.EnviarArquivoAsync(nomeArquivo, conteudo, new Dictionary<string, string>
             {
-                Metadata = new BsonDocument { { "solicitacaoId", solicitacaoId }, { "documento", tipo } }
+                ["solicitacaoId"] = solicitacaoId,
+                ["documento"] = tipo
             });
-            return id.ToString();
-        }
 
         /// <summary>Baixa o arquivo para a pasta de cache (para exibir ou abrir) e devolve o caminho local.</summary>
         public static async Task<string> BaixarArquivoAsync(ArquivoDocumento arquivo)
@@ -77,29 +59,25 @@ namespace European.Data
 
             if (!File.Exists(caminho))
             {
-                await using var destino = File.Create(caminho);
-                await MongoContext.Arquivos.DownloadToStreamAsync(ObjectId.Parse(arquivo.ArquivoId), destino);
+                try
+                {
+                    await using var destino = File.Create(caminho);
+                    await Api.BaixarArquivoAsync(arquivo.ArquivoId, destino);
+                }
+                catch
+                {
+                    File.Delete(caminho); // não deixa um arquivo pela metade no cache
+                    throw;
+                }
             }
 
             return caminho;
         }
 
-        public static async Task ExcluirArquivosAsync(IEnumerable<ArquivoDocumento> arquivos)
+        public static Task ExcluirArquivosAsync(IEnumerable<ArquivoDocumento> arquivos)
         {
-            foreach (var arquivo in arquivos)
-            {
-                if (!ObjectId.TryParse(arquivo.ArquivoId, out var id))
-                    continue;
-
-                try
-                {
-                    await MongoContext.Arquivos.DeleteAsync(id);
-                }
-                catch (GridFSFileNotFoundException)
-                {
-                    // já removido
-                }
-            }
+            var ids = arquivos.Select(a => a.ArquivoId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+            return ids.Count == 0 ? Task.CompletedTask : Api.PostAsync("arquivos/excluir", new { ids });
         }
     }
 }
