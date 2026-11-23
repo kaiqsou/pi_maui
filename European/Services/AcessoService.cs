@@ -10,12 +10,13 @@ namespace European.Services
 
         public sealed record Resultado(string? Rota, string? Mensagem = null);
 
+        // Toda permissão exige o token JWT da sessão válido (SessionService.SessaoValida).
         private static Usuario? Usuario => SessionService.UsuarioAtual;
-        private static bool Logado() => Usuario != null;
-        private static bool Aluno() => Usuario?.Roles == Roles.Aluno;
-        private static bool Professor() => Usuario is { Roles: Roles.Professor, AcessoLiberado: true };
-        private static bool Coordenacao() => Usuario is { IsCoordenacao: true, AcessoLiberado: true };
-        private static bool Candidato() => SessionService.SolicitacaoAtual != null;
+        private static bool Logado() => Usuario != null && SessionService.SessaoValida;
+        private static bool Aluno() => Usuario?.Roles == Roles.Aluno && Logado();
+        private static bool Professor() => Usuario is { Roles: Roles.Professor, AcessoLiberado: true } && Logado();
+        private static bool Coordenacao() => Usuario is { IsCoordenacao: true, AcessoLiberado: true } && Logado();
+        private static bool Candidato() => SessionService.SolicitacaoAtual != null && SessionService.SessaoValida;
 
         /// <summary>Quem pode abrir cada tela. Telas fora da lista (login, cadastro, detalhes do curso) são livres.</summary>
         private static readonly Dictionary<string, Func<bool>> Permissoes = new()

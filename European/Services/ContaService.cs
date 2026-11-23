@@ -31,7 +31,7 @@ namespace European.Services
             return SenhaService.EhValida(senha, out var erro) ? null : erro;
         }
 
-        /// <summary>Login conferido com um hash antigo (SHA-256 sem salt): grava a senha no formato atual.</summary>
+        /// <summary>Login conferido com um hash antigo (PBKDF2 ou SHA-256 sem salt): grava a senha em Argon2id.</summary>
         public static async Task AtualizarHashAntigoAsync(Usuario usuario, string senha)
         {
             if (!SenhaService.PrecisaAtualizar(usuario.SenhaHash))

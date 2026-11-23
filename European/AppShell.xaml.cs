@@ -49,8 +49,18 @@ namespace European
             // Cada tela só abre para o perfil que pode usá-la (AcessoService.PodeAbrir)
             Navigating += (_, e) =>
             {
-                if (e.CanCancel && !AcessoService.PodeAbrir(e.Target.Location))
-                    e.Cancel();
+                if (!e.CanCancel || AcessoService.PodeAbrir(e.Target.Location))
+                    return;
+
+                e.Cancel();
+
+                // token JWT vencido: encerra a sessão e volta para o login
+                if (SessionService.SessaoExpirada)
+                    Dispatcher.Dispatch(async () =>
+                    {
+                        await AcessoService.SairAsync();
+                        await DisplayAlertAsync("Sessão expirada", "Sua sessão expirou. Entre novamente.", "OK");
+                    });
             };
         }
     }
