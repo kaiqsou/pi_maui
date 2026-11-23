@@ -32,7 +32,6 @@ namespace European.Data
         public static IMongoCollection<Prova> Provas => Banco.GetCollection<Prova>("provas");
         public static IMongoCollection<ResultadoProva> Resultados => Banco.GetCollection<ResultadoProva>("resultados");
         public static IMongoCollection<Certificado> Certificados => Banco.GetCollection<Certificado>("certificados");
-        public static IMongoCollection<Sala> Salas => Banco.GetCollection<Sala>("salas");
         public static IMongoCollection<SolicitacaoMatricula> Solicitacoes => Banco.GetCollection<SolicitacaoMatricula>("solicitacoes");
         public static IMongoCollection<Notificacao> Notificacoes => Banco.GetCollection<Notificacao>("notificacoes");
 

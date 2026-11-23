@@ -23,7 +23,13 @@ namespace European.ViewModels
         public string Origem { get; init; } = string.Empty;
         public string Detalhe { get; init; } = string.Empty;
         public bool Publicada => Prova.IsPublicada;
-        public string Status => Prova.IsPublicada ? (Prova.Expirada ? "Encerrada" : "Publicada") : "Rascunho";
+        public string Status => Prova.IsPublicada ? "Publicada" : "Rascunho";
+
+        /// <summary>Posição na ordem do curso (1 = primeira a ser liberada para o aluno).</summary>
+        public int Posicao { get; init; }
+        public string PosicaoTexto => $"{Posicao}º";
+        public bool PodeSubir { get; init; }
+        public bool PodeDescer { get; init; }
 
         /// <summary>Entregas aguardando a correção do professor.</summary>
         public int ACorrigir { get; init; }
@@ -31,23 +37,18 @@ namespace European.ViewModels
         public string ACorrigirTexto => $"{ACorrigir} a corrigir";
     }
 
-    public class SalaResumo
-    {
-        public Sala Sala { get; init; } = new();
-        public string Nome => Sala.Nome;
-        public string Detalhe { get; init; } = string.Empty;
-    }
-
-    /// <summary>Painel do professor, com três abas: cursos que leciona, provas e salas (turmas).</summary>
+    /// <summary>
+    /// Painel do professor, com duas abas: cursos que leciona e provas. As provas são do curso (de todos os professores
+    /// dele), aparecem separadas por curso e na ordem em que são liberadas para o aluno, que o professor muda pelas setas.
+    /// </summary>
     public partial class ProfessorViewModel : BaseViewModel
     {
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(MostrarCursos), nameof(MostrarProvas), nameof(MostrarSalas))]
+        [NotifyPropertyChangedFor(nameof(MostrarCursos), nameof(MostrarProvas))]
         public partial string Aba { get; set; } = "cursos";
 
         public bool MostrarCursos => Aba == "cursos";
         public bool MostrarProvas => Aba == "provas";
-        public bool MostrarSalas => Aba == "salas";
 
         /// <summary>Notificações não lidas (sino no cabeçalho).</summary>
         public Sino Sino { get; } = new();
@@ -56,8 +57,31 @@ namespace European.ViewModels
         public partial string Saudacao { get; private set; } = string.Empty;
 
         public ObservableCollection<CursoResumo> Cursos { get; } = new();
+
+        /// <summary>Cursos mostrados aos poucos (5 por vez).</summary>
+        public ListaIncremental<CursoResumo> CursosLista => _cursosLista ??= new(5, Cursos);
+        private ListaIncremental<CursoResumo>? _cursosLista;
         public ObservableCollection<ProvaResumo> Provas { get; } = new();
-        public ObservableCollection<SalaResumo> Salas { get; } = new();
+
+        /// <summary>Provas mostrados aos poucos (5 por vez).</summary>
+        public ListaIncremental<ProvaResumo> ProvasLista => _provasLista ??= new(5, Provas);
+        private ListaIncremental<ProvaResumo>? _provasLista;
+
+        /// <summary>Provas de cada curso, já na ordem de liberação.</summary>
+        private Dictionary<string, List<Prova>> _provasPorCurso = new();
+        private ILookup<string, ResultadoProva> _entregas = Enumerable.Empty<ResultadoProva>().ToLookup(r => r.ProvaId);
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemVariosCursos))]
+        public partial List<CursoOpcao> CursosDasProvas { get; private set; } = new();
+
+        /// <summary>Com mais de um curso, o professor escolhe de qual curso ver as provas.</summary>
+        public bool TemVariosCursos => CursosDasProvas.Count > 1;
+
+        [ObservableProperty]
+        public partial CursoOpcao? CursoDasProvas { get; set; }
+
+        partial void OnCursoDasProvasChanged(CursoOpcao? value) => ExibirProvas();
 
         public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
@@ -74,40 +98,73 @@ namespace European.ViewModels
             foreach (var curso in cursos)
                 Cursos.Add(new CursoResumo { Curso = curso, Detalhe = $"{ativosPorCurso.GetValueOrDefault(curso.Id)} aluno(s) ativos" });
 
-            var provas = await ProvaRepositorio.DoProfessorAsync(professor.Id);
-            var resultados = (await ResultadoRepositorio.DasProvasAsync(provas.Select(p => p.Id))).ToLookup(r => r.ProvaId);
-            var cursosDasProvas = (await CursoRepositorio.PorIdsAsync(provas.Select(p => p.CursoId))).ToDictionary(c => c.Id);
-            var salas = await SalaRepositorio.DoProfessorAsync(professor.Id);
+            // provas dos cursos que ele leciona, de qualquer professor do curso (a entrega é corrigida por todos)
+            var provas = await ProvaRepositorio.DosCursosAsync(cursos.Select(c => c.Id));
+            _entregas = (await ResultadoRepositorio.DasProvasAsync(provas.Select(p => p.Id))).ToLookup(r => r.ProvaId);
+            _provasPorCurso = cursos.ToDictionary(c => c.Id, c => ProvaService.OrdenarDoCurso(provas, c));
 
+            var selecionado = CursoDasProvas?.Valor?.Id;
+            CursosDasProvas = cursos.Select(c => new CursoOpcao { Valor = c, Texto = c.Nome }).ToList();
+            CursoDasProvas = CursosDasProvas.FirstOrDefault(c => c.Valor!.Id == selecionado) ?? CursosDasProvas.FirstOrDefault();
+            ExibirProvas();
+        });
+
+        private void ExibirProvas()
+        {
             Provas.Clear();
-            foreach (var prova in provas)
-            {
-                var materia = cursosDasProvas.GetValueOrDefault(prova.CursoId)?.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId);
-                var entregas = resultados[prova.Id].ToList();
-                var corrigidas = entregas.Where(r => r.Corrigida).ToList();
-                var aCorrigir = entregas.Count - corrigidas.Count;
-                var sala = salas.FirstOrDefault(s => s.Id == prova.SalaId);
+            var curso = CursoDasProvas?.Valor;
+            if (curso == null || !_provasPorCurso.TryGetValue(curso.Id, out var provas))
+                return;
 
+            for (var i = 0; i < provas.Count; i++)
+            {
+                var prova = provas[i];
+                var entregas = _entregas[prova.Id].ToList();
                 Provas.Add(new ProvaResumo
                 {
                     Prova = prova,
-                    Origem = $"{materia?.Nome ?? "Matéria removida"}{(sala == null ? string.Empty : $" · {sala.Nome}")}",
-                    Detalhe = $"{prova.Questoes.Count} questão(ões) · {entregas.Count} entrega(s)",
-                    ACorrigir = aCorrigir
+                    Posicao = i + 1,
+                    PodeSubir = i > 0,
+                    PodeDescer = i < provas.Count - 1,
+                    Origem = curso.TodasMaterias.FirstOrDefault(m => m.Id == prova.MateriaId)?.Nome ?? "Matéria removida",
+                    Detalhe = $"{prova.Questoes.Count} questão(ões) · {prova.PrazoDiasTexto} · {entregas.Count} entrega(s)",
+                    ACorrigir = entregas.Count(r => !r.Corrigida)
                 });
+            }
+        }
+
+        [RelayCommand]
+        private Task Subir(ProvaResumo? item) => MoverAsync(item, -1);
+
+        [RelayCommand]
+        private Task Descer(ProvaResumo? item) => MoverAsync(item, +1);
+
+        /// <summary>Troca a prova de lugar com a vizinha e grava a nova ordem do curso inteiro.</summary>
+        private async Task MoverAsync(ProvaResumo? item, int direcao)
+        {
+            var curso = CursoDasProvas?.Valor;
+            if (item == null || curso == null || !_provasPorCurso.TryGetValue(curso.Id, out var provas))
+                return;
+
+            var de = provas.FindIndex(p => p.Id == item.Prova.Id);
+            var para = de + direcao;
+            if (de < 0 || para < 0 || para >= provas.Count)
+                return;
+
+            var anterior = provas.ToList();
+            (provas[de], provas[para]) = (provas[para], provas[de]);
+            ExibirProvas();
+
+            if (!await ExecutarAsync(() => ProvaRepositorio.SalvarOrdemAsync(provas)))
+            {
+                _provasPorCurso[curso.Id] = anterior;
+                ExibirProvas();
+                return;
             }
 
-            Salas.Clear();
-            foreach (var sala in salas)
-            {
-                var curso = cursos.FirstOrDefault(c => c.Id == sala.CursoId);
-                Salas.Add(new SalaResumo
-                {
-                    Sala = sala,
-                    Detalhe = $"{sala.AlunoIds.Count} aluno(s){(curso == null ? string.Empty : $" · {curso.Nome}")}"
-                });
-            }
-        });
+            for (var i = 0; i < provas.Count; i++)
+                provas[i].Ordem = i + 1;
+        }
 
         [RelayCommand]
         private void SelecionarAba(string aba) => Aba = aba;
@@ -125,12 +182,5 @@ namespace European.ViewModels
         [RelayCommand]
         private Task AbrirProva(ProvaResumo? item)
             => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.ProvaResultados, ("Prova", item.Prova));
-
-        [RelayCommand]
-        private Task NovaSala() => Navegacao.IrAsync(Navegacao.SalaEdit);
-
-        [RelayCommand]
-        private Task AbrirSala(SalaResumo? item)
-            => item == null ? Task.CompletedTask : Navegacao.IrAsync(Navegacao.Sala, ("Sala", item.Sala));
     }
 }

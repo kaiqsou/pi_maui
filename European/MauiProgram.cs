@@ -9,6 +9,10 @@ namespace European
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+#if WINDOWS
+                // senha com o PasswordBox nativo (não mostra os caracteres ao digitar rápido)
+                .ConfigureMauiHandlers(handlers => handlers.AddHandler<Controls.CaixaSenha, WinUI.CaixaSenhaHandler>())
+#endif
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("Lato-Regular.ttf", "Texto");
@@ -59,6 +63,10 @@ namespace European
                 handler.PlatformView.OnContent = null;
                 handler.PlatformView.OffContent = null;
             });
+
+            // Troca de tema sem a animação de entrada das telas (ver TemaService.PrepararFrame)
+            Microsoft.Maui.Controls.Handlers.ShellSectionHandler.Mapper.AppendToMapping("TemaSemTransicao",
+                (handler, _) => Services.TemaService.PrepararFrame(handler.PlatformView));
 
             Microsoft.Maui.Handlers.WebViewHandler.Mapper.AppendToMapping("YouTubePlayer", (handler, _) =>
             {

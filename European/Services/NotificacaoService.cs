@@ -24,19 +24,61 @@ namespace European.Services
         public static Task ParaProfessoresDoCursoAsync(string cursoId, string titulo, string mensagem)
             => EnviarAsync(async () => (await CursoRepositorio.PorIdAsync(cursoId))?.ProfessorIds ?? new List<string>(), titulo, mensagem);
 
-        /// <summary>Para os alunos com matrícula ativa no curso (ou só os da sala, se informada).</summary>
-        public static Task ParaAlunosAsync(string cursoId, string? salaId, string titulo, string mensagem)
-            => EnviarAsync(async () =>
+        /// <summary>
+        /// Avisos do calendário de provas do aluno: "prova liberada" quando uma prova abre para ele, e lembretes quando
+        /// faltam 3 dias e no último dia do prazo (só das que ele ainda não fez). Sem servidor para agendar, roda quando
+        /// a tela inicial do aluno aparece; a Chave de cada aviso impede que ele se repita.
+        /// </summary>
+        public static async Task AvisarCalendarioDeProvasAsync(Usuario aluno)
+        {
+            try
             {
-                var ativos = (await MatriculaRepositorio.DoCursoAsync(cursoId))
-                    .Where(m => m.Status == StatusMatricula.Ativa)
-                    .Select(m => m.AlunoId);
-                if (salaId == null)
-                    return ativos;
+                var agora = DateTime.Now;
+                var matriculas = await MatriculaRepositorio.AtivasDoAlunoAsync(aluno.Id);
+                if (matriculas.Count == 0)
+                    return;
 
-                var sala = await SalaRepositorio.PorIdAsync(salaId);
-                return ativos.Intersect(sala?.AlunoIds ?? new List<string>());
-            }, titulo, mensagem);
+                var feitas = (await ResultadoRepositorio.DoAlunoAsync(aluno.Id)).Select(r => r.ProvaId).ToHashSet();
+                var abertas = (await ProvaService.AgendaAsync(matriculas))
+                    .Where(p => p.Aberta && !feitas.Contains(p.Prova.Id))
+                    .ToList();
+
+                var avisos = new List<Notificacao>();
+                foreach (var p in abertas)
+                {
+                    avisos.Add(new Notificacao
+                    {
+                        UsuarioId = aluno.Id,
+                        Chave = $"prova-liberada:{p.Prova.Id}",
+                        Titulo = "Nova prova liberada",
+                        Mensagem = $"A prova \"{p.Prova.Titulo}\" já está disponível na aba Provas. Você tem até {p.PrazoTexto} para fazer."
+                    });
+
+                    if (p.PrazoAte > agora.AddDays(3))
+                        continue;
+
+                    var ultimoDia = p.PrazoAte <= agora.AddDays(1);
+                    avisos.Add(new Notificacao
+                    {
+                        UsuarioId = aluno.Id,
+                        Chave = $"prazo-{(ultimoDia ? "1d" : "3d")}:{p.Prova.Id}",
+                        Titulo = ultimoDia ? "Prova encerra em breve" : "Prazo de prova se aproximando",
+                        Mensagem = $"A prova \"{p.Prova.Titulo}\" encerra em {p.PrazoTexto}" +
+                                   (ultimoDia ? ". Faça antes que o prazo termine; depois disso ela conta como nota 0." : ". Não deixe para a última hora.")
+                    });
+                }
+
+                if (avisos.Count == 0)
+                    return;
+
+                var recebidas = await NotificacaoRepositorio.ChavesRecebidasAsync(aluno.Id, avisos.Select(n => n.Chave!));
+                await NotificacaoRepositorio.InserirAsync(avisos.Where(n => !recebidas.Contains(n.Chave!)));
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(NotificacaoService), ex);
+            }
+        }
 
         private static async Task EnviarAsync(Func<Task<IEnumerable<string>>> destinatarios, string titulo, string mensagem)
         {

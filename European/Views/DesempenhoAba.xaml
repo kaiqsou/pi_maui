@@ -27,7 +27,7 @@
         <ScrollView Grid.Row="3" VerticalScrollBarVisibility="Default">
             <VerticalStackLayout Spacing="10" Padding="20,0,20,20">
 
-                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding Materias}">
+                <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding MateriasLista.Visiveis}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:MateriaDesempenho">
                             <Border Style="{StaticResource Card}" Padding="14">
@@ -59,6 +59,9 @@
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
+
+                <Button Text="{Binding MateriasLista.VerMaisTexto}" Style="{StaticResource GhostButton}"
+                        Command="{Binding MateriasLista.CarregarMaisCommand}" IsVisible="{Binding MateriasLista.TemMais}" />
 
                 <Border Style="{StaticResource Card}" Padding="14" IsVisible="{Binding SemMaterias}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">

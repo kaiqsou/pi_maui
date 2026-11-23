@@ -28,7 +28,7 @@ namespace European.Controls
             BindableProperty.Create(nameof(ReturnCommand), typeof(ICommand), typeof(CampoSenha),
                 propertyChanged: (b, _, novo) => ((CampoSenha)b)._entrada.ReturnCommand = (ICommand?)novo);
 
-        private readonly Entry _entrada = new() { IsPassword = true };
+        private readonly CaixaSenha _entrada = new() { IsPassword = true };
         private readonly Label _olho;
 
         public CampoSenha()
@@ -60,40 +60,26 @@ namespace European.Controls
         public ICommand? ReturnCommand { get => (ICommand?)GetValue(ReturnCommandProperty); set => SetValue(ReturnCommandProperty, value); }
 
         /// <summary>
-        /// Mostra/oculta a senha mantendo o cursor onde estava. Trocar IsPassword faz o controle nativo reescrever o
-        /// texto e mandar o cursor para o início; a posição é devolvida na mesma hora, antes de a tela ser redesenhada,
-        /// para o cursor não "pular".
+        /// Mostra/oculta a senha mantendo o cursor onde estava. No Android/iOS, trocar IsPassword faz o controle nativo
+        /// reescrever o texto e mandar o cursor para o início; a posição é devolvida na mesma hora, antes de a tela ser
+        /// redesenhada, para o cursor não "pular". (No Windows o PasswordBox só muda o modo de exibição, sem mexer no cursor.)
         /// </summary>
         private void AlternarVisibilidade()
         {
-            var posicao = PosicaoDoCursor();
-            _entrada.IsPassword = !_entrada.IsPassword;
-            _olho.Text = _entrada.IsPassword ? IconeMostrar : IconeOcultar;
-            PorCursorEm(posicao);
-
-            SemanticProperties.SetDescription((View)_olho.Parent, _entrada.IsPassword ? "Mostrar senha" : "Ocultar senha");
-        }
-
-        private int PosicaoDoCursor()
-        {
 #if WINDOWS
-            if (_entrada.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox caixa)
-                return caixa.SelectionStart;
+            _entrada.IsPassword = !_entrada.IsPassword;
+#else
+            var posicao = _entrada.CursorPosition;
+            _entrada.IsPassword = !_entrada.IsPassword;
+            PorCursorEm(posicao);
 #endif
-            return _entrada.CursorPosition;
+            _olho.Text = _entrada.IsPassword ? IconeMostrar : IconeOcultar;
+            SemanticProperties.SetDescription((View)_olho.Parent, _entrada.IsPassword ? "Mostrar senha" : "Ocultar senha");
         }
 
         private void PorCursorEm(int posicao)
         {
-#if WINDOWS
-            // direto na caixa de texto nativa: o MAUI não repassa a posição quando o valor dele "não mudou"
-            if (_entrada.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.TextBox caixa)
-            {
-                caixa.Select(Math.Min(posicao, caixa.Text.Length), 0);
-                return;
-            }
-#endif
-            // nas outras plataformas, muda o valor duas vezes para a posição ser reaplicada no controle nativo
+            // muda o valor duas vezes para a posição ser reaplicada no controle nativo
             var destino = Math.Min(posicao, _entrada.Text?.Length ?? 0);
             _entrada.CursorPosition = destino == 0 ? 1 : 0;
             _entrada.CursorPosition = destino;

@@ -17,11 +17,12 @@ namespace European.ViewModels
     {
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(Nome), nameof(Descricao), nameof(CategoriaTexto), nameof(PrecoTexto),
-            nameof(CargaTexto), nameof(ModulosTexto), nameof(AulasTexto), nameof(Modulos), nameof(TemModulos), nameof(TemCapa))]
+            nameof(CargaTexto), nameof(ModulosTexto), nameof(AulasTexto), nameof(Modulos), nameof(TemModulos), nameof(TemCapa), nameof(TemDescricao))]
         public partial Curso? Curso { get; private set; }
 
         public string Nome => Curso?.Nome ?? string.Empty;
         public string Descricao => Curso?.Descricao ?? string.Empty;
+        public bool TemDescricao => !string.IsNullOrWhiteSpace(Descricao);
         public bool TemCapa => !string.IsNullOrWhiteSpace(Curso?.CapaUrl);
         public string CategoriaTexto => Curso == null ? string.Empty : Formatos.Categoria(Curso.Categoria);
         public string PrecoTexto => Formatos.Preco(Curso?.Preco ?? 0);

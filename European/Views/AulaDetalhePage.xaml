@@ -33,7 +33,7 @@
                 <Label Grid.Column="2" Text="{Binding DuracaoFormatada}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
             </Grid>
 
-            <Label Text="{Binding Aula.Descricao}" Style="{StaticResource BodyMd}" />
+            <Label Text="{Binding Aula.Descricao}" Style="{StaticResource BodyMd}" IsVisible="{Binding TemDescricao}" />
 
             <VerticalStackLayout Spacing="4">
                 <ProgressBar Progress="{Binding PercentualAssistido, Converter={StaticResource PercentToProgress}}" />

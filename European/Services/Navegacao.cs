@@ -11,6 +11,7 @@ namespace European.Services
         public const string SomenteCertificados = "//certificados";
         public const string Aguardando = "//aguardando";
         public const string Pagamento = "//pagamento";
+        public const string Documentos = "//documentos";
         public const string NovaSenha = "//novasenha";
 
         // Telas empilhadas sobre a área atual, registradas em AppShell.xaml.cs.
@@ -20,6 +21,7 @@ namespace European.Services
         public const string Perfil = "perfil";
         public const string Aula = "aula";
         public const string ProvaRealizar = "provarealizar";
+        public const string ProvaRevisao = "provarevisao";
         public const string Certificado = "certificado";
         public const string Curso = "curso";
         public const string CursoEdit = "cursoedit";
@@ -29,8 +31,6 @@ namespace European.Services
         public const string ProvaEdit = "provaedit";
         public const string ProvaResultados = "provaresultados";
         public const string Correcao = "correcao";
-        public const string Sala = "sala";
-        public const string SalaEdit = "salaedit";
         public const string AlunoAcesso = "alunoacesso";
         public const string Solicitacao = "solicitacao";
         public const string ProfessorAcesso = "professoracesso";

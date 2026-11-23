@@ -49,7 +49,7 @@
                     </Border>
                 </Grid>
 
-                <VerticalStackLayout Spacing="6">
+                <VerticalStackLayout Spacing="6" IsVisible="{Binding TemDescricao}">
                     <Label Text="Sobre o curso" Style="{StaticResource TitleSm}" />
                     <Label Text="{Binding Descricao}" Style="{StaticResource BodyMd}" />
                 </VerticalStackLayout>

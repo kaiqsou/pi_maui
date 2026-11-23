@@ -20,7 +20,18 @@ namespace European.ViewModels
         {
             try
             {
-                NaoLidas = SessionService.UsuarioAtual is { } usuario ? await NotificacaoRepositorio.NaoLidasAsync(usuario.Id) : 0;
+                var usuario = SessionService.UsuarioAtual;
+                if (usuario == null)
+                {
+                    NaoLidas = 0;
+                    return;
+                }
+
+                // avisos do calendário de provas (liberação e prazo) são gerados aqui, antes de contar
+                if (usuario.Roles == Enums.Roles.Aluno)
+                    await NotificacaoService.AvisarCalendarioDeProvasAsync(usuario);
+
+                NaoLidas = await NotificacaoRepositorio.NaoLidasAsync(usuario.Id);
             }
             catch (Exception ex)
             {

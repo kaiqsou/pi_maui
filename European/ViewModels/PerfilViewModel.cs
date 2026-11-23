@@ -65,12 +65,6 @@ namespace European.ViewModels
         public partial double Progresso { get; private set; }
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TemTurma))]
-        public partial string TurmaTexto { get; private set; } = string.Empty;
-
-        public bool TemTurma => !string.IsNullOrEmpty(TurmaTexto);
-
-        [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TemAcessoAte))]
         public partial string AcessoAteTexto { get; private set; } = string.Empty;
 
@@ -140,9 +134,6 @@ namespace European.ViewModels
             MatriculadoEmTexto = matricula.DataMatricula.ToString("dd/MM/yyyy");
             Progresso = matricula.ProgressoPercentual;
             AcessoAteTexto = matricula.AcessoAte?.ToString("dd/MM/yyyy") ?? string.Empty;
-
-            var salas = await SalaRepositorio.DoAlunoAsync(Usuario.Id);
-            TurmaTexto = string.Join(", ", salas.Where(s => s.CursoId == null || s.CursoId == matricula.CursoId).Select(s => s.Nome));
         });
 
         [RelayCommand]

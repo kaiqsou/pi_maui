@@ -20,7 +20,8 @@ namespace European.ViewModels
         /// <summary>Primeira aula da matéria: mostra o nome da matéria acima dela.</summary>
         public bool MostrarCabecalho { get; set; }
 
-        public string Duracao => Aula.DuracaoTexto;
+        /// <summary>Vazia enquanto a duração não é conhecida (ela vem do vídeo na primeira vez que a aula é aberta).</summary>
+        public string Duracao => Aula.DuracaoSegundos > 0 ? Aula.DuracaoTexto : string.Empty;
         public string Descricao => Aula.Descricao;
         public bool TemDescricao => !string.IsNullOrWhiteSpace(Aula.Descricao);
         public bool Bloqueada => !Liberada;

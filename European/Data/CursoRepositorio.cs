@@ -92,7 +92,6 @@ namespace European.Data
             await MongoContext.Resultados.DeleteManyAsync(Builders<ResultadoProva>.Filter.In(r => r.ProvaId, provaIds));
             await MongoContext.Provas.DeleteManyAsync(p => p.CursoId == cursoId);
             await MaterialRepositorio.ExcluirDoCursoAsync(cursoId);
-            await MongoContext.Salas.UpdateManyAsync(s => s.CursoId == cursoId, Builders<Sala>.Update.Set(s => s.CursoId, null));
             await Colecao.DeleteOneAsync(c => c.Id == cursoId);
         }
 

@@ -103,15 +103,18 @@ namespace European.Services
             var modulos = curso.Modulos.Where(m => m.Materias.Any(x => x.Aulas.Count > 0)).ToList();
             var modulosConcluidos = modulos.Count(m => m.Materias.SelectMany(x => x.Aulas).All(a => concluidas.Contains(a.Id)));
 
-            // provas exigidas: as publicadas que o aluno enxerga (do curso inteiro ou da sala dele)
-            var provas = await ProvaService.ExigidasDoAlunoAsync(matricula.AlunoId, new[] { curso.Id });
-            // só contam as provas já corrigidas pelo professor
-            var resultados = (await ResultadoRepositorio.DoAlunoAsync(matricula.AlunoId))
-                .Where(r => r.CursoId == curso.Id && r.Corrigida).ToList();
+            // provas exigidas: todas as do calendário do aluno (inclusive as que ainda vão ser liberadas)
+            matricula.Curso ??= curso;
+            var agenda = await ProvaService.AgendaAsync(matricula);
+            var provas = agenda.Select(p => p.Prova).ToList();
+            // contam as provas corrigidas pelo professor e as perdidas (prazo encerrado sem entrega = nota 0)
+            var resultados = ProvaService.ComPerdidas(agenda, (await ResultadoRepositorio.DoAlunoAsync(matricula.AlunoId))
+                .Where(r => r.CursoId == curso.Id && r.Corrigida));
 
             var notas = ComProva(resultados, provas);
 
-            // aprovação pela média de cada matéria que tem prova (uma prova baixa pode ser compensada pelas outras)
+            // aprovação pela média de cada matéria (uma prova baixa pode ser compensada pelas outras);
+            // a matéria só fecha quando todas as provas dela já foram feitas ou encerradas
             var materias = provas.GroupBy(p => p.MateriaId).ToList();
             var aprovadas = materias.Count(g => AvaliarMateria(g.ToList(), resultados).Aprovada);
 

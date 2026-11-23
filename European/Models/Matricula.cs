@@ -18,6 +18,12 @@ namespace European.Models
 
         /// <summary>Quando o aluno trancou (o progresso fica guardado; ao reabrir, volta a valer).</summary>
         public DateTime? TrancadaEm { get; set; }
+        /// <summary>
+        /// Calendário de provas do aluno neste curso: quando cada prova foi (ou será) liberada e até quando pode ser feita.
+        /// Mantido por ProvaService.AgendaAsync; as provas já liberadas não mudam de data.
+        /// </summary>
+        public List<ProvaAgendada> AgendaProvas { get; set; } = new();
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
@@ -31,5 +37,13 @@ namespace European.Models
         /// <summary>Ativa, ou concluída e ainda dentro da validade de acesso às aulas.</summary>
         public bool AcessoAulasVigente => Status == StatusMatricula.Ativa
             || (Status == StatusMatricula.Concluida && AcessoAte.HasValue && AcessoAte.Value > DateTime.Now);
+    }
+
+    /// <summary>Uma prova no calendário do aluno.</summary>
+    public class ProvaAgendada
+    {
+        public string ProvaId { get; set; } = string.Empty;
+        public DateTime LiberadaEm { get; set; }
+        public DateTime PrazoAte { get; set; }
     }
 }

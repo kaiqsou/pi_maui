@@ -17,6 +17,7 @@ namespace European
             // Aluno
             Routing.RegisterRoute(Navegacao.Aula, typeof(AulaDetalhePage));
             Routing.RegisterRoute(Navegacao.ProvaRealizar, typeof(ProvaRealizarPage));
+            Routing.RegisterRoute(Navegacao.ProvaRevisao, typeof(ProvaRevisaoPage));
             Routing.RegisterRoute(Navegacao.Certificado, typeof(CertificadoDetalhePage));
 
             // Conteúdo (coordenação e professor)
@@ -30,8 +31,6 @@ namespace European
             Routing.RegisterRoute(Navegacao.ProvaEdit, typeof(ProvaEditPage));
             Routing.RegisterRoute(Navegacao.ProvaResultados, typeof(ProvaResultadosPage));
             Routing.RegisterRoute(Navegacao.Correcao, typeof(CorrecaoPage));
-            Routing.RegisterRoute(Navegacao.Sala, typeof(SalaDetalhePage));
-            Routing.RegisterRoute(Navegacao.SalaEdit, typeof(SalaEditPage));
 
             // Coordenação
             Routing.RegisterRoute(Navegacao.AlunoAcesso, typeof(AlunoAcessoPage));
@@ -50,8 +49,18 @@ namespace European
             // Cada tela só abre para o perfil que pode usá-la (AcessoService.PodeAbrir)
             Navigating += (_, e) =>
             {
-                if (e.CanCancel && !AcessoService.PodeAbrir(e.Target.Location))
-                    e.Cancel();
+                if (!e.CanCancel || AcessoService.PodeAbrir(e.Target.Location))
+                    return;
+
+                e.Cancel();
+
+                // token JWT vencido: encerra a sessão e volta para o login
+                if (SessionService.SessaoExpirada)
+                    Dispatcher.Dispatch(async () =>
+                    {
+                        await AcessoService.SairAsync();
+                        await DisplayAlertAsync("Sessão expirada", "Sua sessão expirou. Entre novamente.", "OK");
+                    });
             };
         }
     }

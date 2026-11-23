@@ -61,7 +61,7 @@
     </Style>
 
     <!-- Campos de formulário (normalmente dentro de um Border com Style="Campo") -->
-    <Style TargetType="Entry">
+    <Style TargetType="Entry" ApplyToDerivedTypes="True">
         <Setter Property="TextColor" Value="{DynamicResource OnSurface}" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource Placeholder}" />
         <Setter Property="BackgroundColor" Value="Transparent" />

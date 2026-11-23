@@ -70,9 +70,59 @@ namespace European.Services
                 return;
 
             var onde = anterior.CurrentState?.Location?.OriginalString;
-            janela.Page = new AppShell();
+#if WINDOWS
+            _semTransicao = true;
+#endif
+            try
+            {
+                await MontarShellAsync(janela, onde);
+            }
+            finally
+            {
+#if WINDOWS
+                // espera o WinUI terminar de mostrar as telas novas antes de devolver as transições
+                await Task.Delay(500);
+                _semTransicao = false;
+                foreach (var (frame, transicoes) in _framesSemTransicao)
+                    frame.ContentTransitions = transicoes;
+                _framesSemTransicao.Clear();
+#endif
+            }
+        }
 
-            if (string.IsNullOrEmpty(onde) || Shell.Current == null)
+#if WINDOWS
+        private static bool _semTransicao;
+        private static readonly List<(Microsoft.UI.Xaml.Controls.Frame Frame, Microsoft.UI.Xaml.Media.Animation.TransitionCollection? Transicoes)> _framesSemTransicao = new();
+
+        /// <summary>
+        /// Chamado quando o Windows cria o Frame de uma seção do Shell (MauiProgram). Durante a troca de tema o
+        /// Frame fica sem transição: senão o WinUI anima a entrada das telas novas (o conteúdo "sobe" de baixo).
+        /// </summary>
+        public static void PrepararFrame(Microsoft.UI.Xaml.Controls.Frame frame)
+        {
+            if (!_semTransicao || _framesSemTransicao.Any(f => f.Frame == frame))
+                return;
+
+            _framesSemTransicao.Add((frame, frame.ContentTransitions));
+            frame.ContentTransitions = null;
+        }
+#endif
+
+        private static async Task MontarShellAsync(Window janela, string? onde)
+        {
+            var novo = new AppShell();
+
+            // Já abre na área certa (login, main, professor...): sem isso o Shell novo mostrava o login e
+            // depois navegava até a tela, o que aparecia como uma animação estranha na troca de tema.
+            var partes = (onde ?? "").Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var area = partes.Length > 0 ? novo.Items.FirstOrDefault(i => i.Route == partes[0]) : null;
+            if (area != null)
+                novo.CurrentItem = area;
+
+            janela.Page = novo;
+
+            // telas empilhadas por cima da área (ex.: perfil) voltam sem animação
+            if (partes.Length == 0 || (area != null && partes.Length < 2) || Shell.Current == null)
                 return;
 
             try

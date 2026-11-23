@@ -21,13 +21,13 @@ namespace European.ViewModels
     }
 
     /// <summary>
-    /// Cadastro do aluno em duas etapas (seus dados → escolha do curso). Gera uma solicitação de matrícula:
-    /// a conta só é criada quando a coordenação libera.
+    /// Cadastro do aluno em duas etapas (seus dados → escolha do curso). Gera uma solicitação de matrícula, que segue
+    /// para o envio dos documentos e o pagamento; a conta só é criada quando a coordenação libera.
     /// </summary>
     public partial class CadastroViewModel : BaseViewModel
     {
-        /// <summary>Cursos por página na etapa de escolha do curso.</summary>
-        private const int CursosPorPagina = 4;
+        /// <summary>Cursos mostrados de cada vez na escolha do curso (o resto no "Ver mais").</summary>
+        private const int CursosPorVez = 4;
 
         private bool _cursosCarregados;
         private CursoCadastroItem? _cursoSelecionado;
@@ -35,7 +35,6 @@ namespace European.ViewModels
         public CadastroViewModel()
         {
             Title = "Acesso";
-            Paginas.Mudou += () => CursosPagina = Cursos.Skip(Paginas.Indice * CursosPorPagina).Take(CursosPorPagina).ToList();
         }
 
         [ObservableProperty]
@@ -66,7 +65,7 @@ namespace European.ViewModels
 
         partial void OnEtapaChanged(int value) => Mensagem = string.Empty;
 
-        // ---- Cursos (etapa 2), paginados ----
+        // ---- Cursos (etapa 2), mostrados aos poucos ----
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(SemCursos))]
@@ -74,10 +73,9 @@ namespace European.ViewModels
 
         public bool SemCursos => Cursos.Count == 0;
 
-        public Paginador Paginas { get; } = new();
+        public ListaIncremental<CursoCadastroItem> CursosLista { get; } = new(CursosPorVez);
 
-        [ObservableProperty]
-        public partial IReadOnlyList<CursoCadastroItem> CursosPagina { get; private set; } = new List<CursoCadastroItem>();
+        partial void OnCursosChanged(List<CursoCadastroItem> value) => CursosLista.Fonte = value;
 
         /// <summary>Volta da página de detalhes com "Escolher este curso".</summary>
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
@@ -85,7 +83,9 @@ namespace European.ViewModels
             if (parametros.Obter<string>("CursoEscolhidoId") is { } cursoId && Cursos.FirstOrDefault(c => c.Curso.Id == cursoId) is { } item)
             {
                 SelecionarCurso(item);
-                Paginas.Reiniciar(TotalPaginas(), Cursos.IndexOf(item) / CursosPorPagina);
+                // o curso escolhido nos detalhes fica visível na lista
+                while (!CursosLista.Visiveis.Contains(item) && CursosLista.TemMais)
+                    CursosLista.CarregarMaisCommand.Execute(null);
             }
 
             parametros.Clear();
@@ -102,7 +102,6 @@ namespace European.ViewModels
                 await MongoContext.InicializarAsync();
                 var cursos = (await CursoRepositorio.ListarAsync()).Where(c => c.IsPublicado).ToList();
                 Cursos = cursos.Select(c => new CursoCadastroItem { Curso = c }).ToList();
-                Paginas.Reiniciar(TotalPaginas());
                 _cursosCarregados = true;
 
                 // com um único curso (o mestrado), ele já vem marcado
@@ -115,8 +114,6 @@ namespace European.ViewModels
                 Mensagem = LoginViewModel.SemConexao;
             }
         }
-
-        private int TotalPaginas() => (int)Math.Ceiling(Cursos.Count / (double)CursosPorPagina);
 
         [RelayCommand]
         private void SelecionarCurso(CursoCadastroItem? item)
@@ -150,8 +147,9 @@ namespace European.ViewModels
             if (!await ExecutarAsync(async () =>
                 {
                     await MongoContext.InicializarAsync();
+                    // um pedido cancelado não impede um cadastro novo (ele é substituído)
                     disponivel = await UsuarioRepositorio.PorEmailAsync(Email) == null
-                                 && await SolicitacaoRepositorio.PorEmailAsync(Email) == null;
+                                 && await SolicitacaoRepositorio.PorEmailAsync(Email) is null or { Cancelada: true };
                 }))
                 return;
 
@@ -164,7 +162,7 @@ namespace European.ViewModels
             Etapa = 2;
         }
 
-        /// <summary>Envia a solicitação de matrícula e entra como candidato (segue para o pagamento).</summary>
+        /// <summary>Envia a solicitação de matrícula e entra como candidato (segue para os documentos).</summary>
         [RelayCommand]
         private async Task CadastroAsync()
         {

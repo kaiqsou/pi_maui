@@ -10,27 +10,38 @@ namespace European.Models
         public Materia? Materia { get; set; }
         public string ProfessorId { get; set; } = string.Empty;
 
-        /// <summary>Quando definida, só os alunos da sala veem a prova; senão, todos os alunos do curso.</summary>
-        public string? SalaId { get; set; }
-
         public string Titulo { get; set; } = string.Empty;
         public string Instrucoes { get; set; } = string.Empty;
         public double NotaMaxima { get; set; } = 10;
         public double Peso { get; set; } = 1;
         public double NotaCorte { get; set; } = 6;
-        public DateTime? Prazo { get; set; }
+
+        /// <summary>
+        /// Dias que o aluno tem para fazer a prova depois que ela é liberada para ele. As provas do curso são liberadas
+        /// uma de cada vez, na ordem das matérias: a primeira quando o acesso do aluno é liberado, e cada uma das
+        /// seguintes quando termina o prazo da anterior (ProvaService.AgendaAsync).
+        /// </summary>
+        public int PrazoDias { get; set; } = PrazoDiasPadrao;
+
+        public const int PrazoDiasPadrao = 30;
 
         /// <summary>Tempo para realizar a prova; 0 = sem limite.</summary>
         public int DuracaoMinutos { get; set; }
 
         public bool IsPublicada { get; set; }
+
+        /// <summary>
+        /// Posição da prova no curso, definida pelo professor (setas na aba Provas). É a ordem em que as provas são
+        /// liberadas para o aluno. Provas antigas, sem posição (0), seguem a ordem das matérias.
+        /// </summary>
+        public int Ordem { get; set; }
+
         public List<Questao> Questoes { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-        public bool Expirada => Prazo.HasValue && Prazo.Value < DateTime.Now;
         public string DuracaoTexto => DuracaoMinutos > 0 ? $"{DuracaoMinutos} min" : "Sem limite";
-        public string PrazoTexto => Prazo?.ToString("dd/MM/yyyy HH:mm") ?? "Sem prazo";
+        public string PrazoDiasTexto => PrazoDias == 1 ? "1 dia" : $"{PrazoDias} dias";
     }
 
     public class Questao

@@ -19,12 +19,6 @@ namespace European.ViewModels
         public partial bool Atribuido { get; set; }
     }
 
-    public class TurmaResumo
-    {
-        public string Nome { get; init; } = string.Empty;
-        public string Detalhe { get; init; } = string.Empty;
-    }
-
     public class ProvaDoProfessor
     {
         public Prova Prova { get; init; } = new();
@@ -34,7 +28,7 @@ namespace European.ViewModels
         public string StatusTexto => Prova.IsPublicada ? "Publicada" : "Rascunho";
     }
 
-    /// <summary>Coordenação: cursos, turmas e provas de um professor e o acesso dele ao aplicativo.</summary>
+    /// <summary>Coordenação: cursos e provas de um professor e o acesso dele ao aplicativo.</summary>
     public partial class ProfessorAcessoViewModel : BaseViewModel
     {
         [ObservableProperty]
@@ -49,12 +43,10 @@ namespace European.ViewModels
         public string AcessoBotaoTexto => AcessoLiberado ? "Remover acesso ao aplicativo" : "Restaurar acesso";
 
         public ObservableCollection<CursoAtribuicao> Cursos { get; } = new();
-        public ObservableCollection<TurmaResumo> Turmas { get; } = new();
         public ObservableCollection<ProvaDoProfessor> Provas { get; } = new();
-        public bool TemTurmas => Turmas.Count > 0;
         public bool TemProvas => Provas.Count > 0;
 
-        /// <summary>"2 cursos · 3 provas · 1 turma", no cartão do professor.</summary>
+        /// <summary>"2 cursos · 3 provas", no cartão do professor.</summary>
         [ObservableProperty]
         public partial string ResumoTexto { get; private set; } = string.Empty;
 
@@ -81,15 +73,6 @@ namespace European.ViewModels
 
             var nomesCursos = cursos.ToDictionary(c => c.Id, c => c.Nome);
 
-            // turmas (salas) que o professor criou
-            var salas = await SalaRepositorio.DoProfessorAsync(Professor.Id);
-            Turmas.Clear();
-            foreach (var sala in salas)
-            {
-                var curso = sala.CursoId == null ? "Todos os cursos" : nomesCursos.GetValueOrDefault(sala.CursoId, "Curso removido");
-                Turmas.Add(new TurmaResumo { Nome = sala.Nome, Detalhe = $"{Plural(sala.AlunoIds.Count, "aluno", "alunos")} · {curso}" });
-            }
-
             // provas que o professor criou, com quantos alunos já fizeram
             var provas = await ProvaRepositorio.DoProfessorAsync(Professor.Id);
             var respostas = (await ResultadoRepositorio.DasProvasAsync(provas.Select(p => p.Id)))
@@ -107,8 +90,7 @@ namespace European.ViewModels
             }
 
             ResumoTexto = $"{Plural(cursos.Count(c => c.ProfessorIds.Contains(Professor.Id)), "curso", "cursos")} · " +
-                          $"{Plural(provas.Count, "prova", "provas")} · {Plural(salas.Count, "turma", "turmas")}";
-            OnPropertyChanged(nameof(TemTurmas));
+                          $"{Plural(provas.Count, "prova", "provas")}";
             OnPropertyChanged(nameof(TemProvas));
         });
 

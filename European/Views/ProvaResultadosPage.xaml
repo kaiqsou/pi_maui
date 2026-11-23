@@ -31,10 +31,6 @@
                     </Border>
                 </Grid>
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                    <Label Text="&#xe7ef;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
-                    <Label Grid.Column="1" Text="{Binding TurmaTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
-                </Grid>
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                     <Label Text="&#xe873;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
                     <Label Grid.Column="1" Text="{Binding RegrasTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                 </Grid>
@@ -93,6 +89,12 @@
                     </ContentView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <ContentView Padding="20,0,20,16" IsVisible="{Binding TemMaisNotas, x:DataType=vm:ProvaResultadosViewModel}">
+                    <Button Text="{Binding VerTodasTexto, x:DataType=vm:ProvaResultadosViewModel}" Style="{StaticResource GhostButton}"
+                            Command="{Binding AlternarTodasCommand, x:DataType=vm:ProvaResultadosViewModel}" />
+                </ContentView>
+            </CollectionView.Footer>
         </CollectionView>
 
     </Grid>

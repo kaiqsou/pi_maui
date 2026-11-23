@@ -17,8 +17,10 @@ namespace European.ViewModels
 
         // VideoSource é notificado em AtualizarProgresso, depois de saber o minuto em que o aluno parou
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(DuracaoFormatada), nameof(MateriaNome))]
+        [NotifyPropertyChangedFor(nameof(DuracaoFormatada), nameof(MateriaNome), nameof(TemDescricao))]
         public partial Aula? Aula { get; private set; }
+
+        public bool TemDescricao => !string.IsNullOrWhiteSpace(Aula?.Descricao);
 
         /// <summary>Sem matrícula = pré-visualização do professor ou da coordenação (não registra progresso).</summary>
         [ObservableProperty]
@@ -29,7 +31,9 @@ namespace European.ViewModels
         public ObservableCollection<AulaItem> AulasDoModulo { get; } = new();
 
         public string MateriaNome => Aula?.Materia?.Nome ?? string.Empty;
-        public string DuracaoFormatada => Formatos.Tempo(_duracaoSegundos > 0 ? _duracaoSegundos : Aula?.DuracaoSegundos ?? 0);
+        public string DuracaoFormatada => _duracaoSegundos > 0 || Aula?.DuracaoSegundos > 0
+            ? Formatos.Tempo(_duracaoSegundos > 0 ? _duracaoSegundos : Aula!.DuracaoSegundos)
+            : string.Empty;
 
         /// <summary>Página do player, já posicionada onde o aluno parou.</summary>
         public WebViewSource VideoSource => Aula == null
@@ -169,6 +173,12 @@ namespace European.ViewModels
                 return;
 
             Aula.DuracaoSegundos = (int)Math.Round(segundos);
+
+            // a lista de aulas embaixo pode ter outra cópia da aula: atualiza para não ficar sem duração
+            foreach (var item in AulasDoModulo.Where(i => i.Aula.Id == Aula.Id && !ReferenceEquals(i.Aula, Aula)))
+                item.Aula.DuracaoSegundos = Aula.DuracaoSegundos;
+            CarregarAulas();
+
             var cursoId = Aula.Materia?.Modulo?.Curso?.Id;
             if (cursoId != null)
                 _ = SalvarEmSegundoPlanoAsync(() => CursoRepositorio.AtualizarDuracaoAulaAsync(cursoId, Aula.Id, Aula.DuracaoSegundos));

@@ -15,8 +15,8 @@ namespace European.ViewModels
     }
 
     /// <summary>
-    /// Pagamento da matrícula — apenas simulado: nada é cobrado e os dados do cartão não são
-    /// gravados; só a forma de pagamento e a data ficam na solicitação para a coordenação conferir.
+    /// Pagamento da matrícula (Pix, crédito ou débito), depois do envio dos documentos. Os dados do cartão não são
+    /// gravados: só a forma de pagamento, o valor e o código da transação ficam na solicitação para a coordenação conferir.
     /// </summary>
     public partial class PagamentoViewModel : BaseViewModel
     {
@@ -82,8 +82,21 @@ namespace European.ViewModels
 
         public override Task AoAparecerAsync() => ExecutarAsync(async () =>
         {
-            var solicitacao = SessionService.SolicitacaoAtual;
-            Curso = solicitacao == null ? null : await CursoRepositorio.PorIdAsync(solicitacao.CursoId);
+            var solicitacao = await Candidatura.RecarregarAsync();
+            if (solicitacao == null)
+            {
+                await AcessoService.SairAsync();
+                return;
+            }
+
+            // a etapa pode ter mudado (ex.: já pago, ou cancelada) enquanto a tela estava fechada
+            if (solicitacao.Status != StatusSolicitacao.Pagamento)
+            {
+                await Candidatura.IrParaEtapaAsync(solicitacao);
+                return;
+            }
+
+            Curso = await CursoRepositorio.PorIdAsync(solicitacao.CursoId);
 
             Parcelas = Enumerable.Range(1, MaxParcelas)
                 .Select(n => new ParcelaOpcao
@@ -94,8 +107,8 @@ namespace European.ViewModels
                 .ToList();
             ParcelaSelecionada = Parcelas.FirstOrDefault();
 
-            // código "copia e cola" apenas ilustrativo
-            CodigoPix = $"00020126580014BR.GOV.BCB.PIX0136european-{solicitacao?.Id[^8..]}5204000053039865406{Valor.ToString("0.00", CultureInfo.InvariantCulture)}5802BR5908EUROPEAN6304ABCD";
+            // código Pix "copia e cola" da cobrança (o mesmo texto vira o QR Code)
+            CodigoPix = PixService.GerarCodigo(solicitacao.Id, Valor);
         });
 
         [RelayCommand]
@@ -132,26 +145,31 @@ namespace European.ViewModels
             Mensagem = string.Empty;
             var ok = await ExecutarAsync(async () =>
             {
-                await Task.Delay(1200); // simula o processamento
-                var agora = DateTime.Now;
-                await SolicitacaoRepositorio.RegistrarPagamentoAsync(solicitacao.Id, Forma, agora);
-                await NotificacaoService.ParaCoordenacaoAsync("Solicitação de matrícula",
-                    $"{solicitacao.Nome} fez o pagamento e aguarda a liberação em {CursoNome}.");
-                solicitacao.FormaPagamento = Forma;
-                solicitacao.PagamentoEm = agora;
-                solicitacao.PendenciaMotivo = null;
-                solicitacao.PendenciaEm = null;
+                await Task.Delay(1200);
+                await SolicitacaoService.RegistrarPagamentoAsync(solicitacao, Forma, ParcelaSelecionada?.Quantidade ?? 1, Valor);
             });
 
             if (!ok)
                 return;
 
             NumeroCartao = NomeCartao = Validade = Cvv = string.Empty;
-            await AvisarAsync("Pagamento confirmado", "Agora é só aguardar a coordenação liberar o seu acesso ao curso.");
-            await Shell.Current.GoToAsync(Navegacao.Aguardando);
+            await AvisarAsync("Pagamento confirmado", $"Comprovante {solicitacao.TransacaoId}. Agora é só aguardar a análise da coordenação.");
+            await Candidatura.IrParaEtapaAsync(solicitacao);
         }
 
-        /// <summary>Confere o formato dos dados do cartão (nada é enviado a operadora). Retorna o erro, ou null se estiver ok.</summary>
+        /// <summary>Volta para trocar alguma foto antes de pagar.</summary>
+        [RelayCommand]
+        private async Task VoltarDocumentosAsync()
+        {
+            if (SessionService.SolicitacaoAtual is not { } solicitacao)
+                return;
+
+            solicitacao.Status = StatusSolicitacao.Documentos;
+            if (await ExecutarAsync(() => SolicitacaoRepositorio.AtualizarAsync(solicitacao)))
+                await Candidatura.IrParaEtapaAsync(solicitacao);
+        }
+
+        /// <summary>Confere os dados do cartão antes de cobrar. Retorna o erro, ou null se estiver ok.</summary>
         private string? ValidarCartao()
         {
             var digitos = new string(NumeroCartao.Where(char.IsDigit).ToArray());

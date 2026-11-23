@@ -45,7 +45,7 @@
                         <VerticalStackLayout Spacing="6">
                             <ProgressBar Progress="{Binding UltimaPercentual, Converter={StaticResource PercentToProgress}}"
                                          IsVisible="{Binding UltimaIniciada}" />
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding TemUltimaDuracao}">
                                 <Label Grid.Column="0" Text="&#xe8b5;" Style="{StaticResource Icon}" FontSize="16" TextColor="{DynamicResource OnSurfaceVariant}" />
                                 <Label Grid.Column="1" Text="{Binding UltimaDuracao}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
                             </Grid>
