@@ -12,10 +12,10 @@
              Shell.NavBarIsVisible="False">
 
     <!--
-        Topo fixo (curso + módulo da página), só as matérias do módulo rolam, e a paginação (< >) fica fixa embaixo.
+        Topo fixo (curso + seletor de módulo); só as matérias do módulo escolhido rolam.
         As ações ficam nos menus "⋮" e no toque das aulas, para não encher a tela de botões.
     -->
-    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="0">
 
         <!-- Curso -->
         <VerticalStackLayout Grid.Row="0" Padding="20,16,20,12" Spacing="10">
@@ -33,14 +33,21 @@
             </Grid>
         </VerticalStackLayout>
 
-        <!-- Módulo da página atual -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Padding="20,4,20,10">
+        <!-- Módulo: seletor quando o curso tem mais de um -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Padding="20,4,20,10">
+            <Border Style="{StaticResource Campo}" VerticalOptions="Center" IsVisible="{Binding TemVariosModulos}">
+                <Picker ItemsSource="{Binding Modulos}" SelectedItem="{Binding ModuloSelecionado}" Title="Módulo"
+                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:ModuloOpcao}" />
+            </Border>
             <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleSm}" MaxLines="2" LineBreakMode="TailTruncation"
-                   VerticalOptions="Center" IsVisible="{Binding TemModulos}" />
+                   VerticalOptions="Center" IsVisible="{Binding TemUmModulo}" />
             <Label Text="Módulos" Style="{StaticResource TitleSm}" VerticalOptions="Center" IsVisible="{Binding SemModulos}" />
             <Button Grid.Column="1" Text="Novo módulo" Style="{StaticResource SoftButton}" VerticalOptions="Center"
                     Command="{Binding NovoModuloCommand}" IsVisible="{Binding PodeEditarEstrutura}" />
-            <Button Grid.Column="2" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do módulo"
+            <Button Grid.Column="2" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{DynamicResource OnSurfaceVariant}"
+                    ToolTipProperties.Text="Excluir módulo" SemanticProperties.Description="Excluir módulo"
+                    Command="{Binding ExcluirModuloCommand}" IsVisible="{Binding TemOpcoesModulo}" />
+            <Button Grid.Column="3" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções do módulo"
                     Command="{Binding OpcoesModuloCommand}" IsVisible="{Binding TemOpcoesModulo}" />
         </Grid>
 
@@ -56,12 +63,17 @@
                             <Border Style="{StaticResource Card}" Padding="14" StrokeShape="RoundRectangle 14">
                                 <VerticalStackLayout Spacing="8">
 
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
                                         <VerticalStackLayout Spacing="0" VerticalOptions="Center">
                                             <Label Text="{Binding Materia.Nome}" Style="{StaticResource TitleSm}" FontSize="15" />
                                             <Label Text="{Binding Resumo}" Style="{StaticResource BodySm}" />
                                         </VerticalStackLayout>
-                                        <Button Grid.Column="1" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções da matéria"
+                                        <Button Grid.Column="1" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{DynamicResource OnSurfaceVariant}"
+                                                ToolTipProperties.Text="Excluir matéria" SemanticProperties.Description="Excluir matéria"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                CommandParameter="{Binding .}"
+                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarEstrutura, x:DataType=vm:CursoDetalheViewModel}" />
+                                        <Button Grid.Column="2" Text="&#xe5d4;" Style="{StaticResource IconButton}" ToolTipProperties.Text="Opções da matéria"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=OpcoesMateriaCommand, x:DataType=vm:CursoDetalheViewModel}"
                                                 CommandParameter="{Binding .}"
                                                 IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
@@ -71,7 +83,7 @@
                                     <VerticalStackLayout Spacing="2" BindableLayout.ItemsSource="{Binding Aulas}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="models:Aula">
-                                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Padding="0,6">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Padding="0,6">
                                                     <Grid.GestureRecognizers>
                                                         <TapGestureRecognizer
                                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=OpcoesAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
@@ -81,6 +93,11 @@
                                                     <Label Grid.Column="1" Text="{Binding Titulo}" Style="{StaticResource BodyMd}" MaxLines="2"
                                                            LineBreakMode="TailTruncation" VerticalOptions="Center" />
                                                     <Label Grid.Column="2" Text="{Binding DuracaoTexto}" Style="{StaticResource BodySm}" VerticalOptions="Center" />
+                                                    <Button Grid.Column="3" Text="&#xe872;" Style="{StaticResource IconButton}" TextColor="{DynamicResource OnSurfaceVariant}"
+                                                            ToolTipProperties.Text="Excluir aula" SemanticProperties.Description="Excluir aula" VerticalOptions="Center"
+                                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=ExcluirAulaCommand, x:DataType=vm:CursoDetalheViewModel}"
+                                                            CommandParameter="{Binding .}"
+                                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:CursoDetalheViewModel}}, Path=PodeEditarAulas, x:DataType=vm:CursoDetalheViewModel}" />
                                                 </Grid>
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -128,8 +145,6 @@
 
             </VerticalStackLayout>
         </ScrollView>
-
-    <controls:BarraPaginacao Grid.Row="3" Padding="20,8,20,16" BindingContext="{Binding Paginas}" />
 
     </Grid>
 

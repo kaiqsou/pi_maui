@@ -8,15 +8,20 @@
              BackgroundColor="{DynamicResource Surface}">
 
     <!-- A margem lateral fica dentro de cada parte para a barra de rolagem ficar na borda, sem cobrir os cards. -->
-    <Grid RowDefinitions="Auto,*,Auto" Padding="0,24,0,0" RowSpacing="16">
+    <Grid RowDefinitions="Auto,*" Padding="0,24,0,0" RowSpacing="16">
 
         <VerticalStackLayout Grid.Row="0" Spacing="2" Padding="20,0">
             <Label Text="Aulas" Style="{StaticResource TitleLg}" />
             <Label Text="{Binding CursoNome}" Style="{StaticResource Muted}" />
-            <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleMd}" Margin="0,12,0,0" />
+            <!-- módulo: seletor quando o curso tem mais de um -->
+            <Border Style="{StaticResource Campo}" Margin="0,12,0,0" IsVisible="{Binding TemVariosModulos}">
+                <Picker ItemsSource="{Binding Modulos}" SelectedItem="{Binding ModuloSelecionado}" Title="Módulo"
+                        ItemDisplayBinding="{Binding Texto, x:DataType=vm:ModuloOpcao}" />
+            </Border>
+            <Label Text="{Binding ModuloAtualTitulo}" Style="{StaticResource TitleMd}" Margin="0,12,0,0" IsVisible="{Binding TemUmModulo}" />
         </VerticalStackLayout>
 
-        <!-- Cabeçalho e paginação ficam fixos; só a lista de aulas do módulo rola. -->
+        <!-- Cabeçalho e seletor de módulo ficam fixos; só a lista de aulas do módulo rola. -->
         <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
             <VerticalStackLayout Spacing="10" Padding="20,0,20,16">
 
@@ -90,8 +95,6 @@
 
             </VerticalStackLayout>
         </ScrollView>
-
-        <controls:BarraPaginacao Grid.Row="2" Padding="20,0,20,16" BindingContext="{Binding Paginas}" />
 
     </Grid>
 

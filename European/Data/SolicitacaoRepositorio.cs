@@ -11,9 +11,14 @@ namespace European.Data
     {
         private static IMongoCollection<SolicitacaoMatricula> Colecao => MongoContext.Solicitacoes;
 
-        /// <summary>Solicitações em andamento (as canceladas ficam só para o candidato ver o reembolso).</summary>
+        /// <summary>
+        /// Solicitações que chegaram à coordenação: depois do pagamento (em análise ou devolvidas para correção).
+        /// Candidatos que ainda estão enviando documentos ou pagando não aparecem; as canceladas ficam só para o
+        /// candidato ver o reembolso.
+        /// </summary>
         public static Task<List<SolicitacaoMatricula>> ListarAsync()
-            => Colecao.Find(s => s.Status != StatusSolicitacao.Cancelada).SortBy(s => s.CriadaEm).ToListAsync();
+            => Colecao.Find(s => s.Status == StatusSolicitacao.EmAnalise || s.Status == StatusSolicitacao.Devolvida)
+                .SortBy(s => s.CriadaEm).ToListAsync();
 
         public static Task<SolicitacaoMatricula?> PorIdAsync(string id) => Colecao.PorIdAsync(id);
 

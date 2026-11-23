@@ -86,10 +86,21 @@ namespace European.ViewModels
         public ObservableCollection<QuestaoEdicao> Questoes { get; } = new();
 
         public QuestaoEdicao? QuestaoAtual => _indiceQuestao >= 0 && _indiceQuestao < Questoes.Count ? Questoes[_indiceQuestao] : null;
-        public string IndicadorQuestao => Questoes.Count == 0 ? "0 / 0" : $"{_indiceQuestao + 1} / {Questoes.Count}";
-        public bool PodeQuestaoAnterior => _indiceQuestao > 0;
-        public bool PodeQuestaoProxima => _indiceQuestao < Questoes.Count - 1;
-        public string ResumoQuestoes => $"{Questoes.Count} questão(ões) · peso total {Questoes.Sum(q => q.PesoValor):0.#}";
+        /// <summary>Itens do seletor de questão ("Questão 1 de 4").</summary>
+        [ObservableProperty]
+        public partial List<string> OpcoesQuestoes { get; private set; } = new();
+
+        /// <summary>Questão aberta, escolhida no seletor.</summary>
+        public int IndiceQuestao
+        {
+            get => _indiceQuestao;
+            set
+            {
+                // o seletor manda -1 enquanto a lista de opções é trocada: ignora
+                if (value >= 0 && value != _indiceQuestao)
+                    IrParaQuestao(value);
+            }
+        }
 
         public bool IsEdicao => !string.IsNullOrEmpty(_prova?.Id);
         public bool TemEntregas => _entregas > 0;
@@ -180,19 +191,11 @@ namespace European.ViewModels
         [RelayCommand]
         private void VoltarEtapa() => Secao = Secao == "questoes" ? "regras" : "dados";
 
-        [RelayCommand]
-        private void QuestaoAnterior() => IrParaQuestao(_indiceQuestao - 1);
-
-        [RelayCommand]
-        private void QuestaoProxima() => IrParaQuestao(_indiceQuestao + 1);
-
         private void IrParaQuestao(int indice)
         {
             _indiceQuestao = Questoes.Count == 0 ? 0 : Math.Clamp(indice, 0, Questoes.Count - 1);
             OnPropertyChanged(nameof(QuestaoAtual));
-            OnPropertyChanged(nameof(IndicadorQuestao));
-            OnPropertyChanged(nameof(PodeQuestaoAnterior));
-            OnPropertyChanged(nameof(PodeQuestaoProxima));
+            OnPropertyChanged(nameof(IndiceQuestao));
         }
 
         // ---- Edição das questões ----
@@ -240,7 +243,7 @@ namespace European.ViewModels
         {
             for (var i = 0; i < Questoes.Count; i++)
                 Questoes[i].Numero = i + 1;
-            OnPropertyChanged(nameof(ResumoQuestoes));
+            OpcoesQuestoes = Questoes.Select(q => $"Questão {q.Numero} de {Questoes.Count}").ToList();
         }
 
         // ---- Salvar, excluir e resultados ----

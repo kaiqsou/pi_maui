@@ -3,9 +3,14 @@ using European.Models;
 
 namespace European.Services
 {
+    /// <summary>
+    /// Quem está logado. O token da sessão fica guardado no SecureStorage (armazenamento criptografado do sistema),
+    /// para o usuário continuar logado ao fechar e abrir o app (AcessoService.RestaurarSessaoAsync).
+    /// </summary>
     public static class SessionService
     {
         public const string PerfilCandidato = "Candidato";
+        private const string ChaveToken = "european.sessao.token";
 
         public static Usuario? UsuarioAtual { get; private set; }
 
@@ -49,6 +54,7 @@ namespace European.Services
             UsuarioAtual = usuario;
             SolicitacaoAtual = null;
             Token = TokenService.Emitir(usuario.Id, usuario.Email, usuario.Roles.ToString());
+            _ = GuardarAsync(Token);
         }
 
         public static void EntrarCandidato(SolicitacaoMatricula solicitacao)
@@ -56,6 +62,7 @@ namespace European.Services
             UsuarioAtual = null;
             SolicitacaoAtual = solicitacao;
             Token = TokenService.Emitir(solicitacao.Id, solicitacao.Email, PerfilCandidato);
+            _ = GuardarAsync(Token);
         }
 
         public static void Sair()
@@ -63,6 +70,40 @@ namespace European.Services
             UsuarioAtual = null;
             SolicitacaoAtual = null;
             Token = null;
+            _ = GuardarAsync(null);
+        }
+
+        /// <summary>Token salvo da última sessão (null se não houver ou se o SecureStorage não estiver disponível).</summary>
+        public static async Task<string?> TokenSalvoAsync()
+        {
+            try
+            {
+                return await SecureStorage.Default.GetAsync(ChaveToken);
+            }
+            catch (Exception ex)
+            {
+                CrashLogger.Registrar(nameof(SessionService), ex);
+                return null;
+            }
+        }
+
+        /// <summary>Apaga a sessão salva (ex.: a conta não existe mais).</summary>
+        public static Task EsquecerAsync() => GuardarAsync(null);
+
+        private static async Task GuardarAsync(string? token)
+        {
+            try
+            {
+                if (token == null)
+                    SecureStorage.Default.Remove(ChaveToken);
+                else
+                    await SecureStorage.Default.SetAsync(ChaveToken, token);
+            }
+            catch (Exception ex)
+            {
+                // sem SecureStorage: a sessão continua valendo até fechar o app
+                CrashLogger.Registrar(nameof(SessionService), ex);
+            }
         }
     }
 }

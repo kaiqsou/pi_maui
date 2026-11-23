@@ -24,7 +24,7 @@ namespace European
         protected override Window CreateWindow(IActivationState? activationState)
         {
             var janela = new Window(new AppShell());
-            janela.Height = 700;
+            janela.Height = 800;
             janela.Width = 400;
             janela.Activated += (_, _) => TemaService.AplicarNaJanela();
 

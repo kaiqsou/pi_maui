@@ -128,6 +128,59 @@ namespace European.Services
             await Shell.Current.GoToAsync(RotaCandidato(solicitacao));
         }
 
+        /// <summary>
+        /// Ao abrir o app: se há uma sessão salva e o token ainda vale, entra de novo com a conta (relida do banco,
+        /// com o acesso conferido outra vez) e renova o token. Retorna true se entrou.
+        /// </summary>
+        public static async Task<bool> RestaurarSessaoAsync()
+        {
+            await TokenService.CarregarChaveAsync();
+            var claims = TokenService.Validar(await SessionService.TokenSalvoAsync());
+            if (claims == null)
+            {
+                await SessionService.EsquecerAsync();
+                return false;
+            }
+
+            var id = claims.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+            var email = claims.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email)?.Value;
+            var perfil = claims.FindFirst(TokenService.ClaimPerfil)?.Value;
+            await MongoContext.InicializarAsync();
+
+            if (perfil == SessionService.PerfilCandidato)
+            {
+                if (id != null && await SolicitacaoRepositorio.PorIdAsync(id) is { } solicitacao)
+                {
+                    await EntrarCandidatoAsync(solicitacao);
+                    return true;
+                }
+
+                // a coordenação liberou enquanto o app estava fechado: a solicitação virou conta de aluno
+                if (email != null && await UsuarioRepositorio.PorEmailAsync(email) is { } liberado)
+                    return await EntrarRestauradoAsync(liberado);
+            }
+            else if (id != null && await UsuarioRepositorio.PorIdAsync(id) is { } usuario && usuario.Roles.ToString() == perfil)
+            {
+                return await EntrarRestauradoAsync(usuario);
+            }
+
+            await SessionService.EsquecerAsync();
+            return false;
+        }
+
+        private static async Task<bool> EntrarRestauradoAsync(Usuario usuario)
+        {
+            // acesso removido desde a última vez: não restaura (o login mostra o motivo se a pessoa tentar entrar)
+            if ((await RotaInicialAsync(usuario)).Rota == null)
+            {
+                await SessionService.EsquecerAsync();
+                return false;
+            }
+
+            await EntrarAsync(usuario);
+            return true;
+        }
+
         public static async Task SairAsync()
         {
             SessionService.Sair();

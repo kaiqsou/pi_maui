@@ -12,4 +12,5 @@ namespace European.ViewModels
     // Tipos concretos para usar com x:DataType no XAML (que não aceita tipos genéricos).
     public class CursoOpcao : Opcao<Curso> { }
     public class MateriaOpcao : Opcao<Materia> { }
+    public class ModuloOpcao : Opcao<Modulo> { }
 }

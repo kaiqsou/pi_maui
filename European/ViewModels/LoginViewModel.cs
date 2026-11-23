@@ -27,6 +27,9 @@ namespace European.ViewModels
 
         public bool TemMensagem => !string.IsNullOrWhiteSpace(Mensagem);
 
+        /// <summary>A sessão salva é conferida só na primeira vez que o login aparece (ao abrir o app).</summary>
+        private static bool _sessaoConferida;
+
         /// <summary>Banco sem nenhuma conta (instalação nova): mostra "Primeiro acesso" para criar a coordenação.</summary>
         [ObservableProperty]
         public partial bool PrecisaConfigurar { get; private set; }
@@ -36,6 +39,23 @@ namespace European.ViewModels
             try
             {
                 await MongoContext.InicializarAsync();
+
+                // continua logado de onde parou (sessão guardada no SecureStorage)
+                if (!_sessaoConferida)
+                {
+                    _sessaoConferida = true;
+                    IsBusy = true;
+                    try
+                    {
+                        if (await AcessoService.RestaurarSessaoAsync())
+                            return;
+                    }
+                    finally
+                    {
+                        IsBusy = false;
+                    }
+                }
+
                 PrecisaConfigurar = !await UsuarioRepositorio.ExisteAlgumUsuarioAsync();
                 if (Mensagem == SemConexao)
                     Mensagem = string.Empty;

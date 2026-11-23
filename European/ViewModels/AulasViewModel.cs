@@ -29,7 +29,7 @@ namespace European.ViewModels
         public string MateriaNome => Aula.Materia?.Nome ?? string.Empty;
     }
 
-    /// <summary>Aba "Aulas" do aluno: uma página por módulo do curso.</summary>
+    /// <summary>Aba "Aulas" do aluno: as aulas de um módulo por vez, escolhido no seletor de módulo.</summary>
     public partial class AulasViewModel : BaseViewModel
     {
         private List<Modulo> _modulos = new();
@@ -38,10 +38,21 @@ namespace European.ViewModels
         public AulasViewModel()
         {
             Title = "Aulas";
-            Paginas.Mudou += AplicarPagina;
         }
 
-        public Paginador Paginas { get; } = new();
+        /// <summary>Módulos do curso para o seletor (só aparece com mais de um módulo).</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemVariosModulos), nameof(TemUmModulo))]
+        public partial List<ModuloOpcao> Modulos { get; private set; } = new();
+
+        public bool TemVariosModulos => Modulos.Count > 1;
+        public bool TemUmModulo => Modulos.Count == 1;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ModuloAtualTitulo))]
+        public partial ModuloOpcao? ModuloSelecionado { get; set; }
+
+        partial void OnModuloSelecionadoChanged(ModuloOpcao? value) => AplicarModulo();
 
         [ObservableProperty]
         public partial string CursoNome { get; private set; } = string.Empty;
@@ -53,7 +64,7 @@ namespace European.ViewModels
         [NotifyPropertyChangedFor(nameof(SemAulas))]
         public partial IReadOnlyList<AulaItem> AulasPagina { get; private set; } = new List<AulaItem>();
 
-        public string ModuloAtualTitulo => Paginas.Indice < _modulos.Count ? _modulos[Paginas.Indice].Titulo : string.Empty;
+        public string ModuloAtualTitulo => ModuloSelecionado?.Valor?.Titulo ?? string.Empty;
         public bool SemAulas => AulasPagina.Count == 0;
         public string MensagemSemAulas => _modulos.Count == 0
             ? "Ainda não há aulas disponíveis para você."
@@ -102,13 +113,21 @@ namespace European.ViewModels
 
             _modulos = modulos;
             _aulasPorModulo = aulasPorModulo;
-            Paginas.Reiniciar(modulos.Count);
+
+            // mantém o módulo escolhido ao voltar para a aba; na primeira vez, abre no módulo em que o aluno está
+            // (o da primeira aula liberada e ainda não concluída)
+            var escolhido = ModuloSelecionado?.Valor?.Id;
+            var atual = aulasPorModulo.FindIndex(a => a.Any(i => i.Liberada && !i.Concluida));
+            Modulos = modulos.Select(m => new ModuloOpcao { Valor = m, Texto = m.Titulo }).ToList();
+            ModuloSelecionado = Modulos.FirstOrDefault(o => o.Valor!.Id == escolhido)
+                                ?? (atual >= 0 ? Modulos[atual] : Modulos.FirstOrDefault());
+            AplicarModulo();
         });
 
-        private void AplicarPagina()
+        private void AplicarModulo()
         {
-            AulasPagina = Paginas.Indice < _aulasPorModulo.Count ? _aulasPorModulo[Paginas.Indice] : new List<AulaItem>();
-            OnPropertyChanged(nameof(ModuloAtualTitulo));
+            var indice = ModuloSelecionado == null ? -1 : _modulos.FindIndex(m => m.Id == ModuloSelecionado.Valor?.Id);
+            AulasPagina = indice >= 0 && indice < _aulasPorModulo.Count ? _aulasPorModulo[indice] : new List<AulaItem>();
             OnPropertyChanged(nameof(MensagemSemAulas));
         }
 

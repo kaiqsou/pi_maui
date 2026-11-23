@@ -13,3 +13,19 @@ ALUNOS
 ana.souza@european.com        - Direito - 60%, prova 1 corrigida (com comentario), prova 2 aguardando correcao, prova 3 aberta
 bruno.carvalho@european.com   - Harmonizacao - 38%, prova 1 corrigida (abaixo da media), prova 2 aberta
 carolina.mendes@european.com  - Educacao - 12%, acabou de entrar, prova 1 aberta
+
+MAIS 97 ALUNOS GERADOS (e-mails nome.sobrenome@email.com) - exemplos por situacao
+Ativos, cursando (62)               igor.farias@email.com, rafael.melo@email.com
+Concluidos (8; 6 ja com certificado) bernardo.batista@email.com, natalia.oliveira@email.com
+Em dois cursos (3)                  bernardo.moraes@email.com, alexandre.barros@email.com
+Matricula trancada (6)              bernardo.pinto@email.com, vinicius.santos@email.com
+Ex-aluno, matricula encerrada (4)   paulo.freitas@email.com, igor.almeida@email.com
+Ex-aluno, acesso removido (5)       luana.moreira@email.com, nicolas.nogueira@email.com
+Conta pendente, sem curso (6)       fabiana.andrade@email.com, heitor.almeida@email.com
+Conta liberada, sem curso (3)       arthur.nascimento@email.com, isadora.teixeira@email.com
+
+SOLICITACOES DE MATRICULA (candidatos, ainda nao sao alunos)
+Enviando documentos (3)             caio.vieira@email.com, andre.santos@email.com  (a coordenacao ainda nao ve)
+Em analise (8)                      lucas.monteiro@email.com, olivia.barbosa@email.com
+Devolvida para correcao (2)         marcos.borges@email.com, miguel.farias@email.com
+Cancelada e reembolsada (2)         bernardo.nogueira@email.com, camila.rocha@email.com

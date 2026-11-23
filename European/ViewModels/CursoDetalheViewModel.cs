@@ -31,7 +31,7 @@ namespace European.ViewModels
     }
 
     /// <summary>
-    /// Gestão do conteúdo de um curso, um módulo por página. A coordenação edita a estrutura (curso, módulos,
+    /// Gestão do conteúdo de um curso, um módulo por vez (escolhido no seletor de módulo). A coordenação edita a estrutura (curso, módulos,
     /// matérias) e as aulas; os professores do curso editam aulas, materiais e as próprias provas.
     /// As ações ficam nos menus "⋮" e no toque em cada item.
     /// </summary>
@@ -40,12 +40,18 @@ namespace European.ViewModels
         private string? _cursoId;
         private List<ModuloNode> _modulos = new();
 
-        public CursoDetalheViewModel()
-        {
-            Paginas.Mudou += AoMudarPagina;
-        }
+        /// <summary>Módulos do curso para o seletor (só aparece com mais de um módulo).</summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemVariosModulos), nameof(TemUmModulo))]
+        public partial List<ModuloOpcao> Modulos { get; private set; } = new();
 
-        public Paginador Paginas { get; } = new();
+        public bool TemVariosModulos => Modulos.Count > 1;
+        public bool TemUmModulo => Modulos.Count == 1;
+
+        [ObservableProperty]
+        public partial ModuloOpcao? ModuloSelecionado { get; set; }
+
+        partial void OnModuloSelecionadoChanged(ModuloOpcao? value) => AoMudarModulo();
 
         [ObservableProperty]
         public partial Curso? Curso { get; private set; }
@@ -53,8 +59,8 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial string ProfessoresTexto { get; private set; } = string.Empty;
 
-        /// <summary>Módulo exibido na página atual.</summary>
-        public ModuloNode? ModuloAtual => Paginas.Indice < _modulos.Count ? _modulos[Paginas.Indice] : null;
+        /// <summary>Módulo escolhido no seletor.</summary>
+        public ModuloNode? ModuloAtual => _modulos.FirstOrDefault(n => n.Modulo.Id == ModuloSelecionado?.Valor?.Id);
         public string ModuloAtualTitulo => ModuloAtual?.Modulo.Titulo ?? string.Empty;
         public bool TemModulos => _modulos.Count > 0;
         public bool SemModulos => !TemModulos;
@@ -81,7 +87,7 @@ namespace European.ViewModels
         public bool PodeEditarAulas => Editando && PodeEditar;
         public bool PodeCriarProvas => Editando && IsProfessorDoCurso;
 
-        /// <summary>Editar dados do curso e excluir curso, módulos e matérias: só a coordenação.</summary>
+        /// <summary>Editar os dados do curso e excluir o curso inteiro: só a coordenação.</summary>
         public bool PodeGerenciarCurso => Editando && IsCoordenacao;
 
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
@@ -127,10 +133,14 @@ namespace European.ViewModels
             OnPropertyChanged(nameof(PodeEditarAulas));
             OnPropertyChanged(nameof(PodeCriarProvas));
             OnPropertyChanged(nameof(PodeGerenciarCurso));
-            Paginas.Reiniciar(_modulos.Count, Paginas.Indice);
+            // continua no módulo que estava aberto (ex.: ao voltar da edição de uma aula); senão, o primeiro
+            var escolhido = ModuloSelecionado?.Valor?.Id;
+            Modulos = _modulos.Select(n => new ModuloOpcao { Valor = n.Modulo, Texto = n.Modulo.Titulo }).ToList();
+            ModuloSelecionado = Modulos.FirstOrDefault(o => o.Valor!.Id == escolhido) ?? Modulos.FirstOrDefault();
+            AoMudarModulo();
         });
 
-        private void AoMudarPagina()
+        private void AoMudarModulo()
         {
             OnPropertyChanged(nameof(ModuloAtual));
             OnPropertyChanged(nameof(ModuloAtualTitulo));
@@ -180,7 +190,7 @@ namespace European.ViewModels
             if (modulo == null || Curso == null || !PodeEditarEstrutura)
                 return;
 
-            switch (await EscolherOpcaoAsync(modulo.Titulo, IsCoordenacao ? "Excluir módulo" : null, "Nova matéria", "Editar módulo"))
+            switch (await EscolherOpcaoAsync(modulo.Titulo, "Excluir módulo", "Nova matéria", "Editar módulo"))
             {
                 case "Nova matéria":
                     await Navegacao.IrAsync(Navegacao.MateriaEdit, ("Modulo", modulo));
@@ -189,8 +199,7 @@ namespace European.ViewModels
                     await Navegacao.IrAsync(Navegacao.ModuloEdit, ("Curso", Curso), ("Modulo", modulo));
                     break;
                 case "Excluir módulo":
-                    await ExcluirEAtualizarAsync($"Excluir o módulo \"{modulo.Titulo}\" com todas as matérias, aulas e provas?",
-                        () => CursoRepositorio.ExcluirModuloAsync(Curso.Id, modulo));
+                    await ExcluirModuloAsync();
                     break;
             }
         }
@@ -209,7 +218,7 @@ namespace European.ViewModels
             if (opcoes.Count == 0)
                 return;
 
-            switch (await EscolherOpcaoAsync(materia.Nome, PodeGerenciarCurso ? "Excluir matéria" : null, opcoes.ToArray()))
+            switch (await EscolherOpcaoAsync(materia.Nome, PodeEditarEstrutura ? "Excluir matéria" : null, opcoes.ToArray()))
             {
                 case "Nova aula":
                     await Navegacao.IrAsync(Navegacao.AulaEdit, ("Materia", materia));
@@ -221,8 +230,7 @@ namespace European.ViewModels
                     await Navegacao.IrAsync(Navegacao.MateriaEdit, ("Modulo", materia.Modulo), ("Materia", materia));
                     break;
                 case "Excluir matéria":
-                    await ExcluirEAtualizarAsync($"Excluir a matéria \"{materia.Nome}\" com suas aulas e provas?",
-                        () => CursoRepositorio.ExcluirMateriaAsync(Curso.Id, materia));
+                    await ExcluirMateriaAsync(node);
                     break;
             }
         }
@@ -248,10 +256,43 @@ namespace European.ViewModels
                     await Navegacao.IrAsync(Navegacao.AulaEdit, ("Materia", aula.Materia), ("Aula", aula));
                     break;
                 case "Excluir aula":
-                    await ExcluirEAtualizarAsync($"Excluir a aula \"{aula.Titulo}\" e seus materiais?",
-                        () => CursoRepositorio.ExcluirAulaAsync(Curso.Id, aula));
+                    await ExcluirAulaAsync(aula);
                     break;
             }
+        }
+
+        // ---- Excluir (lixeira em cada item, no modo de edição; também nos menus ⋮) ----
+
+        [RelayCommand]
+        private Task ExcluirModuloAsync()
+        {
+            var modulo = ModuloAtual?.Modulo;
+            if (modulo == null || Curso == null || !PodeEditarEstrutura)
+                return Task.CompletedTask;
+
+            return ExcluirEAtualizarAsync($"Excluir o módulo \"{modulo.Titulo}\" com todas as matérias, aulas e provas?",
+                () => CursoRepositorio.ExcluirModuloAsync(Curso.Id, modulo));
+        }
+
+        [RelayCommand]
+        private Task ExcluirMateriaAsync(MateriaNode? node)
+        {
+            if (node == null || Curso == null || !PodeEditarEstrutura)
+                return Task.CompletedTask;
+
+            var materia = node.Materia;
+            return ExcluirEAtualizarAsync($"Excluir a matéria \"{materia.Nome}\" com suas aulas e provas?",
+                () => CursoRepositorio.ExcluirMateriaAsync(Curso.Id, materia));
+        }
+
+        [RelayCommand]
+        private Task ExcluirAulaAsync(Aula? aula)
+        {
+            if (aula == null || Curso == null || !PodeEditarAulas)
+                return Task.CompletedTask;
+
+            return ExcluirEAtualizarAsync($"Excluir a aula \"{aula.Titulo}\" e seus materiais?",
+                () => CursoRepositorio.ExcluirAulaAsync(Curso.Id, aula));
         }
 
         private async Task ExcluirEAtualizarAsync(string pergunta, Func<Task> excluir)

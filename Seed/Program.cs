@@ -2,6 +2,7 @@
 // Uso (na pasta pi_maui):  dotnet run --project Seed
 // ATENÇÃO: apaga o banco inteiro antes de gravar. Todas as senhas são "Senha123".
 
+using System.IO.Compression;
 using European.Data;
 using European.Enums;
 using European.Models;
@@ -21,6 +22,9 @@ var provas = new List<Prova>();
 var resultados = new List<ResultadoProva>();
 var materiais = new List<MaterialComplementar>();
 var notificacoes = new List<Notificacao>();
+var certificados = new List<Certificado>();
+var solicitacoes = new List<SolicitacaoMatricula>();
+var rng = new Random(2026); // semente fixa: a seed gera sempre os mesmos alunos
 
 // ============================================================ USUÁRIOS
 
@@ -243,6 +247,185 @@ Assistir(mCarolina, educacao, 1, 30);
 foreach (var matricula in matriculas)
     Agendar(matricula);
 
+// ============================================================ MAIS ALUNOS (gerados), EM VÁRIAS SITUAÇÕES
+// Com os 3 acima, são 100 alunos. Os e-mails seguem nome.sobrenome@email.com.
+
+var situacoes = new List<string>();
+void Varios(string situacao, int quantidade) => situacoes.AddRange(Enumerable.Repeat(situacao, quantidade));
+Varios("ativo", 62);         // cursando, em pontos diferentes do curso
+Varios("concluido", 8);      // terminou o curso (a maioria já gerou o certificado)
+Varios("trancado", 6);       // trancou a matrícula
+Varios("removido", 5);       // a coordenação removeu o acesso (ex-aluno)
+Varios("encerrado", 4);      // matrícula encerrada, conta ainda liberada (ex-aluno)
+Varios("pendente", 6);       // conta antiga aguardando liberação, sem curso
+Varios("semcurso", 3);       // conta liberada, sem matrícula
+Varios("doiscursos", 3);     // matriculado em dois cursos
+situacoes = situacoes.OrderBy(_ => rng.Next()).ToList();
+
+var resumoSituacoes = new Dictionary<string, List<string>>();
+for (var i = 0; i < situacoes.Count; i++)
+{
+    var situacao = situacoes[i];
+    var (nome, email) = NovoNome();
+    var curso = cursos[i % cursos.Count];
+    var nascimento = new DateTime(rng.Next(1970, 2001), rng.Next(1, 13), rng.Next(1, 29));
+    var habilidade = 0.45 + rng.NextDouble() * 0.5; // chance de acertar cada questão objetiva
+
+    Usuario aluno;
+    switch (situacao)
+    {
+        case "pendente":
+            aluno = NovoUsuario(nome, email, Roles.Aluno, nascimento, rng.Next(1, 20));
+            aluno.StatusAcesso = StatusAcesso.Pendente;
+            break;
+
+        case "semcurso":
+            aluno = NovoAluno(nome, email, nascimento, rng.Next(5, 60), FormaAleatoria());
+            break;
+
+        case "concluido":
+        {
+            var dias = rng.Next(110, 260);
+            aluno = NovoAluno(nome, email, nascimento, dias, FormaAleatoria());
+            var m = Matricular(aluno, curso, dias);
+            Agendar(m);
+            // fez todas as provas no prazo e passou em todas
+            foreach (var agendada in m.AgendaProvas)
+            {
+                var prova = provas.First(p => p.Id == agendada.ProvaId);
+                var quando = NoIntervalo(agendada.LiberadaEm, agendada.PrazoAte.AddDays(-2));
+                Entrega(prova, aluno, GabaritoAprovado(prova), quando, true, Dissertativas(prova, 8.5));
+            }
+            m.Status = StatusMatricula.Concluida;
+            m.DataConclusao = m.AgendaProvas[^1].PrazoAte.AddDays(rng.Next(1, 10));
+            Assistir(m, curso, curso.TotalAulas);
+            if (certificados.Count < 6)
+                EmitirCertificado(m, aluno, curso);
+            break;
+        }
+
+        case "doiscursos":
+        {
+            var dias = rng.Next(20, 160);
+            aluno = NovoAluno(nome, email, nascimento, dias + 10, FormaAleatoria());
+            var outro = cursos[(i + 1) % cursos.Count];
+            foreach (var (c, d) in new[] { (curso, dias), (outro, Math.Max(3, dias - rng.Next(5, 60))) })
+            {
+                var m = Matricular(aluno, c, d);
+                Agendar(m);
+                SimularProvas(m, aluno, DateTime.Now, habilidade);
+                Assistir(m, c, AulasAssistidas(c, d), rng.Next(0, 90));
+            }
+            break;
+        }
+
+        default: // ativo, trancado, removido, encerrado
+        {
+            var dias = situacao == "ativo" ? rng.Next(1, 200) : rng.Next(45, 220);
+            aluno = NovoAluno(nome, email, nascimento, dias, FormaAleatoria());
+            var m = Matricular(aluno, curso, dias);
+            Agendar(m);
+
+            // até quando o aluno estudou: hoje, ou quando trancou/saiu
+            var limite = situacao == "ativo" ? DateTime.Now : m.DataMatricula.AddDays(rng.Next(20, dias - 5));
+            switch (situacao)
+            {
+                case "trancado":
+                    m.Status = StatusMatricula.Trancada;
+                    m.TrancadaEm = limite;
+                    Notificar(kaique, "Matrícula trancada", $"{aluno.Nome} trancou a matrícula em {curso.Nome}.", limite, true);
+                    break;
+                case "removido":
+                    m.Status = StatusMatricula.Cancelada;
+                    aluno.StatusAcesso = StatusAcesso.Removido;
+                    break;
+                case "encerrado":
+                    m.Status = StatusMatricula.Cancelada;
+                    break;
+            }
+
+            SimularProvas(m, aluno, limite, habilidade);
+            Assistir(m, curso, AulasAssistidas(curso, (int)(limite - m.DataMatricula).TotalDays), situacao == "ativo" ? rng.Next(0, 90) : 0);
+            break;
+        }
+    }
+
+    if (!resumoSituacoes.TryGetValue(situacao, out var lista))
+        resumoSituacoes[situacao] = lista = new List<string>();
+    lista.Add(aluno.Email);
+}
+
+// ============================================================ SOLICITAÇÕES DE MATRÍCULA (candidatos, ainda não são alunos)
+
+foreach (var (status, quantidade) in new[]
+{
+    (StatusSolicitacao.Documentos, 3), (StatusSolicitacao.EmAnalise, 8),
+    (StatusSolicitacao.Devolvida, 2), (StatusSolicitacao.Cancelada, 2)
+})
+{
+    for (var i = 0; i < quantidade; i++)
+    {
+        var (nome, email) = NovoNome();
+        var curso = cursos[rng.Next(cursos.Count)];
+        var criada = Dia(-rng.Next(1, 25), rng.Next(8, 20), rng.Next(0, 60));
+        var solicitacao = new SolicitacaoMatricula
+        {
+            Id = MongoContext.NovoId(),
+            Nome = nome,
+            Email = email,
+            SenhaHash = SenhaService.GerarHash(SenhaPadrao),
+            CursoId = curso.Id,
+            Status = status,
+            CriadaEm = criada
+        };
+
+        // documentos: os primeiros ainda enviando; os demais com todos
+        var quantosDocumentos = status == StatusSolicitacao.Documentos ? rng.Next(0, 4) : DocumentosMatricula.Exigidos.Count;
+        foreach (var exigido in DocumentosMatricula.Exigidos.Take(quantosDocumentos))
+            solicitacao.Documentos.Add(await DocumentoDeExemploAsync(solicitacao, exigido, criada.AddMinutes(rng.Next(5, 120))));
+
+        if (status is StatusSolicitacao.EmAnalise or StatusSolicitacao.Devolvida or StatusSolicitacao.Cancelada)
+        {
+            solicitacao.FormaPagamento = FormaAleatoria();
+            solicitacao.Parcelas = solicitacao.FormaPagamento == FormaPagamento.CartaoCredito ? rng.Next(1, 13) : 1;
+            solicitacao.PagamentoEm = criada.AddHours(rng.Next(2, 30));
+            solicitacao.ValorPago = curso.Preco;
+            solicitacao.TransacaoId = $"PAG-{solicitacao.PagamentoEm:yyyyMMdd}-{solicitacao.Id[^6..].ToUpperInvariant()}";
+        }
+
+        if (status == StatusSolicitacao.EmAnalise)
+            Notificar(kaique, "Solicitação de matrícula",
+                $"{nome} enviou os documentos e pagou {curso.Preco.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}. A solicitação aguarda a análise.", solicitacao.PagamentoEm!.Value);
+
+        if (status == StatusSolicitacao.Devolvida)
+        {
+            var recusado = solicitacao.Documentos[rng.Next(solicitacao.Documentos.Count)];
+            recusado.Recusado = true;
+            recusado.Observacao = "Foto ilegível, envie outra.";
+            foreach (var aprovado in solicitacao.Documentos.Where(d => d != recusado))
+                aprovado.Aprovado = true;
+            solicitacao.PendenciaMotivo = $"Reenviar: {DocumentosMatricula.NomeDe(recusado.Tipo)}.";
+            solicitacao.PendenciaEm = solicitacao.PagamentoEm!.Value.AddDays(1);
+        }
+
+        if (status == StatusSolicitacao.Cancelada)
+        {
+            // cancelada: os arquivos já foram apagados e o valor reembolsado
+            solicitacao.Documentos.Clear();
+            solicitacao.CanceladaEm = solicitacao.PagamentoEm!.Value.AddDays(rng.Next(1, 5));
+            solicitacao.CanceladaMotivo = i == 0 ? "Desistência do candidato" : "Documentos não reenviados no prazo";
+            solicitacao.ReembolsoId = $"EST-{solicitacao.CanceladaEm:yyyyMMdd}-{solicitacao.Id[^6..].ToUpperInvariant()}";
+            solicitacao.ReembolsadaEm = solicitacao.CanceladaEm;
+        }
+
+        solicitacoes.Add(solicitacao);
+        var chave = $"solicitação {status}";
+        if (!resumoSituacoes.TryGetValue(chave, out var lista))
+            resumoSituacoes[chave] = lista = new List<string>();
+        lista.Add(email);
+    }
+}
+
 // ============================================================ NOTIFICAÇÕES
 
 Notificar(helena, "Nova entrega", $"Uma entrega da prova \"{pTributario.Titulo}\" aguarda correção.", Dia(-20, 21));
@@ -264,6 +447,10 @@ await MongoContext.Materiais.InsertManyAsync(materiais);
 await MongoContext.Provas.InsertManyAsync(provas);
 await MongoContext.Resultados.InsertManyAsync(resultados);
 await MongoContext.Notificacoes.InsertManyAsync(notificacoes);
+if (certificados.Count > 0)
+    await MongoContext.Certificados.InsertManyAsync(certificados);
+if (solicitacoes.Count > 0)
+    await MongoContext.Solicitacoes.InsertManyAsync(solicitacoes);
 await MongoContext.InicializarAsync(); // índices (os cursos já existem, então não grava os iniciais)
 
 Console.WriteLine($"""
@@ -272,10 +459,14 @@ Console.WriteLine($"""
       {usuarios.Count(u => u.IsCoordenacao)} coordenador, {usuarios.Count(u => u.Roles == Roles.Professor)} professores, {usuarios.Count(u => u.Roles == Roles.Aluno)} alunos
       {cursos.Count} cursos, {cursos.Sum(c => c.Modulos.Count)} módulos, {cursos.Sum(c => c.TotalMaterias)} matérias, {cursos.Sum(c => c.TotalAulas)} aulas
       {provas.Count} provas, {resultados.Count} entregas ({resultados.Count(r => !r.Corrigida)} aguardando correção)
-      {matriculas.Count} matrículas
+      {matriculas.Count} matrículas, {certificados.Count} certificados, {solicitacoes.Count} solicitações de matrícula
 
     Login: kaique@european.com  /  {SenhaPadrao}  (todas as contas usam a mesma senha)
     """);
+
+Console.WriteLine("Exemplos por situação:");
+foreach (var (situacao, emails) in resumoSituacoes.OrderBy(r => r.Key))
+    Console.WriteLine($"  {situacao,-26} {emails.Count,3}  ex.: {string.Join(", ", emails.Take(2))}");
 
 // ============================================================ AUXILIARES
 
@@ -542,6 +733,201 @@ void Notificar(Usuario usuario, string titulo, string mensagem, DateTime quando,
         Lida = lida,
         Chave = chave
     });
+
+// ---- Auxiliares dos alunos gerados ----
+
+(string Nome, string Email) NovoNome()
+{
+    string[] nomes =
+    {
+        "Adriana", "Alexandre", "Aline", "André", "Beatriz", "Bernardo", "Bianca", "Caio", "Camila", "Cláudio",
+        "Daniela", "Davi", "Débora", "Eduardo", "Elisa", "Enzo", "Fabiana", "Fábio", "Flávia", "Gabriel",
+        "Giovana", "Gustavo", "Helena", "Heitor", "Igor", "Isadora", "Júlia", "Juliano", "Karina", "Leonardo",
+        "Letícia", "Lucas", "Luana", "Marcos", "Mariana", "Mateus", "Natália", "Nicolas", "Olívia", "Otávio",
+        "Patrícia", "Paulo", "Priscila", "Rafael", "Raquel", "Renato", "Sabrina", "Samuel", "Tatiane", "Thiago",
+        "Vanessa", "Vinícius", "Yasmin", "Rodrigo", "Larissa", "Pedro", "Sofia", "Miguel", "Laura", "Arthur"
+    };
+    string[] sobrenomes =
+    {
+        "Almeida", "Andrade", "Araújo", "Barbosa", "Barros", "Batista", "Borges", "Campos", "Cardoso", "Castro",
+        "Correia", "Costa", "Dias", "Farias", "Ferreira", "Freitas", "Gomes", "Lima", "Lopes", "Machado",
+        "Martins", "Medeiros", "Melo", "Mendonça", "Monteiro", "Moraes", "Moreira", "Nascimento", "Nogueira", "Oliveira",
+        "Pereira", "Pinto", "Prado", "Ramos", "Reis", "Ribeiro", "Rocha", "Santos", "Silva", "Teixeira", "Vieira"
+    };
+
+    while (true)
+    {
+        var nome = $"{nomes[rng.Next(nomes.Length)]} {sobrenomes[rng.Next(sobrenomes.Length)]}";
+        var email = $"{SemAcento(nome).ToLowerInvariant().Replace(' ', '.')}@email.com";
+        if (usuarios.All(u => u.Email != email) && solicitacoes.All(s => s.Email != email))
+            return (nome, email);
+    }
+}
+
+static string SemAcento(string texto)
+    => new(texto.Normalize(System.Text.NormalizationForm.FormD)
+        .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+        .ToArray());
+
+FormaPagamento FormaAleatoria() => (FormaPagamento)rng.Next(0, 3);
+
+DateTime NoIntervalo(DateTime inicio, DateTime fim)
+{
+    var limite = fim < DateTime.Now.AddHours(-2) ? fim : DateTime.Now.AddHours(-2);
+    return limite <= inicio ? inicio : inicio + (limite - inicio) * rng.NextDouble();
+}
+
+// aulas concluídas de acordo com o tempo de curso (cerca de 100 dias para assistir tudo, com variação)
+int AulasAssistidas(Curso curso, int dias)
+    => Math.Clamp((int)Math.Round(curso.TotalAulas * dias / 100.0 * (0.5 + rng.NextDouble())), 0, curso.TotalAulas);
+
+string GabaritoAprovado(Prova prova)
+{
+    var objetivas = prova.Questoes.Count(q => !q.IsDissertativa);
+    var erro = rng.Next(objetivas + 2); // no máximo um erro
+    return new string(Enumerable.Range(0, objetivas).Select(i => i == erro ? 'E' : 'C').ToArray());
+}
+
+(string, double, string)[] Dissertativas(Prova prova, double nivel)
+{
+    string[] respostas =
+    {
+        "Com base nas aulas, o ponto central é relacionar o conceito à prática: identificar o problema, apontar a regra aplicável e justificar a conclusão com exemplos.",
+        "A resposta envolve três aspectos: a definição, a aplicação no caso e os limites. Na prática, isso significa analisar o contexto antes de decidir.",
+        "Entendo que a questão exige comparar os conceitos. O primeiro se aplica antes do fato; o segundo, depois, com consequências diferentes.",
+        "Resumo: conceito principal, exemplo das aulas e a consequência prática para o profissional da área."
+    };
+    string[] comentarios = { "Boa resposta, bem fundamentada.", "Faltou aprofundar um dos pontos.", "Correto, mas poderia trazer um exemplo.", "" };
+    return prova.Questoes.Where(q => q.IsDissertativa)
+        .Select(_ => (respostas[rng.Next(respostas.Length)], Math.Round(Math.Clamp(nivel + rng.NextDouble() * 3 - 1.5, 0, 10) * 2) / 2,
+            comentarios[rng.Next(comentarios.Length)]))
+        .ToArray();
+}
+
+// Entregas pelo calendário: prazo encerrado -> fez na maioria das vezes; prova aberta -> às vezes já fez.
+void SimularProvas(Matricula matricula, Usuario aluno, DateTime limite, double habilidade)
+{
+    foreach (var agendada in matricula.AgendaProvas.Where(a => a.LiberadaEm < limite))
+    {
+        var encerrou = agendada.PrazoAte <= limite;
+        if (rng.NextDouble() > (encerrou ? 0.85 : 0.45))
+            continue; // perdeu o prazo, ou ainda não fez
+
+        var prova = provas.First(p => p.Id == agendada.ProvaId);
+        var quando = NoIntervalo(agendada.LiberadaEm, encerrou ? agendada.PrazoAte : limite);
+        var gabarito = new string(prova.Questoes.Where(q => !q.IsDissertativa).Select(_ => rng.NextDouble() < habilidade ? 'C' : 'E').ToArray());
+        var corrigida = quando < DateTime.Now.AddDays(-7) || rng.NextDouble() < 0.4;
+        Entrega(prova, aluno, gabarito, quando, corrigida, Dissertativas(prova, habilidade * 10));
+    }
+}
+
+void EmitirCertificado(Matricula matricula, Usuario aluno, Curso curso)
+{
+    var notas = resultados.Where(r => r.AlunoId == aluno.Id && r.CursoId == curso.Id)
+        .Select(r => (r.NotaNormalizada, provas.First(p => p.Id == r.ProvaId).Peso)).ToList();
+    var certificado = new Certificado
+    {
+        Id = MongoContext.NovoId(),
+        MatriculaId = matricula.Id,
+        CursoId = curso.Id,
+        AlunoId = aluno.Id,
+        Titulo = curso.Nome,
+        AlunoNome = aluno.Nome,
+        CursoNome = curso.Nome,
+        CargaHorariaHoras = curso.CargaHorariaHoras,
+        MediaFinal = Math.Round(notas.Sum(n => n.NotaNormalizada * n.Peso) / notas.Sum(n => n.Peso), 1),
+        DataInicio = matricula.DataMatricula,
+        DataConclusao = matricula.DataConclusao,
+        EmitidoEm = matricula.DataConclusao!.Value.AddDays(1)
+    };
+    certificado.CodigoVerificacao = $"EURO-{certificado.EmitidoEm:yyyy}-{certificado.Id[^8..].ToUpperInvariant()}";
+    certificados.Add(certificado);
+}
+
+// Foto de exemplo de um documento (cartão claro com cabeçalho colorido e linhas de "texto"), gravada no GridFS.
+async Task<DocumentoEnviado> DocumentoDeExemploAsync(SolicitacaoMatricula solicitacao, DocumentosMatricula.Exigido exigido, DateTime quando)
+{
+    var documento = new DocumentoEnviado { Tipo = exigido.Tipo };
+    var paginas = exigido.Tipo is "identidade" or "diploma" ? 2 : 1; // frente e verso
+    for (var pagina = 1; pagina <= paginas; pagina++)
+    {
+        var nomeArquivo = $"{exigido.Tipo}-{pagina}.png";
+        var id = await MongoContext.Arquivos.UploadFromBytesAsync(nomeArquivo, ImagemDocumento(exigido.Tipo.Sum(c => c) * 7 + pagina),
+            new MongoDB.Driver.GridFS.GridFSUploadOptions
+            {
+                Metadata = new MongoDB.Bson.BsonDocument { { "solicitacaoId", solicitacao.Id }, { "documento", exigido.Tipo } }
+            });
+        documento.Arquivos.Add(new ArquivoDocumento { ArquivoId = id.ToString(), NomeArquivo = nomeArquivo, EnviadoEm = quando });
+    }
+    return documento;
+}
+
+static byte[] ImagemDocumento(int semente)
+{
+    const int largura = 640, altura = 420;
+    var r = new Random(semente);
+    var cabecalho = (R: (byte)r.Next(40, 140), G: (byte)r.Next(60, 140), B: (byte)r.Next(90, 180));
+    var linhas = Enumerable.Range(0, 7).Select(i => (Y: 150 + i * 34, Fim: r.Next(260, 600))).ToArray();
+
+    var pixels = new byte[altura * (largura * 3 + 1)];
+    for (var y = 0; y < altura; y++)
+    {
+        var linha = y * (largura * 3 + 1);
+        pixels[linha] = 0; // filtro PNG "nenhum"
+        for (var x = 0; x < largura; x++)
+        {
+            (byte R, byte G, byte B) cor = (244, 240, 228); // papel
+            if (x < 8 || y < 8 || x >= largura - 8 || y >= altura - 8)
+                cor = (70, 70, 70); // borda
+            else if (y < 90)
+                cor = cabecalho;
+            else if (x is >= 40 and < 150 && y is >= 120 and < 260)
+                cor = (190, 190, 190); // "foto"
+            else if (linhas.Any(l => y >= l.Y && y < l.Y + 12 && x >= 180 && x < l.Fim))
+                cor = (120, 120, 120); // "texto"
+
+            var i = linha + 1 + x * 3;
+            pixels[i] = cor.R;
+            pixels[i + 1] = cor.G;
+            pixels[i + 2] = cor.B;
+        }
+    }
+
+    using var saida = new MemoryStream();
+    saida.Write(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+    Bloco(saida, "IHDR", Grande(largura).Concat(Grande(altura)).Concat(new byte[] { 8, 2, 0, 0, 0 }).ToArray());
+    using (var comprimido = new MemoryStream())
+    {
+        using (var zlib = new ZLibStream(comprimido, CompressionLevel.Optimal, leaveOpen: true))
+            zlib.Write(pixels);
+        Bloco(saida, "IDAT", comprimido.ToArray());
+    }
+    Bloco(saida, "IEND", Array.Empty<byte>());
+    return saida.ToArray();
+
+    static byte[] Grande(int valor) => new[] { (byte)(valor >> 24), (byte)(valor >> 16), (byte)(valor >> 8), (byte)valor };
+
+    static void Bloco(Stream saida, string tipo, byte[] dados)
+    {
+        var tipoBytes = System.Text.Encoding.ASCII.GetBytes(tipo);
+        saida.Write(Grande(dados.Length));
+        saida.Write(tipoBytes);
+        saida.Write(dados);
+        saida.Write(Grande((int)Crc32(tipoBytes.Concat(dados).ToArray())));
+    }
+
+    static uint Crc32(byte[] dados)
+    {
+        var crc = 0xFFFFFFFFu;
+        foreach (var b in dados)
+        {
+            crc ^= b;
+            for (var k = 0; k < 8; k++)
+                crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320u : crc >> 1;
+        }
+        return ~crc;
+    }
+}
 
 record AulaDef(string Titulo, string Descricao, string VideoId, string Duracao);
 record MateriaDef(string Nome, string Descricao, AulaDef[] Aulas);
