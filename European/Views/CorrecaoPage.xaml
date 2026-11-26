@@ -17,67 +17,81 @@
         </Border>
 
         <ScrollView Grid.Row="2">
-            <VerticalStackLayout Padding="20,0,20,20" Spacing="12" BindableLayout.ItemsSource="{Binding Questoes}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:QuestaoCorrecao">
-                        <Border Style="{StaticResource Card}">
-                            <VerticalStackLayout Spacing="10">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                    <Border Style="{StaticResource Pill}" VerticalOptions="Start">
-                                        <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
-                                    </Border>
-                                    <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
-                                    <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
-                                </Grid>
+            <VerticalStackLayout Padding="20,0,20,20" Spacing="12">
+                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Questoes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:QuestaoCorrecao">
+                            <Border Style="{StaticResource Card}">
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <Border Style="{StaticResource Pill}" VerticalOptions="Start">
+                                            <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
+                                        </Border>
+                                        <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
+                                        <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
+                                    </Grid>
 
-                                <!-- alternativas: já corrigida -->
-                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAlternativas}">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                        <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Success}" IsVisible="{Binding Acertou}" />
-                                        <Label Text="&#xe5c9;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Danger}" IsVisible="{Binding Errou}" />
-                                        <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" VerticalOptions="Center">
+                                    <!-- alternativas: já corrigida -->
+                                    <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAlternativas}">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Success}" IsVisible="{Binding Acertou}" />
+                                            <Label Text="&#xe5c9;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Danger}" IsVisible="{Binding Errou}" />
+                                            <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" VerticalOptions="Center">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="Marcou: " FontFamily="TextoNegrito" />
+                                                        <Span Text="{Binding MarcadaTexto}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                        </Grid>
+                                        <Label Style="{StaticResource BodySm}" IsVisible="{Binding Errou}">
                                             <Label.FormattedText>
                                                 <FormattedString>
-                                                    <Span Text="Marcou: " FontFamily="TextoNegrito" />
-                                                    <Span Text="{Binding MarcadaTexto}" />
+                                                    <Span Text="Correta: " FontFamily="TextoNegrito" />
+                                                    <Span Text="{Binding CorretaTexto}" />
                                                 </FormattedString>
                                             </Label.FormattedText>
                                         </Label>
-                                    </Grid>
-                                    <Label Style="{StaticResource BodySm}" IsVisible="{Binding Errou}">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span Text="Correta: " FontFamily="TextoNegrito" />
-                                                <Span Text="{Binding CorretaTexto}" />
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
-                                </VerticalStackLayout>
-
-                                <!-- dissertativa: professor corrige -->
-                                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsDissertativa}">
-                                    <Border Style="{StaticResource Painel}" Padding="12">
-                                        <Label Text="{Binding RespostaAluno}" Style="{StaticResource BodyMd}" />
-                                    </Border>
-                                    <VerticalStackLayout Spacing="4" IsVisible="{Binding TemRespostaEsperada}">
-                                        <Label Text="Resposta esperada" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" />
-                                        <Label Text="{Binding RespostaEsperada}" Style="{StaticResource BodySm}" />
                                     </VerticalStackLayout>
-                                    <Grid ColumnDefinitions="Auto,80" ColumnSpacing="10">
-                                        <Label Text="Nota (0 a 10)" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
-                                        <Border Grid.Column="1" Style="{StaticResource Campo}" Padding="8,0">
-                                            <Entry Text="{Binding Nota}" Keyboard="Numeric" HorizontalTextAlignment="Center" Placeholder="—" />
+
+                                    <!-- dissertativa: professor corrige -->
+                                    <VerticalStackLayout Spacing="10" IsVisible="{Binding IsDissertativa}">
+                                        <Border Style="{StaticResource Painel}" Padding="12">
+                                            <Label Text="{Binding RespostaAluno}" Style="{StaticResource BodyMd}" />
                                         </Border>
-                                    </Grid>
+                                        <VerticalStackLayout Spacing="4" IsVisible="{Binding TemRespostaEsperada}">
+                                            <Label Text="Resposta esperada" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" />
+                                            <Label Text="{Binding RespostaEsperada}" Style="{StaticResource BodySm}" />
+                                        </VerticalStackLayout>
+                                        <Grid ColumnDefinitions="Auto,80" ColumnSpacing="10">
+                                            <Label Text="Nota (0 a 10)" Style="{StaticResource BodyMd}" VerticalOptions="Center" />
+                                            <Border Grid.Column="1" Style="{StaticResource Campo}" Padding="8,0">
+                                                <Entry Text="{Binding Nota}" Keyboard="Numeric" HorizontalTextAlignment="Center" Placeholder="—" />
+                                            </Border>
+                                        </Grid>
+                                    </VerticalStackLayout>
+
+                                    <!-- qualquer questão: comentário opcional (ex.: explicar por que a alternativa está errada) -->
                                     <Border Style="{StaticResource CampoTexto}">
                                         <Editor Text="{Binding Comentario}" Placeholder="Comentário para o aluno (opcional)" AutoSize="TextChanges"
                                                 MinimumHeightRequest="50" />
                                     </Border>
                                 </VerticalStackLayout>
-                            </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <!-- comentário sobre a prova inteira -->
+                <Border Style="{StaticResource Card}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Comentário geral" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
+                        <Border Style="{StaticResource CampoTexto}">
+                            <Editor Text="{Binding ComentarioGeral}" Placeholder="Feedback sobre a prova como um todo (opcional)"
+                                    AutoSize="TextChanges" MinimumHeightRequest="70" />
                         </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </Border>
             </VerticalStackLayout>
         </ScrollView>
 

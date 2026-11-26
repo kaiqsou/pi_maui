@@ -20,7 +20,7 @@ namespace European.ViewModels
         public bool Acertou { get; init; }
         public bool Errou => IsAlternativas && !Acertou;
 
-        // dissertativa: o professor dá a nota (0 a 10) e pode comentar
+        // dissertativa: o professor dá a nota (0 a 10); em qualquer questão ele pode comentar
         public string RespostaAluno { get; init; } = string.Empty;
         public string RespostaEsperada { get; init; } = string.Empty;
         public bool TemRespostaEsperada => !string.IsNullOrWhiteSpace(RespostaEsperada);
@@ -48,6 +48,7 @@ namespace European.ViewModels
         {
             var marcada = indice < resultado.Respostas.Count ? resultado.Respostas[indice] : -1;
             var nota = indice < resultado.NotasQuestoes.Count ? resultado.NotasQuestoes[indice] : null;
+            var acertou = !questao.IsDissertativa && marcada == questao.IndiceCorreta;
 
             return new QuestaoCorrecao
             {
@@ -57,7 +58,7 @@ namespace European.ViewModels
                 IsDissertativa = questao.IsDissertativa,
                 MarcadaTexto = questao.IsDissertativa ? string.Empty : Alternativa(questao, marcada) ?? "Em branco",
                 CorretaTexto = questao.IsDissertativa ? string.Empty : Alternativa(questao, questao.IndiceCorreta) ?? string.Empty,
-                Acertou = !questao.IsDissertativa && marcada == questao.IndiceCorreta,
+                Acertou = acertou,
                 RespostaAluno = Item(resultado.RespostasTexto, indice) is { Length: > 0 } texto ? texto : "(em branco)",
                 RespostaEsperada = questao.RespostaEsperada,
                 Nota = questao.IsDissertativa && nota.HasValue ? Formatos.Numero(nota.Value) : string.Empty,

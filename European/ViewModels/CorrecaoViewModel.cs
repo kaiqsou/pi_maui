@@ -21,6 +21,10 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial string NotaTotalTexto { get; private set; } = string.Empty;
 
+        /// <summary>Comentário do professor sobre a prova inteira (opcional), visto pelo aluno na revisão.</summary>
+        [ObservableProperty]
+        public partial string ComentarioGeral { get; set; } = string.Empty;
+
         public bool JaCorrigida => _resultado?.Corrigida == true;
         public string ConcluirTexto => JaCorrigida ? "Salvar correção" : "Concluir correção";
 
@@ -47,6 +51,7 @@ namespace European.ViewModels
                     Questoes.Add(item);
                 }
 
+                ComentarioGeral = _resultado.ComentarioGeral ?? string.Empty;
                 AtualizarTotal();
                 OnPropertyChanged(nameof(JaCorrigida));
                 OnPropertyChanged(nameof(ConcluirTexto));
@@ -95,8 +100,9 @@ namespace European.ViewModels
                 return;
             }
 
+            // uma correção já liberada ao aluno não pode voltar a ter questão sem nota
             var semNota = Questoes.FirstOrDefault(q => q.IsDissertativa && q.NotaValor == null);
-            if (concluir && semNota != null)
+            if ((concluir || JaCorrigida) && semNota != null)
             {
                 await AvisarAsync("Correção", $"Dê a nota da questão {semNota.Numero} para concluir.");
                 return;
@@ -104,7 +110,8 @@ namespace European.ViewModels
 
             var resultado = _resultado;
             resultado.NotasQuestoes = NotasDigitadas();
-            resultado.Comentarios = Questoes.Select(q => q.IsDissertativa ? q.Comentario.Trim() : string.Empty).ToList();
+            resultado.Comentarios = Questoes.OrderBy(q => q.Indice).Select(q => q.Comentario.Trim()).ToList();
+            resultado.ComentarioGeral = ComentarioGeral.Trim();
 
             if (!await ExecutarAsync(() => ProvaService.SalvarCorrecaoAsync(_prova, resultado, concluir)))
                 return;

@@ -29,62 +29,77 @@
         </Border>
 
         <ScrollView Grid.Row="2">
-            <VerticalStackLayout Padding="20,0,20,24" Spacing="12" BindableLayout.ItemsSource="{Binding Questoes}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:QuestaoCorrecao">
-                        <Border Style="{StaticResource Card}">
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding Errou}" Value="True">
-                                    <Setter Property="Stroke" Value="{DynamicResource Danger}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <VerticalStackLayout Spacing="10">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                    <Border Style="{StaticResource Pill}" VerticalOptions="Start">
-                                        <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
-                                    </Border>
-                                    <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
-                                    <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
-                                </Grid>
+            <VerticalStackLayout Padding="20,0,20,24" Spacing="12">
+                <!-- comentário do professor sobre a prova inteira -->
+                <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource BrandContainerSoft}" Stroke="Transparent" Padding="14"
+                        IsVisible="{Binding TemComentarioGeral}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                        <Label Text="&#xe0b9;" Style="{StaticResource IconPrimary}" FontSize="20" VerticalOptions="Start" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Comentário geral do professor" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" />
+                            <Label Text="{Binding ComentarioGeral}" Style="{StaticResource BodyMd}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Questoes}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:QuestaoCorrecao">
+                            <Border Style="{StaticResource Card}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding Errou}" Value="True">
+                                        <Setter Property="Stroke" Value="{DynamicResource Danger}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <VerticalStackLayout Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                        <Border Style="{StaticResource Pill}" VerticalOptions="Start">
+                                            <Label Text="{Binding Numero}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
+                                        </Border>
+                                        <Label Grid.Column="1" Text="{Binding Enunciado}" Style="{StaticResource BodyMd}" FontFamily="TextoNegrito" />
+                                        <Label Grid.Column="2" Text="{Binding PesoTexto}" Style="{StaticResource BodySm}" />
+                                    </Grid>
 
-                                <!-- alternativas: a marcada e, se errou, a correta -->
-                                <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAlternativas}">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                        <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Success}" IsVisible="{Binding Acertou}" />
-                                        <Label Text="&#xe5c9;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Danger}" IsVisible="{Binding Errou}" />
-                                        <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" VerticalOptions="Center">
+                                    <!-- alternativas: a marcada e, se errou, a correta -->
+                                    <VerticalStackLayout Spacing="6" IsVisible="{Binding IsAlternativas}">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <Label Text="&#xe86c;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Success}" IsVisible="{Binding Acertou}" />
+                                            <Label Text="&#xe5c9;" Style="{StaticResource Icon}" FontSize="18" TextColor="{DynamicResource Danger}" IsVisible="{Binding Errou}" />
+                                            <Label Grid.Column="1" Style="{StaticResource BodySm}" TextColor="{DynamicResource OnSurface}" VerticalOptions="Center">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="Sua resposta: " FontFamily="TextoNegrito" />
+                                                        <Span Text="{Binding MarcadaTexto}" />
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                        </Grid>
+                                        <Label Style="{StaticResource BodySm}" TextColor="{DynamicResource Success}" IsVisible="{Binding Errou}">
                                             <Label.FormattedText>
                                                 <FormattedString>
-                                                    <Span Text="Sua resposta: " FontFamily="TextoNegrito" />
-                                                    <Span Text="{Binding MarcadaTexto}" />
+                                                    <Span Text="Correta: " FontFamily="TextoNegrito" />
+                                                    <Span Text="{Binding CorretaTexto}" />
                                                 </FormattedString>
                                             </Label.FormattedText>
                                         </Label>
-                                    </Grid>
-                                    <Label Style="{StaticResource BodySm}" TextColor="{DynamicResource Success}" IsVisible="{Binding Errou}">
-                                        <Label.FormattedText>
-                                            <FormattedString>
-                                                <Span Text="Correta: " FontFamily="TextoNegrito" />
-                                                <Span Text="{Binding CorretaTexto}" />
-                                            </FormattedString>
-                                        </Label.FormattedText>
-                                    </Label>
-                                </VerticalStackLayout>
-
-                                <!-- dissertativa: a resposta, a nota e o comentário do professor -->
-                                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsDissertativa}">
-                                    <VerticalStackLayout Spacing="4">
-                                        <Label Text="Sua resposta" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" />
-                                        <Border Style="{StaticResource Painel}" Padding="12">
-                                            <Label Text="{Binding RespostaAluno}" Style="{StaticResource BodyMd}" />
-                                        </Border>
                                     </VerticalStackLayout>
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Label Text="Nota da questão" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" VerticalOptions="Center" />
-                                        <Border Grid.Column="1" Style="{StaticResource Pill}">
-                                            <Label Text="{Binding NotaQuestaoTexto}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
-                                        </Border>
-                                    </Grid>
+
+                                    <!-- dissertativa: a resposta e a nota dada pelo professor -->
+                                    <VerticalStackLayout Spacing="10" IsVisible="{Binding IsDissertativa}">
+                                        <VerticalStackLayout Spacing="4">
+                                            <Label Text="Sua resposta" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" />
+                                            <Border Style="{StaticResource Painel}" Padding="12">
+                                                <Label Text="{Binding RespostaAluno}" Style="{StaticResource BodyMd}" />
+                                            </Border>
+                                        </VerticalStackLayout>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Text="Nota da questão" Style="{StaticResource BodySm}" FontFamily="TextoNegrito" VerticalOptions="Center" />
+                                            <Border Grid.Column="1" Style="{StaticResource Pill}">
+                                                <Label Text="{Binding NotaQuestaoTexto}" FontFamily="TextoNegrito" FontSize="13" TextColor="{DynamicResource BrandPrimary}" />
+                                            </Border>
+                                        </Grid>
+                                    </VerticalStackLayout>
+
+                                    <!-- qualquer questão: o comentário do professor -->
                                     <Border Style="{StaticResource Card}" BackgroundColor="{DynamicResource BrandContainerSoft}" Stroke="Transparent" Padding="12"
                                             IsVisible="{Binding TemComentario}">
                                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
@@ -96,10 +111,10 @@
                                         </Grid>
                                     </Border>
                                 </VerticalStackLayout>
-                            </VerticalStackLayout>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
 

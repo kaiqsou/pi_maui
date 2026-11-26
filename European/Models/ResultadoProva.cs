@@ -22,6 +22,9 @@ namespace European.Models
         /// <summary>Comentário do professor em cada questão (opcional).</summary>
         public List<string> Comentarios { get; set; } = new();
 
+        /// <summary>Comentário do professor sobre a prova como um todo (opcional).</summary>
+        public string ComentarioGeral { get; set; } = string.Empty;
+
         public int Acertos { get; set; }
         public int TotalQuestoes { get; set; }
         public double NotaObtida { get; set; }

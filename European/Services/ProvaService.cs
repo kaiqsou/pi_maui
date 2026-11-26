@@ -205,6 +205,8 @@ namespace European.Services
         /// </summary>
         public static async Task SalvarCorrecaoAsync(Prova prova, ResultadoProva resultado, bool concluir)
         {
+            var jaCorrigida = resultado.Corrigida;
+            var notaAnterior = resultado.NotaObtida;
             resultado.NotaObtida = CalcularNota(prova, resultado);
             if (concluir)
             {
@@ -214,9 +216,14 @@ namespace European.Services
 
             await ResultadoRepositorio.AtualizarAsync(resultado);
 
-            if (concluir)
+            if (concluir && !jaCorrigida)
                 await NotificacaoService.ParaUsuarioAsync(resultado.AlunoId, "Nota liberada",
                     $"A correção da prova \"{prova.Titulo}\" foi concluída. Veja a nota em Provas › Realizadas.");
+            else if (concluir)
+                await NotificacaoService.ParaUsuarioAsync(resultado.AlunoId, "Correção atualizada",
+                    Math.Abs(resultado.NotaObtida - notaAnterior) >= 0.005
+                        ? $"O professor alterou a nota da prova \"{prova.Titulo}\": {notaAnterior:0.0} → {resultado.NotaObtida:0.0}."
+                        : $"O professor atualizou a correção da prova \"{prova.Titulo}\". Veja em Provas › Realizadas.");
 
             if (resultado.Corrigida)
             {

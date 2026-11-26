@@ -23,6 +23,12 @@ namespace European.ViewModels
         [ObservableProperty]
         public partial bool Aprovado { get; private set; }
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(TemComentarioGeral))]
+        public partial string ComentarioGeral { get; private set; } = string.Empty;
+
+        public bool TemComentarioGeral => !string.IsNullOrWhiteSpace(ComentarioGeral);
+
         protected override Task ReceberParametrosAsync(IDictionary<string, object> parametros)
         {
             if (parametros.Obter<string>("ResultadoId") is not { } resultadoId)
@@ -46,6 +52,7 @@ namespace European.ViewModels
                 Title = prova.Titulo;
                 Aprovado = resultado.NotaObtida >= prova.NotaCorte;
                 NotaTexto = $"{resultado.NotaObtida:0.0} de {prova.NotaMaxima:0.#}";
+                ComentarioGeral = resultado.ComentarioGeral ?? string.Empty;
 
                 ProvaService.CompletarNotasAntigas(prova, resultado);
                 for (var i = 0; i < prova.Questoes.Count; i++)
